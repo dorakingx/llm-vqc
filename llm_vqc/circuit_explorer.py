@@ -51,7 +51,7 @@ def _validate_inputs(num_qubits: int, max_depth: int) -> None:
 
 def state_key(cliff: Clifford) -> bytes:
     """Hash the physical state U|0...0>, modulo global phase."""
-    statevector = Statevector(cliff.to_circuit())
+    statevector = Statevector.from_label("0" * cliff.num_qubits).evolve(cliff)
     data = np.array(statevector.data, copy=True)
 
     for amplitude in data:
