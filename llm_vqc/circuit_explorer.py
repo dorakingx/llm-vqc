@@ -7,8 +7,9 @@ from collections import deque
 from dataclasses import dataclass
 from typing import Any
 
+import numpy as np
 from qiskit import QuantumCircuit
-from qiskit.quantum_info import Clifford, StabilizerState
+from qiskit.quantum_info import Clifford, StabilizerState, Statevector
 
 MAX_DEPTH_LIMIT = 12
 SINGLE_QUBIT_GATES = ("H", "X", "Y", "Z")
@@ -49,9 +50,18 @@ def _validate_inputs(num_qubits: int, max_depth: int) -> None:
 
 
 def state_key(cliff: Clifford) -> bytes:
-    """Hash the stabilizer generators of the state produced by cliff on |0...0>."""
-    stabilizer_labels = StabilizerState(cliff).clifford.to_labels(mode="S")
-    return "|".join(stabilizer_labels).encode("utf-8")
+    """Hash the physical state U|0...0>, modulo global phase."""
+    statevector = Statevector(cliff.to_circuit())
+    data = np.array(statevector.data, copy=True)
+
+    for amplitude in data:
+        if abs(amplitude) > 1e-5:
+            phase = amplitude / abs(amplitude)
+            data *= np.conjugate(phase)
+            break
+
+    data = np.round(data.real, 5) + 1j * np.round(data.imag, 5)
+    return np.asarray(data, dtype=np.complex128).tobytes()
 
 
 def format_gate(action: GateAction) -> str:

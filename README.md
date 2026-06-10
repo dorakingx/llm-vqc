@@ -5,7 +5,7 @@ A Python agent that uses the OpenAI API with function calling to explore equival
 ## Features
 
 - **Clifford BFS explorer** (`explore_circuit_space`): explores circuits built from `{H, X, Y, Z, CX, CY, CZ}` up to a maximum depth.
-- **Stabilizer pruning**: hashes stabilizer states (not full unitaries) to merge equivalent outcomes.
+- **Statevector equivalence pruning**: hashes phase-normalized statevector bytes to merge physically equivalent outcomes.
 - **Custom agent loop**: OpenAI tool calling with local execution and follow-up analysis.
 
 ## Setup
@@ -45,8 +45,8 @@ print(result["new_states_at_depth"])
 ## How pruning works
 
 1. BFS starts from the identity Clifford on `N` qubits (state `|0...0>`).
-2. Each gate appends a precomputed Clifford operator.
-3. The resulting stabilizer state is hashed via its tableau bytes.
+2. Each gate appends a precomputed Clifford operator (fast simulation, no dense state evolution in BFS).
+3. The resulting physical state is converted to a `Statevector`, global phase is normalized, amplitudes are rounded, and the bytes are hashed.
 4. If the state was seen before, that branch is discarded.
 5. The first circuit reaching each state (minimum depth) is retained.
 
@@ -61,7 +61,7 @@ The return payload includes:
 
 ```
 llm_vqc/
-├── circuit_explorer.py   # BFS + stabilizer hashing
+├── circuit_explorer.py   # BFS + Statevector equivalence hashing
 ├── agent.py              # OpenAI agent loop
 └── main.py               # CLI entry point
 ```
