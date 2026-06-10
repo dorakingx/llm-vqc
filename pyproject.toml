@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "llm-vqc"
+version = "0.1.0"
+description = "LLM agent for exploring quantum circuit equivalence classes via Clifford BFS"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "openai>=1.40",
+    "qiskit>=1.0",
+    "python-dotenv>=1.0",
+]
+
+[project.scripts]
+llm-vqc = "llm_vqc.main:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["llm_vqc*"]
