@@ -51,7 +51,7 @@ def _validate_inputs(num_qubits: int, max_depth: int) -> None:
 
 def state_key(cliff: Clifford) -> bytes:
     """Hash the physical state U|0...0>, modulo global phase."""
-    statevector = Statevector.from_label("0" * cliff.num_qubits).evolve(cliff)
+    statevector = Statevector.from_int(0, 2**cliff.num_qubits).evolve(cliff)
     data = np.array(statevector.data, copy=True)
 
     for amplitude in data:
@@ -200,7 +200,14 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
         if depth >= max_depth:
             continue
 
+        # Get the last action to prune trivial self-inverses
+        last_action = gates[-1] if gates else None
+
         for action, gate_clifford in gate_actions:
+            # Skip if applying the exact same gate as the previous step
+            if action == last_action:
+                continue
+
             new_clifford = clifford.compose(gate_clifford, front=False)
             key = state_key(new_clifford)
             if key in visited:
