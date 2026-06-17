@@ -54,11 +54,12 @@ def state_key(cliff: Clifford) -> bytes:
     statevector = Statevector.from_int(0, 2**cliff.num_qubits).evolve(cliff)
     data = np.array(statevector.data, copy=True)
 
-    for amplitude in data:
-        if abs(amplitude) > 1e-5:
-            phase = amplitude / abs(amplitude)
-            data *= np.conjugate(phase)
-            break
+    magnitudes = np.abs(data)
+    significant = magnitudes > 1e-5
+    if np.any(significant):
+        first_idx = int(np.argmax(significant))
+        phase = data[first_idx] / magnitudes[first_idx]
+        data *= np.conjugate(phase)
 
     data = np.round(data.real, 5) + 1j * np.round(data.imag, 5)
     return np.asarray(data, dtype=np.complex128).tobytes()
