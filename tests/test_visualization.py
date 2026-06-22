@@ -7,6 +7,7 @@ from pathlib import Path
 from llm_vqc.circuit_explorer import explore_circuit_space
 from llm_vqc.visualization import (
     generate_exploration_visualizations,
+    plot_equivalence_class_example,
     plot_exploration_trajectory,
     plot_gate_distribution,
     plot_pruning_efficiency,
@@ -71,6 +72,25 @@ def test_plot_state_probabilities(tmp_path: Path) -> None:
     assert result["most_complex_state"]["measurement_probabilities"]
 
 
+def test_explore_circuit_space_captures_equivalence_example() -> None:
+    result = explore_circuit_space(num_qubits=2, max_depth=2)
+
+    assert result["equivalence_example"] is not None
+    original = result["equivalence_example"]["original_circuit"]
+    redundant = result["equivalence_example"]["redundant_circuit"]
+    assert original["circuit_str"] != redundant["circuit_str"]
+
+
+def test_plot_equivalence_class_example(tmp_path: Path) -> None:
+    result = explore_circuit_space(num_qubits=2, max_depth=2)
+    output_path = tmp_path / "equivalence_class_example.png"
+
+    saved_path = plot_equivalence_class_example(result, output_path)
+
+    assert saved_path.exists()
+    assert saved_path.stat().st_size > 0
+
+
 def test_generate_exploration_visualizations(tmp_path: Path) -> None:
     result = explore_circuit_space(num_qubits=2, max_depth=2)
 
@@ -80,8 +100,10 @@ def test_generate_exploration_visualizations(tmp_path: Path) -> None:
     assert outputs["gate_distribution"].name == "gate_distribution.png"
     assert outputs["pruning_efficiency"].name == "pruning_efficiency.png"
     assert outputs["state_probabilities"].name == "state_probabilities.png"
+    assert outputs["equivalence_class_example"].name == "equivalence_class_example.png"
     assert outputs["best_circuit_text"].name == "best_circuit.txt"
     assert outputs["exploration_trajectory"].exists()
     assert outputs["gate_distribution"].exists()
     assert outputs["pruning_efficiency"].exists()
     assert outputs["state_probabilities"].exists()
+    assert outputs["equivalence_class_example"].exists()
