@@ -1,3 +1,4 @@
 openai>=1.40
 qiskit>=1.0
 python-dotenv>=1.0
+matplotlib>=3.8

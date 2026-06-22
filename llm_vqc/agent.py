@@ -74,6 +74,7 @@ class Agent:
         self.model = model
         self.max_iterations = max_iterations
         self.messages: list[ChatCompletionMessageParam] = []
+        self.last_tool_result: dict[str, Any] | None = None
 
         if system_prompt is None:
             system_prompt = (
@@ -121,10 +122,12 @@ class Agent:
                 return {"error": f"Invalid argument types: {exc}"}
 
             try:
-                return TOOL_REGISTRY[tool_name](
+                result = TOOL_REGISTRY[tool_name](
                     num_qubits=num_qubits,
                     max_depth=max_depth,
                 )
+                self.last_tool_result = result
+                return result
             except CircuitExplorerError as exc:
                 return {"error": str(exc)}
             except Exception as exc:  # pragma: no cover - defensive guardrail

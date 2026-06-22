@@ -9,11 +9,13 @@ import sys
 from dotenv import load_dotenv
 
 from llm_vqc.agent import Agent, AgentError
+from llm_vqc.visualization import VisualizationError, generate_exploration_visualizations
 
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
 )
+logger = logging.getLogger(__name__)
 
 
 def main() -> None:
@@ -42,7 +44,16 @@ def main() -> None:
         print(f"Agent error: {exc}", file=sys.stderr)
         sys.exit(1)
 
-    print(response)
+    if agent.last_tool_result:
+        try:
+            outputs = generate_exploration_visualizations(agent.last_tool_result)
+            print("\nVisualizations saved:")
+            for name, path in outputs.items():
+                print(f"  {name}: {path}")
+        except VisualizationError as exc:
+            logger.warning("Visualization skipped: %s", exc)
+
+    print(f"\n{response}")
 
 
 if __name__ == "__main__":
