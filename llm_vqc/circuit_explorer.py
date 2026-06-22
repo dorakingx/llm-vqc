@@ -126,6 +126,53 @@ def _enumerate_gate_actions(num_qubits: int) -> tuple[tuple[GateAction, Clifford
     return tuple(actions)
 
 
+def gates_to_quantum_circuit(
+    gates: tuple[GateAction, ...], num_qubits: int
+) -> QuantumCircuit:
+    """Build a Qiskit circuit from an ordered gate sequence."""
+    circuit = QuantumCircuit(num_qubits)
+    for action in gates:
+        if action.name == "H":
+            circuit.h(action.qubits[0])
+        elif action.name == "X":
+            circuit.x(action.qubits[0])
+        elif action.name == "Y":
+            circuit.y(action.qubits[0])
+        elif action.name == "Z":
+            circuit.z(action.qubits[0])
+        elif action.name == "CX":
+            circuit.cx(action.qubits[0], action.qubits[1])
+        elif action.name == "CY":
+            circuit.cy(action.qubits[0], action.qubits[1])
+        elif action.name == "CZ":
+            circuit.cz(action.qubits[0], action.qubits[1])
+        else:
+            raise CircuitExplorerError(f"Unsupported gate: {action.name}")
+    return circuit
+
+
+def _gate_action_to_dict(action: GateAction) -> dict[str, Any]:
+    return {"name": action.name, "qubits": list(action.qubits)}
+
+
+def _select_best_circuit(
+    visited: dict[bytes, CircuitRecord], max_depth: int
+) -> dict[str, Any]:
+    """Pick a representative minimum-depth circuit at the target depth."""
+    candidates = [record for record in visited.values() if record.depth == max_depth]
+    if not candidates:
+        best_depth = max(record.depth for record in visited.values())
+        candidates = [record for record in visited.values() if record.depth == best_depth]
+
+    record = min(candidates, key=lambda item: format_circuit(item.gates))
+    return {
+        "depth": record.depth,
+        "gate_count": record.depth,
+        "circuit_str": format_circuit(record.gates),
+        "gates": [_gate_action_to_dict(gate) for gate in record.gates],
+    }
+
+
 def _build_sample_circuits(
     visited: dict[bytes, CircuitRecord], max_depth: int
 ) -> list[dict[str, Any]]:
@@ -192,6 +239,14 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
         initial_key: CircuitRecord(depth=0, gates=(), clifford=identity)
     }
     new_states_at_depth: dict[int, int] = {0: 1}
+    exploration_trajectory: list[dict[str, Any]] = [
+        {
+            "step": 0,
+            "depth": 0,
+            "cumulative_unique_states": 1,
+            "coverage_score": 1.0,
+        }
+    ]
     queue: deque[tuple[Clifford, tuple[GateAction, ...], int]] = deque(
         [(identity, (), 0)]
     )
@@ -222,6 +277,14 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
                 clifford=new_clifford,
             )
             new_states_at_depth[new_depth] = new_states_at_depth.get(new_depth, 0) + 1
+            exploration_trajectory.append(
+                {
+                    "step": len(exploration_trajectory),
+                    "depth": new_depth,
+                    "cumulative_unique_states": len(visited),
+                    "coverage_score": float(len(visited)),
+                }
+            )
 
             if new_depth < max_depth:
                 queue.append((new_clifford, new_gates, new_depth))
@@ -238,6 +301,8 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
             str(depth): count for depth, count in sorted(new_states_at_depth.items())
         },
         "states_at_exact_depth_G": states_at_exact_depth,
+        "exploration_trajectory": exploration_trajectory,
+        "best_circuit": _select_best_circuit(visited, max_depth),
         "sample_circuits": _build_sample_circuits(visited, max_depth),
         "elapsed_seconds": round(elapsed_seconds, 4),
     }

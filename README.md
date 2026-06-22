@@ -6,6 +6,7 @@ A Python agent that uses the OpenAI API with function calling to explore equival
 
 - **Clifford BFS explorer** (`explore_circuit_space`): explores circuits built from `{H, X, Y, Z, CX, CY, CZ}` up to a maximum depth.
 - **Statevector equivalence pruning**: hashes phase-normalized statevector bytes to merge physically equivalent outcomes.
+- **Automatic visualizations**: saves exploration trajectory and best-circuit diagrams to `outputs/`.
 - **Custom agent loop**: OpenAI tool calling with local execution and follow-up analysis.
 
 ## Setup
@@ -31,6 +32,11 @@ Run the agent with the bundled example prompt:
 ```bash
 python -m llm_vqc.main
 ```
+
+This generates:
+- `outputs/optimization_trajectory.png` — exploration step vs coverage score, plus per-depth discoveries
+- `outputs/best_circuit.png` — Qiskit diagram of the representative best circuit
+- `outputs/best_circuit.txt` — ASCII fallback diagram and gate sequence
 
 Call the explorer directly from Python:
 
@@ -62,6 +68,7 @@ The return payload includes:
 ```
 llm_vqc/
 ├── circuit_explorer.py   # BFS + Statevector equivalence hashing
+├── visualization.py      # Matplotlib plots and circuit export
 ├── agent.py              # OpenAI agent loop
 └── main.py               # CLI entry point
 ```
