@@ -173,6 +173,17 @@ def _select_best_circuit(
     }
 
 
+def _compute_gate_distribution(
+    visited: dict[bytes, CircuitRecord],
+) -> dict[str, int]:
+    """Count gate-type frequency across all minimum-depth (simplest) circuits."""
+    counts = {gate: 0 for gate in SINGLE_QUBIT_GATES + TWO_QUBIT_GATES}
+    for record in visited.values():
+        for gate in record.gates:
+            counts[gate.name] += 1
+    return counts
+
+
 def _build_sample_circuits(
     visited: dict[bytes, CircuitRecord], max_depth: int
 ) -> list[dict[str, Any]]:
@@ -303,6 +314,7 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
         "states_at_exact_depth_G": states_at_exact_depth,
         "exploration_trajectory": exploration_trajectory,
         "best_circuit": _select_best_circuit(visited, max_depth),
+        "gate_distribution": _compute_gate_distribution(visited),
         "sample_circuits": _build_sample_circuits(visited, max_depth),
         "elapsed_seconds": round(elapsed_seconds, 4),
     }
