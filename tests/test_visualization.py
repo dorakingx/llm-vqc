@@ -9,6 +9,8 @@ from llm_vqc.visualization import (
     generate_exploration_visualizations,
     plot_exploration_trajectory,
     plot_gate_distribution,
+    plot_pruning_efficiency,
+    plot_state_probabilities,
     save_best_circuit_visualization,
 )
 
@@ -48,6 +50,27 @@ def test_save_best_circuit_visualization(tmp_path: Path) -> None:
         assert outputs["best_circuit_image"].exists()
 
 
+def test_plot_pruning_efficiency(tmp_path: Path) -> None:
+    result = explore_circuit_space(num_qubits=2, max_depth=2)
+    output_path = tmp_path / "pruning_efficiency.png"
+
+    saved_path = plot_pruning_efficiency(result, output_path)
+
+    assert saved_path.exists()
+    assert result["explored_states_at_depth"]
+    assert int(result["num_actions_per_step"]) > 0
+
+
+def test_plot_state_probabilities(tmp_path: Path) -> None:
+    result = explore_circuit_space(num_qubits=2, max_depth=2)
+    output_path = tmp_path / "state_probabilities.png"
+
+    saved_path = plot_state_probabilities(result, output_path)
+
+    assert saved_path.exists()
+    assert result["most_complex_state"]["measurement_probabilities"]
+
+
 def test_generate_exploration_visualizations(tmp_path: Path) -> None:
     result = explore_circuit_space(num_qubits=2, max_depth=2)
 
@@ -55,6 +78,10 @@ def test_generate_exploration_visualizations(tmp_path: Path) -> None:
 
     assert outputs["exploration_trajectory"].name == "exploration_trajectory.png"
     assert outputs["gate_distribution"].name == "gate_distribution.png"
+    assert outputs["pruning_efficiency"].name == "pruning_efficiency.png"
+    assert outputs["state_probabilities"].name == "state_probabilities.png"
     assert outputs["best_circuit_text"].name == "best_circuit.txt"
     assert outputs["exploration_trajectory"].exists()
     assert outputs["gate_distribution"].exists()
+    assert outputs["pruning_efficiency"].exists()
+    assert outputs["state_probabilities"].exists()
