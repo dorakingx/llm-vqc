@@ -173,6 +173,44 @@ def _select_best_circuit(
     }
 
 
+def _state_entropy(clifford: Clifford, num_qubits: int) -> float:
+    """Shannon entropy (bits) of the measurement probability distribution."""
+    statevector = Statevector.from_int(0, 2**num_qubits).evolve(clifford)
+    probabilities = np.abs(statevector.data) ** 2
+    probabilities = probabilities[probabilities > 1e-12]
+    return float(-np.sum(probabilities * np.log2(probabilities)))
+
+
+def _select_most_complex_state(
+    visited: dict[bytes, CircuitRecord], num_qubits: int
+) -> dict[str, Any]:
+    """Pick the deepest minimum-depth circuit; tie-break by measurement entropy."""
+    max_depth = max(record.depth for record in visited.values())
+    candidates = [record for record in visited.values() if record.depth == max_depth]
+    record = max(candidates, key=lambda item: _state_entropy(item.clifford, num_qubits))
+    probabilities = _measurement_probabilities(record.clifford, num_qubits)
+    return {
+        "depth": record.depth,
+        "gate_count": record.depth,
+        "circuit_str": format_circuit(record.gates),
+        "gates": [_gate_action_to_dict(gate) for gate in record.gates],
+        "entropy_bits": round(_state_entropy(record.clifford, num_qubits), 4),
+        "measurement_probabilities": probabilities,
+    }
+
+
+def _measurement_probabilities(clifford: Clifford, num_qubits: int) -> dict[str, float]:
+    """Return computational-basis measurement probabilities for U|0...0>."""
+    statevector = Statevector.from_int(0, 2**num_qubits).evolve(clifford)
+    probabilities: dict[str, float] = {}
+    for index, amplitude in enumerate(statevector.data):
+        label = f"|{format(index, f'0{num_qubits}b')}>"
+        probability = float(np.abs(amplitude) ** 2)
+        if probability > 1e-12:
+            probabilities[label] = round(probability, 6)
+    return probabilities
+
+
 def _compute_gate_distribution(
     visited: dict[bytes, CircuitRecord],
 ) -> dict[str, int]:
@@ -250,6 +288,7 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
         initial_key: CircuitRecord(depth=0, gates=(), clifford=identity)
     }
     new_states_at_depth: dict[int, int] = {0: 1}
+    explored_states_at_depth: dict[int, int] = {}
     exploration_trajectory: list[dict[str, Any]] = [
         {
             "step": 0,
@@ -276,11 +315,14 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
                 continue
 
             new_clifford = clifford.compose(gate_clifford, front=False)
+            new_depth = depth + 1
+            explored_states_at_depth[new_depth] = (
+                explored_states_at_depth.get(new_depth, 0) + 1
+            )
             key = state_key(new_clifford)
             if key in visited:
                 continue
 
-            new_depth = depth + 1
             new_gates = gates + (action,)
             visited[key] = CircuitRecord(
                 depth=new_depth,
@@ -306,14 +348,19 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
     return {
         "num_qubits": num_qubits,
         "max_depth": max_depth,
+        "num_actions_per_step": len(gate_actions),
         "gate_set": list(SINGLE_QUBIT_GATES) + list(TWO_QUBIT_GATES),
         "total_unique_states": len(visited),
         "new_states_at_depth": {
             str(depth): count for depth, count in sorted(new_states_at_depth.items())
         },
+        "explored_states_at_depth": {
+            str(depth): count for depth, count in sorted(explored_states_at_depth.items())
+        },
         "states_at_exact_depth_G": states_at_exact_depth,
         "exploration_trajectory": exploration_trajectory,
         "best_circuit": _select_best_circuit(visited, max_depth),
+        "most_complex_state": _select_most_complex_state(visited, num_qubits),
         "gate_distribution": _compute_gate_distribution(visited),
         "sample_circuits": _build_sample_circuits(visited, max_depth),
         "elapsed_seconds": round(elapsed_seconds, 4),

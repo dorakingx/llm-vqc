@@ -20,6 +20,8 @@ EXPLORATION_TRAJECTORY_FILENAME = "exploration_trajectory.png"
 BEST_CIRCUIT_FILENAME = "best_circuit.png"
 BEST_CIRCUIT_TEXT_FILENAME = "best_circuit.txt"
 GATE_DISTRIBUTION_FILENAME = "gate_distribution.png"
+PRUNING_EFFICIENCY_FILENAME = "pruning_efficiency.png"
+STATE_PROBABILITIES_FILENAME = "state_probabilities.png"
 
 GATE_ORDER = ("H", "X", "Y", "Z", "CX", "CY", "CZ")
 
@@ -165,6 +167,140 @@ def plot_gate_distribution(
     return destination
 
 
+def plot_pruning_efficiency(
+    exploration_result: dict[str, Any],
+    output_path: Path | str | None = None,
+) -> Path:
+    """Compare brute-force search space, explored circuits, and unique states by depth."""
+    num_actions = exploration_result.get("num_actions_per_step")
+    explored = exploration_result.get("explored_states_at_depth")
+    unique = exploration_result.get("new_states_at_depth")
+    max_depth = exploration_result.get("max_depth")
+
+    if num_actions is None or explored is None or unique is None or max_depth is None:
+        raise VisualizationError(
+            "exploration_result is missing pruning efficiency metrics."
+        )
+
+    output_dir = ensure_output_dir(
+        Path(output_path).parent if output_path else DEFAULT_OUTPUT_DIR
+    )
+    destination = (
+        Path(output_path)
+        if output_path
+        else output_dir / PRUNING_EFFICIENCY_FILENAME
+    )
+
+    depths = list(range(1, int(max_depth) + 1))
+    theoretical = [int(num_actions) ** depth for depth in depths]
+    explored_counts = [int(explored.get(str(depth), 0)) for depth in depths]
+    unique_counts = [int(unique.get(str(depth), 0)) for depth in depths]
+
+    fig, ax = plt.subplots(figsize=(10, 6), constrained_layout=True)
+    ax.plot(
+        depths,
+        theoretical,
+        marker="o",
+        linewidth=2,
+        label=f"Theoretical Search Space ({num_actions}^d)",
+        color="#dc2626",
+    )
+    ax.plot(
+        depths,
+        explored_counts,
+        marker="s",
+        linewidth=2,
+        label="Explored Circuits (after topological pruning)",
+        color="#2563eb",
+    )
+    ax.plot(
+        depths,
+        unique_counts,
+        marker="^",
+        linewidth=2,
+        label="Unique Equivalence Classes",
+        color="#059669",
+    )
+
+    ax.set_yscale("log")
+    ax.set_xlabel("Circuit Depth d")
+    ax.set_ylabel("State Count (log scale)")
+    ax.set_title("Pruning Efficiency: Combinatorial Explosion vs. Actual Search")
+    ax.set_xticks(depths)
+    ax.grid(True, which="both", alpha=0.3)
+    ax.legend(loc="best", framealpha=0.9)
+
+    num_qubits = exploration_result.get("num_qubits", "?")
+    fig.suptitle(
+        f"Search Space Reduction (N={num_qubits}, G={max_depth}, branching={num_actions})",
+        fontsize=11,
+    )
+
+    try:
+        fig.savefig(destination, dpi=150, bbox_inches="tight")
+    except OSError as exc:
+        raise VisualizationError(f"Failed to save pruning efficiency plot: {exc}") from exc
+    finally:
+        plt.close(fig)
+
+    logger.info("Saved pruning efficiency plot to %s", destination)
+    return destination
+
+
+def plot_state_probabilities(
+    exploration_result: dict[str, Any],
+    output_path: Path | str | None = None,
+) -> Path:
+    """Plot computational-basis measurement probabilities for the most complex state."""
+    most_complex = exploration_result.get("most_complex_state")
+    num_qubits = exploration_result.get("num_qubits")
+    if not most_complex or num_qubits is None:
+        raise VisualizationError("exploration_result is missing most_complex_state.")
+
+    probabilities = most_complex.get("measurement_probabilities")
+    if not probabilities:
+        raise VisualizationError("most_complex_state is missing measurement_probabilities.")
+
+    output_dir = ensure_output_dir(
+        Path(output_path).parent if output_path else DEFAULT_OUTPUT_DIR
+    )
+    destination = (
+        Path(output_path)
+        if output_path
+        else output_dir / STATE_PROBABILITIES_FILENAME
+    )
+
+    labels = sorted(probabilities.keys(), key=lambda label: int(label[1:-1], 2))
+    values = [probabilities[label] for label in labels]
+
+    fig, ax = plt.subplots(figsize=(max(10, len(labels) * 0.45), 5), constrained_layout=True)
+    bars = ax.bar(labels, values, color="#0f766e", alpha=0.85, edgecolor="#134e4a")
+    ax.set_xlabel("Computational Basis State")
+    ax.set_ylabel("Measurement Probability |amplitude|^2")
+    ax.set_title("Measurement Probabilities of the Most Complex Discovered State")
+    ax.set_ylim(0, min(1.05, max(values) * 1.15 if values else 1.0))
+    ax.grid(True, axis="y", alpha=0.3)
+    plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
+
+    circuit_label = most_complex.get("circuit_str", "I")
+    depth = most_complex.get("depth", "?")
+    entropy = most_complex.get("entropy_bits", "?")
+    fig.suptitle(
+        f"Depth={depth}, entropy={entropy} bits | Circuit: {circuit_label}",
+        fontsize=10,
+    )
+
+    try:
+        fig.savefig(destination, dpi=150, bbox_inches="tight")
+    except OSError as exc:
+        raise VisualizationError(f"Failed to save state probabilities plot: {exc}") from exc
+    finally:
+        plt.close(fig)
+
+    logger.info("Saved state probabilities plot to %s", destination)
+    return destination
+
+
 def save_best_circuit_visualization(
     exploration_result: dict[str, Any],
     output_dir: Path | str = DEFAULT_OUTPUT_DIR,
@@ -231,6 +367,12 @@ def generate_exploration_visualizations(
         )),
         ("gate_distribution", lambda: plot_gate_distribution(
             exploration_result, directory / GATE_DISTRIBUTION_FILENAME
+        )),
+        ("pruning_efficiency", lambda: plot_pruning_efficiency(
+            exploration_result, directory / PRUNING_EFFICIENCY_FILENAME
+        )),
+        ("state_probabilities", lambda: plot_state_probabilities(
+            exploration_result, directory / STATE_PROBABILITIES_FILENAME
         )),
     ):
         try:
