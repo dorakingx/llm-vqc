@@ -22,8 +22,16 @@ BEST_CIRCUIT_TEXT_FILENAME = "best_circuit.txt"
 GATE_DISTRIBUTION_FILENAME = "gate_distribution.png"
 PRUNING_EFFICIENCY_FILENAME = "pruning_efficiency.png"
 STATE_PROBABILITIES_FILENAME = "state_probabilities.png"
+EQUIVALENCE_CLASS_FILENAME = "equivalence_class_example.png"
 
 GATE_ORDER = ("H", "X", "Y", "Z", "CX", "CY", "CZ")
+
+
+def _parameter_title(prefix: str, exploration_result: dict[str, Any]) -> str:
+    """Format a plot title with N and G parameters."""
+    num_qubits = exploration_result.get("num_qubits", "?")
+    max_depth = exploration_result.get("max_depth", "?")
+    return f"{prefix} (N={num_qubits}, G={max_depth})"
 
 
 class VisualizationError(Exception):
@@ -78,22 +86,20 @@ def plot_exploration_trajectory(
     fig, axes = plt.subplots(2, 1, figsize=(10, 8), constrained_layout=True)
 
     axes[0].plot(steps, coverage, color="#2563eb", linewidth=2)
-    axes[0].set_title("Unique States vs Exploration Iteration")
-    axes[0].set_xlabel("BFS Iteration (Discovery Step)")
+    axes[0].set_title(_parameter_title("Unique States vs BFS Iteration", exploration_result))
+    axes[0].set_xlabel("BFS Evaluated Nodes (Iterations)")
     axes[0].set_ylabel("Cumulative Unique States")
     axes[0].grid(True, alpha=0.3)
 
     axes[1].plot(depths, cumulative_by_depth, color="#059669", linewidth=2, marker="o")
-    axes[1].set_title("Unique States vs Search Depth")
+    axes[1].set_title(_parameter_title("Unique States vs Search Depth", exploration_result))
     axes[1].set_xlabel("Circuit Depth (Gate Count)")
     axes[1].set_ylabel("Cumulative Unique States")
     axes[1].grid(True, alpha=0.3)
 
-    num_qubits = exploration_result.get("num_qubits", "?")
-    max_depth = exploration_result.get("max_depth", "?")
     total_unique = exploration_result.get("total_unique_states", "?")
     fig.suptitle(
-        f"VQC Exploration Trajectory (N={num_qubits}, G={max_depth}, total={total_unique})",
+        f"{_parameter_title('Exploration Trajectory', exploration_result)} | total={total_unique}",
         fontsize=12,
     )
 
@@ -134,7 +140,7 @@ def plot_gate_distribution(
 
     fig, ax = plt.subplots(figsize=(9, 5), constrained_layout=True)
     bars = ax.bar(gate_names, counts, color="#7c3aed", alpha=0.85)
-    ax.set_title("Gate Distribution Across Simplest Circuits")
+    ax.set_title(_parameter_title("Gate Distribution Across Simplest Circuits", exploration_result))
     ax.set_xlabel("Gate Type")
     ax.set_ylabel("Total Occurrences")
     ax.grid(True, axis="y", alpha=0.3)
@@ -148,13 +154,6 @@ def plot_gate_distribution(
             va="bottom",
             fontsize=9,
         )
-
-    num_qubits = exploration_result.get("num_qubits", "?")
-    max_depth = exploration_result.get("max_depth", "?")
-    fig.suptitle(
-        f"Gate Usage in Minimum-Depth Circuits (N={num_qubits}, G={max_depth})",
-        fontsize=11,
-    )
 
     try:
         fig.savefig(destination, dpi=150, bbox_inches="tight")
@@ -225,14 +224,14 @@ def plot_pruning_efficiency(
     ax.set_yscale("log")
     ax.set_xlabel("Circuit Depth d")
     ax.set_ylabel("State Count (log scale)")
-    ax.set_title("Pruning Efficiency: Combinatorial Explosion vs. Actual Search")
+    ax.set_title(_parameter_title("Pruning Efficiency", exploration_result))
     ax.set_xticks(depths)
     ax.grid(True, which="both", alpha=0.3)
     ax.legend(loc="best", framealpha=0.9)
 
-    num_qubits = exploration_result.get("num_qubits", "?")
+    num_actions = exploration_result.get("num_actions_per_step", "?")
     fig.suptitle(
-        f"Search Space Reduction (N={num_qubits}, G={max_depth}, branching={num_actions})",
+        f"Combinatorial Explosion vs. Actual Search | branching={num_actions}",
         fontsize=11,
     )
 
@@ -277,7 +276,12 @@ def plot_state_probabilities(
     bars = ax.bar(labels, values, color="#0f766e", alpha=0.85, edgecolor="#134e4a")
     ax.set_xlabel("Computational Basis State")
     ax.set_ylabel("Measurement Probability |amplitude|^2")
-    ax.set_title("Measurement Probabilities of the Most Complex Discovered State")
+    ax.set_title(
+        _parameter_title(
+            "Measurement Probabilities of the Most Complex State",
+            exploration_result,
+        )
+    )
     ax.set_ylim(0, min(1.05, max(values) * 1.15 if values else 1.0))
     ax.grid(True, axis="y", alpha=0.3)
     plt.setp(ax.get_xticklabels(), rotation=45, ha="right")
@@ -286,7 +290,7 @@ def plot_state_probabilities(
     depth = most_complex.get("depth", "?")
     entropy = most_complex.get("entropy_bits", "?")
     fig.suptitle(
-        f"Depth={depth}, entropy={entropy} bits | Circuit: {circuit_label}",
+        f"depth={depth}, entropy={entropy} bits | circuit: {circuit_label}",
         fontsize=10,
     )
 
@@ -298,6 +302,77 @@ def plot_state_probabilities(
         plt.close(fig)
 
     logger.info("Saved state probabilities plot to %s", destination)
+    return destination
+
+
+def _circuit_from_payload(
+    circuit_payload: dict[str, Any], num_qubits: int
+):
+    gate_actions = tuple(
+        GateAction(gate["name"], tuple(gate["qubits"]))
+        for gate in circuit_payload.get("gates", [])
+    )
+    return gates_to_quantum_circuit(gate_actions, num_qubits)
+
+
+def plot_equivalence_class_example(
+    exploration_result: dict[str, Any],
+    output_path: Path | str | None = None,
+) -> Path:
+    """Plot simplest vs redundant circuits that produce the same quantum state."""
+    equivalence_example = exploration_result.get("equivalence_example")
+    num_qubits = exploration_result.get("num_qubits")
+    if not equivalence_example or num_qubits is None:
+        raise VisualizationError("exploration_result is missing equivalence_example.")
+
+    original = equivalence_example["original_circuit"]
+    redundant = equivalence_example["redundant_circuit"]
+
+    output_dir = ensure_output_dir(
+        Path(output_path).parent if output_path else DEFAULT_OUTPUT_DIR
+    )
+    destination = (
+        Path(output_path)
+        if output_path
+        else output_dir / EQUIVALENCE_CLASS_FILENAME
+    )
+
+    original_qc = _circuit_from_payload(original, int(num_qubits))
+    redundant_qc = _circuit_from_payload(redundant, int(num_qubits))
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5), constrained_layout=True)
+
+    try:
+        original_qc.draw(output="mpl", ax=axes[0], fold=-1)
+        redundant_qc.draw(output="mpl", ax=axes[1], fold=-1)
+    except Exception as exc:
+        plt.close(fig)
+        raise VisualizationError(f"Failed to draw equivalence class circuits: {exc}") from exc
+
+    axes[0].set_title(
+        f"Simplest Circuit (depth={original.get('depth')})\n{original.get('circuit_str', 'I')}"
+    )
+    axes[1].set_title(
+        f"Redundant Circuit (depth={redundant.get('depth')}) — PRUNED\n"
+        f"{redundant.get('circuit_str', 'I')}"
+    )
+
+    fig.suptitle(
+        "Both circuits produce the exact same quantum state. Redundant circuit was pruned.\n"
+        + _parameter_title("Equivalence Class Example", exploration_result),
+        fontsize=11,
+    )
+
+    try:
+        fig.savefig(destination, dpi=150, bbox_inches="tight")
+    except OSError as exc:
+        raise VisualizationError(
+            f"Failed to save equivalence class example plot: {exc}"
+        ) from exc
+    finally:
+        plt.close(fig)
+
+    logger.info("Saved equivalence class example plot to %s", destination)
     return destination
 
 
@@ -373,6 +448,9 @@ def generate_exploration_visualizations(
         )),
         ("state_probabilities", lambda: plot_state_probabilities(
             exploration_result, directory / STATE_PROBABILITIES_FILENAME
+        )),
+        ("equivalence_class_example", lambda: plot_equivalence_class_example(
+            exploration_result, directory / EQUIVALENCE_CLASS_FILENAME
         )),
     ):
         try:

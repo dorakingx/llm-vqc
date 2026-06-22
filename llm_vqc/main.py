@@ -47,8 +47,8 @@ def main() -> None:
     if agent.last_tool_result:
         try:
             outputs = generate_exploration_visualizations(agent.last_tool_result)
-            print("\nVisualizations saved:")
-            for name, path in outputs.items():
+            print("\nVisualizations saved to outputs/:")
+            for name, path in sorted(outputs.items()):
                 print(f"  {name}: {path}")
         except VisualizationError as exc:
             logger.warning("Visualization skipped: %s", exc)
