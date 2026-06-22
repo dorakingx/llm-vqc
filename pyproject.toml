@@ -13,6 +13,7 @@ dependencies = [
     "qiskit>=1.0",
     "python-dotenv>=1.0",
     "matplotlib>=3.8",
+    "pylatexenc>=2.10",
 ]
 
 [project.scripts]
