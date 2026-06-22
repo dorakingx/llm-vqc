@@ -155,42 +155,6 @@ def _gate_action_to_dict(action: GateAction) -> dict[str, Any]:
     return {"name": action.name, "qubits": list(action.qubits)}
 
 
-def _record_to_circuit_dict(record: CircuitRecord) -> dict[str, Any]:
-    return {
-        "depth": record.depth,
-        "gate_count": record.depth,
-        "circuit_str": format_circuit(record.gates),
-        "gates": [_gate_action_to_dict(gate) for gate in record.gates],
-    }
-
-
-def _gates_to_circuit_dict(
-    gates: tuple[GateAction, ...], depth: int
-) -> dict[str, Any]:
-    return {
-        "depth": depth,
-        "gate_count": depth,
-        "circuit_str": format_circuit(gates),
-        "gates": [_gate_action_to_dict(gate) for gate in gates],
-    }
-
-
-def _capture_equivalence_example(
-    visited: dict[bytes, CircuitRecord],
-    key: bytes,
-    redundant_gates: tuple[GateAction, ...],
-    redundant_depth: int,
-) -> dict[str, Any] | None:
-    """Build an equivalence collision example if the redundant circuit differs."""
-    original_record = visited[key]
-    if redundant_gates == original_record.gates:
-        return None
-    return {
-        "original_circuit": _record_to_circuit_dict(original_record),
-        "redundant_circuit": _gates_to_circuit_dict(redundant_gates, redundant_depth),
-    }
-
-
 def _select_best_circuit(
     visited: dict[bytes, CircuitRecord], max_depth: int
 ) -> dict[str, Any]:
@@ -336,7 +300,6 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
     queue: deque[tuple[Clifford, tuple[GateAction, ...], int]] = deque(
         [(identity, (), 0)]
     )
-    equivalence_example: dict[str, Any] | None = None
 
     while queue:
         clifford, gates, depth = queue.popleft()
@@ -358,13 +321,6 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
             )
             key = state_key(new_clifford)
             if key in visited:
-                if equivalence_example is None:
-                    redundant_gates = gates + (action,)
-                    candidate = _capture_equivalence_example(
-                        visited, key, redundant_gates, new_depth
-                    )
-                    if candidate is not None:
-                        equivalence_example = candidate
                 continue
 
             new_gates = gates + (action,)
@@ -405,7 +361,6 @@ def explore_circuit_space(num_qubits: int, max_depth: int) -> dict[str, Any]:
         "exploration_trajectory": exploration_trajectory,
         "best_circuit": _select_best_circuit(visited, max_depth),
         "most_complex_state": _select_most_complex_state(visited, num_qubits),
-        "equivalence_example": equivalence_example,
         "gate_distribution": _compute_gate_distribution(visited),
         "sample_circuits": _build_sample_circuits(visited, max_depth),
         "elapsed_seconds": round(elapsed_seconds, 4),

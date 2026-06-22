@@ -22,7 +22,6 @@ BEST_CIRCUIT_TEXT_FILENAME = "best_circuit.txt"
 GATE_DISTRIBUTION_FILENAME = "gate_distribution.png"
 PRUNING_EFFICIENCY_FILENAME = "pruning_efficiency.png"
 STATE_PROBABILITIES_FILENAME = "state_probabilities.png"
-EQUIVALENCE_CLASS_FILENAME = "equivalence_class_example.png"
 
 GATE_ORDER = ("H", "X", "Y", "Z", "CX", "CY", "CZ")
 
@@ -305,77 +304,6 @@ def plot_state_probabilities(
     return destination
 
 
-def _circuit_from_payload(
-    circuit_payload: dict[str, Any], num_qubits: int
-):
-    gate_actions = tuple(
-        GateAction(gate["name"], tuple(gate["qubits"]))
-        for gate in circuit_payload.get("gates", [])
-    )
-    return gates_to_quantum_circuit(gate_actions, num_qubits)
-
-
-def plot_equivalence_class_example(
-    exploration_result: dict[str, Any],
-    output_path: Path | str | None = None,
-) -> Path:
-    """Plot simplest vs redundant circuits that produce the same quantum state."""
-    equivalence_example = exploration_result.get("equivalence_example")
-    num_qubits = exploration_result.get("num_qubits")
-    if not equivalence_example or num_qubits is None:
-        raise VisualizationError("exploration_result is missing equivalence_example.")
-
-    original = equivalence_example["original_circuit"]
-    redundant = equivalence_example["redundant_circuit"]
-
-    output_dir = ensure_output_dir(
-        Path(output_path).parent if output_path else DEFAULT_OUTPUT_DIR
-    )
-    destination = (
-        Path(output_path)
-        if output_path
-        else output_dir / EQUIVALENCE_CLASS_FILENAME
-    )
-
-    original_qc = _circuit_from_payload(original, int(num_qubits))
-    redundant_qc = _circuit_from_payload(redundant, int(num_qubits))
-
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5), constrained_layout=True)
-
-    try:
-        original_qc.draw(output="mpl", ax=axes[0], fold=-1)
-        redundant_qc.draw(output="mpl", ax=axes[1], fold=-1)
-    except Exception as exc:
-        plt.close(fig)
-        raise VisualizationError(f"Failed to draw equivalence class circuits: {exc}") from exc
-
-    axes[0].set_title(
-        f"Simplest Circuit (depth={original.get('depth')})\n{original.get('circuit_str', 'I')}"
-    )
-    axes[1].set_title(
-        f"Redundant Circuit (depth={redundant.get('depth')}) — PRUNED\n"
-        f"{redundant.get('circuit_str', 'I')}"
-    )
-
-    fig.suptitle(
-        "Both circuits produce the exact same quantum state. Redundant circuit was pruned.\n"
-        + _parameter_title("Equivalence Class Example", exploration_result),
-        fontsize=11,
-    )
-
-    try:
-        fig.savefig(destination, dpi=150, bbox_inches="tight")
-    except OSError as exc:
-        raise VisualizationError(
-            f"Failed to save equivalence class example plot: {exc}"
-        ) from exc
-    finally:
-        plt.close(fig)
-
-    logger.info("Saved equivalence class example plot to %s", destination)
-    return destination
-
-
 def save_best_circuit_visualization(
     exploration_result: dict[str, Any],
     output_dir: Path | str = DEFAULT_OUTPUT_DIR,
@@ -448,9 +376,6 @@ def generate_exploration_visualizations(
         )),
         ("state_probabilities", lambda: plot_state_probabilities(
             exploration_result, directory / STATE_PROBABILITIES_FILENAME
-        )),
-        ("equivalence_class_example", lambda: plot_equivalence_class_example(
-            exploration_result, directory / EQUIVALENCE_CLASS_FILENAME
         )),
     ):
         try:

@@ -93,7 +93,6 @@ After exploration completes, `main.py` calls `generate_exploration_visualization
 | `outputs/gate_distribution.png` | Bar chart of gate-type frequency across simplest circuits |
 | `outputs/pruning_efficiency.png` | Log-scale comparison of theoretical vs explored vs unique states |
 | `outputs/state_probabilities.png` | Measurement probabilities for the most complex discovered state |
-| `outputs/equivalence_class_example.png` | Side-by-side simplest vs pruned redundant circuit for the same state |
 | `outputs/best_circuit.png` | Qiskit Matplotlib diagram of the representative best circuit |
 | `outputs/best_circuit.txt` | ASCII fallback diagram and gate sequence |
 
