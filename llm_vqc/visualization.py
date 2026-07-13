@@ -272,7 +272,7 @@ def plot_state_probabilities(
     values = [probabilities[label] for label in labels]
 
     fig, ax = plt.subplots(figsize=(max(10, len(labels) * 0.45), 5), constrained_layout=True)
-    bars = ax.bar(labels, values, color="#0f766e", alpha=0.85, edgecolor="#134e4a")
+    ax.bar(labels, values, color="#0f766e", alpha=0.85, edgecolor="#134e4a")
     ax.set_xlabel("Computational Basis State")
     ax.set_ylabel("Measurement Probability |amplitude|^2")
     ax.set_title(

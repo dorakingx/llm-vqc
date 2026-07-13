@@ -61,7 +61,13 @@ def state_key(cliff: Clifford) -> bytes:
         phase = data[first_idx] / magnitudes[first_idx]
         data *= np.conjugate(phase)
 
-    data = np.round(data.real, 5) + 1j * np.round(data.imag, 5)
+    # Round for numerical stability, then canonicalize negative zero: IEEE754
+    # gives -0.0 and +0.0 distinct byte representations even though they are
+    # numerically equal, which previously caused physically identical states
+    # to hash to different keys. Adding 0.0 folds -0.0 into +0.0.
+    real = np.round(data.real, 5) + 0.0
+    imag = np.round(data.imag, 5) + 0.0
+    data = real + 1j * imag
     return np.asarray(data, dtype=np.complex128).tobytes()
 
 
@@ -225,7 +231,9 @@ def _compute_gate_distribution(
 def _build_sample_circuits(
     visited: dict[bytes, CircuitRecord], max_depth: int
 ) -> list[dict[str, Any]]:
-    records = sorted(visited.values(), key=lambda record: (record.depth, format_circuit(record.gates)))
+    records = sorted(
+        visited.values(), key=lambda record: (record.depth, format_circuit(record.gates))
+    )
     samples: list[dict[str, Any]] = []
     seen_depths: set[int] = set()
 

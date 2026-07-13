@@ -177,7 +177,7 @@ class Agent:
         """Run the agent loop until the model returns a final text response."""
         self.messages.append({"role": "user", "content": user_prompt})
 
-        for iteration in range(self.max_iterations):
+        for _iteration in range(self.max_iterations):
             response = self._call_model()
             choice = response.choices[0]
             assistant_message = choice.message
