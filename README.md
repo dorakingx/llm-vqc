@@ -78,10 +78,24 @@ Two circuits that produce the same physical quantum state (modulo global phase) 
 
 1. **State construction:** `Statevector.from_int(0, 2**N).evolve(clifford)` computes `U|0…0⟩` without expensive circuit synthesis.
 2. **Global phase normalization:** The first significant amplitude is rotated to be positive real via NumPy vectorized operations.
-3. **Numerical stabilization:** Real and imaginary parts are rounded to 5 decimal places.
+3. **Numerical stabilization:** Real and imaginary parts are rounded to 5 decimal places, then negative zero (`-0.0`) is canonicalized to positive zero (`+0.0`) — see the note below.
 4. **Hashing:** The normalized complex128 array is converted to bytes and used as a dictionary key.
 
 This approach is more physically accurate than stabilizer-generator label hashing, which can split equivalent states when different generator sets describe the same subspace.
+
+> **Fixed bug (2026-07-12):** `state_key` previously hashed rounded real/imaginary parts without canonicalizing the sign of zero. IEEE754 gives `-0.0` and `+0.0` distinct byte representations even though they are numerically equal, so two circuits reaching the identical physical state could receive different keys whenever a rounded amplitude landed on zero with opposite signs. This silently inflated every "unique state" count ever reported by this tool (verified example: N=2 previously reported 82 states instead of the true 60; N=3 at depth 5 previously reported 893 instead of 666). All figures and data under `outputs/` predating this fix are archived under `outputs/archive_pre_negative_zero_fix_2026-07/` and must not be treated as correct. See `tests/test_circuit_explorer_regression.py` for the regression tests and `DECISIONS.md` for the full writeup.
+
+#### Known-correct reachable state counts
+
+The number of pure stabilizer states on `n` qubits is the closed-form quantity `2^n * ∏_{k=1}^{n} (2^k + 1)` (6, 60, 1080, 36720 for n = 1–4). With the fix above, exhaustive BFS over the gate set `{H, X, Y, Z, CX, CY, CZ}` saturates at:
+
+| N (qubits) | Reachable states | Full stabilizer count | Saturates at depth |
+|---|---|---|---|
+| 1 | **4** | 6 | 2 |
+| 2 | **60** | 60 | 6 |
+| 3 | **1080** | 1080 | 8 |
+
+**N=1 is an intentional partial coverage, not a bug.** The gate set omits the S (phase) gate, so it is not Clifford-complete on a single qubit: the two Y eigenstates `|+i⟩` and `|-i⟩` cannot be reached from `{H, X, Y, Z}` alone, leaving only 4 of the 6 single-qubit stabilizer states reachable. At N≥2, `CY` supplies the missing relative phase between computational-basis amplitudes and full coverage of all stabilizer states is restored (confirmed for N=2 and N=3 above; expected to continue holding for larger N by the same mechanism, though this has not been exhaustively checked past N=3 due to the exponential cost of the search).
 
 ### 4. Visualization Layer (`visualization.py`)
 
@@ -115,7 +129,51 @@ cd llm-vqc
 python -m venv .venv
 source .venv/bin/activate   # Windows: .venv\Scripts\activate
 pip install -e .
+pip install -e ".[dev]"     # adds pytest + ruff
 ```
+
+#### Reproducible environment (pinned lock)
+
+`requirements-lock.txt` pins every transitive dependency version exactly
+as used during development (Phase 0 through Phase 2), for exact
+reproducibility of test results and experiment runs. Key pins as of
+Phase 2: `torch==2.13.0` (CPU build; see below), `scikit-learn==1.9.0`,
+`pennylane==0.45.1`, `qiskit==2.4.1`.
+
+- **Target Python:** 3.14 (CPython). The project's own `requires-python`
+  bound in `pyproject.toml` is `>=3.10`; the lock file itself reflects one
+  specific tested environment, not the full supported range.
+- **Platform:** macOS, arm64 (Apple Silicon). Some pinned wheels
+  (`pennylane_lightning`, `scipy`, `rustworkx`, `torch`) are
+  platform-specific binary distributions; installing this exact lock file
+  on Linux/Windows or on x86_64 may fail to resolve and would need
+  regenerating on that platform instead of reusing this file as-is.
+- **CPU vs GPU:** the pinned `torch` is a standard PyPI wheel, which on
+  most platforms resolves to a CPU-only or CPU+CUDA-capable build
+  depending on the host; this project's evaluation harness only ever
+  requests `device="cpu"` (`llm_vqc.evaluation.training.TrainingConfig.
+  device`, currently the only supported value) and every model/tensor is
+  constructed on CPU explicitly, so GPU availability does not affect
+  reproducibility of results — it is simply unused. Do not assume a CUDA
+  build is present; install the CPU-only PyTorch wheel if disk space or a
+  CUDA toolkit is a concern (`pip install torch --index-url
+  https://download.pytorch.org/whl/cpu`), then re-run `pip install -e .`.
+- **Install from the lock** (exact reproduction, same platform/Python):
+  ```bash
+  pip install -r requirements-lock.txt
+  pip install -e . --no-deps   # install this package itself, deps already pinned above
+  ```
+- **Regenerate the lock** after intentionally changing dependencies (edit
+  `pyproject.toml` first, then):
+  ```bash
+  python -m venv .venv-relock && source .venv-relock/bin/activate
+  pip install -e ".[dev]"
+  pip freeze | grep -v '^-e ' > requirements-lock.txt
+  ```
+- **Verified:** this exact lock file was installed into a brand-new,
+  empty virtualenv and the full test suite (223 tests as of Phase 2) was
+  run against it end to end — see `DECISIONS.md` Phase 2 section for the
+  command transcript.
 
 ### Environment Configuration
 
@@ -158,16 +216,57 @@ print(result["gate_distribution"])
 ```
 llm-vqc/
 ├── llm_vqc/
-│   ├── agent.py              # LLM orchestrator (OpenAI Function Calling)
-│   ├── circuit_explorer.py   # BFS engine + equivalence hashing
-│   ├── visualization.py      # Matplotlib / Qiskit analytics
-│   └── main.py               # CLI entry point
-├── tests/                    # Unit and smoke tests
+│   ├── agent.py              # LLM orchestrator (OpenAI Function Calling) — Phase 0 legacy
+│   ├── circuit_explorer.py   # Discrete Clifford BFS engine + equivalence hashing
+│   ├── visualization.py      # Matplotlib / Qiskit analytics — Phase 0 legacy
+│   ├── main.py                # CLI entry point — Phase 0 legacy
+│   ├── config.py, manifest.py, runner.py   # Config → run-dir → manifest scaffolding
+│   ├── ir/                   # Shared typed circuit IR + compiler (Phase 1) — see llm_vqc/ir/README.md
+│   ├── tasks/                 # T1/T2 data + splits + preprocessing (Phase 2), no test-data leakage
+│   ├── evaluation/            # Fixed training pipeline, harness, quarantined final-test path, result store (Phase 2)
+│   ├── diagnostics/           # Expressibility, Meyer-Wallach, gradient variance (Phase 3) — see llm_vqc/diagnostics/README.md
+│   ├── search/                # Shared search framework + random/evolutionary/greedy/llm_iter/llm_evo arms (Phase 4/5)
+│   └── llm/                   # LLM provider abstraction, cost-cap enforcement, mocked-provider validation (Phase 5)
+├── tests/
+│   └── fixtures/             # Re-encoded published reference circuits
+├── configs/                  # Example run configs (dummy, T1/T2 smoke, diagnostics smoke, resume, search smoke)
+├── scripts/
+│   ├── check.sh               # Local lint + test CI script
+│   ├── smoke_evaluate.py      # Phase 2 smoke workflow (train/eval harness + resumable store)
+│   ├── smoke_diagnostics.py   # Phase 3 smoke workflow (diagnostics + resumable store)
+│   ├── smoke_search_comparison.py  # Phase 4/5 smoke comparison across all 5 arms (system validation only)
+│   ├── pilot_experiment.py    # Phase 6 real pilot: random/evolutionary/greedy, T1, B=25, 3 seeds
+│   └── analyze_pilot.py       # Reproducible statistical analysis of pilot_experiment.py's stored results
 ├── outputs/                  # Generated figures (gitignored)
+├── runs/                     # Run directories with manifests + result stores (gitignored)
+├── LLM-VQC_MASTER_PLAN.md    # Authoritative research design and phase roadmap
+├── DECISIONS.md              # Phase-by-phase completion record and design decisions
+├── requirements-lock.txt     # Pinned dependency lock (see "Reproducible environment" above)
 ├── .env.example
-├── pyproject.toml
-└── requirements.txt
+└── pyproject.toml
 ```
+
+**Current status:** the project is executing `LLM-VQC_MASTER_PLAN.md`'s
+phased LAQS-Bench roadmap. Phase 0-3 are complete: a corrected discrete
+BFS engine, a shared circuit IR + compiler, a fixed leakage-resistant
+task/evaluation harness for T1 (Gaussian-peak regression) and T2 (sklearn
+digits 3-vs-8 — see `DECISIONS.md` Gate G1 for why the original ECAL
+dataset was replaced), and a backend-validated diagnostic layer
+(expressibility, Meyer-Wallach entangling capability, gradient variance).
+Phase 4/5 are also complete: a durable, crash-safe `BudgetLedger`, a
+shared `SearchRunner` every arm is driven through identically, and five
+search arms — `random`, `evolutionary`, `greedy` (all real, pilot-tested)
+and `llm_iter`/`llm_evo` (fully implemented and validated against an
+offline `MockLLMProvider`, but not yet run with a real model — no
+`LLM_API_BUDGET_USD` cap has been configured, so no paid API call has
+been made; see `DECISIONS.md` governance decisions G4-A/B). A real pilot
+experiment (T1, budget 25, 3 seeds, non-LLM arms) has been run and
+analyzed — see `DECISIONS.md` Stage 8. `agent.py`, `main.py`, and
+`visualization.py` are Phase 0 legacy components retained for their
+working BFS/equivalence engine — they are not the project's current
+research direction. See the master plan and `DECISIONS.md` for what each
+phase delivered, and `DECISIONS.md`'s final report for the full pilot
+results, statistics, and recommended next steps.
 
 ---
 
@@ -177,6 +276,13 @@ Run the test suite:
 
 ```bash
 python -m pytest tests/ -q
+```
+
+Run lint + tests together (what `DECISIONS.md` and CI expect before any
+commit):
+
+```bash
+bash scripts/check.sh
 ```
 
 ---
