@@ -63,6 +63,7 @@ class LLMEvoArm(SearchArm[LLMEvoState]):
         budget: LLMApiBudget | None = None,
         cost_estimate_per_call_usd: float = 0.0,
         archive_size: int = 5,
+        user_prompt_suffix: str = "",
     ) -> None:
         self.lower_is_better = lower_is_better
         self.system_prompt = build_system_prompt(task_description)
@@ -71,13 +72,14 @@ class LLMEvoArm(SearchArm[LLMEvoState]):
         self.run_id = run_id
         self.temperature = temperature
         self.archive_size = archive_size
+        self.user_prompt_suffix = user_prompt_suffix
 
     def initialize(self, seed: int) -> LLMEvoState:
         return LLMEvoState(seed=seed)
 
     def propose(self, state: LLMEvoState) -> dict:
         archive_lines = [_summarize_archive_entry(e) for e in state.archive]
-        user_prompt = build_evo_user_prompt(archive_lines)
+        user_prompt = build_evo_user_prompt(archive_lines) + self.user_prompt_suffix
 
         proposal_id = f"{self.run_id}:{state.n_proposed}"
         outcome = self.driver.propose(

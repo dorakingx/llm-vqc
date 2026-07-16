@@ -130,10 +130,10 @@ def test_llm_package_contains_no_network_or_sdk_imports():
     used with real spend). Every other module -- `MockLLMProvider`
     included -- must stay offline."""
     forbidden = {"requests", "httpx", "urllib", "urllib2", "socket", "openai", "anthropic"}
-    sanctioned_exception = "openai_provider.py"
+    sanctioned_exceptions = {"openai_provider.py", "groq_provider.py"}
     pkg = pathlib.Path("llm_vqc/llm")
     for path in pkg.glob("*.py"):
-        if path.name == sanctioned_exception:
+        if path.name in sanctioned_exceptions:
             continue
         tree = ast.parse(path.read_text())
         targets = []
