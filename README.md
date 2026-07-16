@@ -256,17 +256,26 @@ dataset was replaced), and a backend-validated diagnostic layer
 Phase 4/5 are also complete: a durable, crash-safe `BudgetLedger`, a
 shared `SearchRunner` every arm is driven through identically, and five
 search arms — `random`, `evolutionary`, `greedy` (all real, pilot-tested)
-and `llm_iter`/`llm_evo` (fully implemented and validated against an
-offline `MockLLMProvider`, but not yet run with a real model — no
-`LLM_API_BUDGET_USD` cap has been configured, so no paid API call has
-been made; see `DECISIONS.md` governance decisions G4-A/B). A real pilot
-experiment (T1, budget 25, 3 seeds, non-LLM arms) has been run and
-analyzed — see `DECISIONS.md` Stage 8. `agent.py`, `main.py`, and
+and `llm_iter`/`llm_evo` (fully implemented and first validated against
+an offline `MockLLMProvider`). A real OpenAI mini integration experiment
+subsequently completed, and a real Groq GPT-OSS 20B free-tier pilot was
+started. In the Groq pilot all 9 non-LLM cells completed, but only two
+`llm_open` cells ran partially before severe rate-limit delays led to
+interruption; the other LLM cells were not started. This is descriptive
+integration evidence, not a completed LLM comparison. A separate real
+non-LLM pilot (T1, budget 25, 3 seeds) has also been run and analyzed —
+see `DECISIONS.md` Stage 8. `agent.py`, `main.py`, and
 `visualization.py` are Phase 0 legacy components retained for their
 working BFS/equivalence engine — they are not the project's current
 research direction. See the master plan and `DECISIONS.md` for what each
 phase delivered, and `DECISIONS.md`'s final report for the full pilot
 results, statistics, and recommended next steps.
+
+### Latest Groq pilot artifacts
+
+See [`docs/presentation/groq_pilot/`](docs/presentation/groq_pilot/)
+for the sanitized CSV, JSON, report, and plots from the interrupted
+Groq GPT-OSS 20B pilot.
 
 ---
 

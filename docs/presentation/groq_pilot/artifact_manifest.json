@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "publication_status": "interrupted_descriptive_pilot",
+  "generated_at_utc": "2026-07-16T21:51:38Z",
+  "analysis_git_commit_sha": "ee4f3262522a4397ed85d5e79ef2865c29575dc4",
+  "analysis_worktree_dirty": false,
+  "source_run_git_shas": [
+    "a654f0bc01976c0f17f87c02550d9a2b66d51a8f"
+  ],
+  "source_result_store_relative_path": "runs/groq_pilot_t1/results.sqlite",
+  "analysis_script_path": "scripts/analyze_groq_pilot.py",
+  "task": "T1",
+  "provider": "groq",
+  "model": "openai/gpt-oss-20b",
+  "declared_budget": 10,
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "arm_names": [
+    "random",
+    "evolutionary",
+    "greedy",
+    "llm_open",
+    "llm_closed",
+    "llm_evo"
+  ],
+  "run_status": [
+    {
+      "run_id": "groq_gpt_oss_20b_random_s0",
+      "arm": "random",
+      "seed": 0,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_random_s1",
+      "arm": "random",
+      "seed": 1,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_random_s2",
+      "arm": "random",
+      "seed": 2,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_evolutionary_s0",
+      "arm": "evolutionary",
+      "seed": 0,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_evolutionary_s1",
+      "arm": "evolutionary",
+      "seed": 1,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_evolutionary_s2",
+      "arm": "evolutionary",
+      "seed": 2,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_greedy_s0",
+      "arm": "greedy",
+      "seed": 0,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_greedy_s1",
+      "arm": "greedy",
+      "seed": 1,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_greedy_s2",
+      "arm": "greedy",
+      "seed": 2,
+      "status": "complete",
+      "consumed_budget": 10,
+      "n_proposals": 10,
+      "protected_test_result_present": true
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_open_s0",
+      "arm": "llm_open",
+      "seed": 0,
+      "status": "interrupted",
+      "consumed_budget": 4,
+      "n_proposals": 22,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_open_s1",
+      "arm": "llm_open",
+      "seed": 1,
+      "status": "interrupted",
+      "consumed_budget": 1,
+      "n_proposals": 9,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_open_s2",
+      "arm": "llm_open",
+      "seed": 2,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_closed_s0",
+      "arm": "llm_closed",
+      "seed": 0,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_closed_s1",
+      "arm": "llm_closed",
+      "seed": 1,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_closed_s2",
+      "arm": "llm_closed",
+      "seed": 2,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_evo_s0",
+      "arm": "llm_evo",
+      "seed": 0,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_evo_s1",
+      "arm": "llm_evo",
+      "seed": 1,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    },
+    {
+      "run_id": "groq_gpt_oss_20b_llm_evo_s2",
+      "arm": "llm_evo",
+      "seed": 2,
+      "status": "not_started",
+      "consumed_budget": null,
+      "n_proposals": null,
+      "protected_test_result_present": false
+    }
+  ],
+  "manifest_file": "artifact_manifest.json",
+  "checksum_scope": "All package artifacts except this self-referential manifest file.",
+  "included_artifacts": [
+    {
+      "filename": "README.md",
+      "sha256": "018c1a0a92c8c3a36391ade1b09defa6fda46f7e8d5c3bd4d71bcc7db7b2c827",
+      "byte_size": 5900
+    },
+    {
+      "filename": "groq_anytime_curves.png",
+      "sha256": "f0a8c7f1730ce8f276703dce51a7ada78fe514600872ea21ddde9751d52f7633",
+      "byte_size": 69848
+    },
+    {
+      "filename": "groq_anytime_curves.svg",
+      "sha256": "0a3b2710c2b81167c548aab9eb45e624a6df145c3ae7b6ae92e57aee570f2130",
+      "byte_size": 73762
+    },
+    {
+      "filename": "groq_llm_usage.png",
+      "sha256": "24164b28eee2124ec63265bedfdc8545cac43a602deb87b7a278f197368bbc40",
+      "byte_size": 45052
+    },
+    {
+      "filename": "groq_llm_usage.svg",
+      "sha256": "5ab3530fafd37276df38163f9280c8c47afdbfc1dd34f674e38480150480a6f4",
+      "byte_size": 45428
+    },
+    {
+      "filename": "groq_pilot_report.md",
+      "sha256": "57a2a2a94a5313e8197a9cd9aad913d5f5cc1025e4f9fcb7c5d4d325305417ba",
+      "byte_size": 5810
+    },
+    {
+      "filename": "groq_pilot_summary.csv",
+      "sha256": "db875cc48afce8390de1047def8603e19e1e6e85a1d865f70f0b46ce5bed97d2",
+      "byte_size": 1518
+    },
+    {
+      "filename": "groq_pilot_summary.json",
+      "sha256": "c668de68b1662413933df3443104c29382a9d0049139c9a193f4df5865fb3295",
+      "byte_size": 4916
+    },
+    {
+      "filename": "groq_proposal_rates.png",
+      "sha256": "7b2071673d889168ffa5c5c19bffc0d5b1ccda2d779bcc3cbb96f6b5aab29c6b",
+      "byte_size": 38649
+    },
+    {
+      "filename": "groq_proposal_rates.svg",
+      "sha256": "6b4fd23009130e33f0d2a444d3aefbb926eb536fa1d0e21a3aa902292444dae4",
+      "byte_size": 43529
+    },
+    {
+      "filename": "groq_test_performance.png",
+      "sha256": "5607bf929b5ec7badde5d5a69512e9bbc6532f285fc432c1ee896fd03e96e52a",
+      "byte_size": 42376
+    },
+    {
+      "filename": "groq_test_performance.svg",
+      "sha256": "db617802c8d3a62a422dfed5211347d5546c2a7ce1e34ef6cd1a670349a51e74",
+      "byte_size": 42627
+    },
+    {
+      "filename": "groq_val_performance.png",
+      "sha256": "ae5691c2f834b6f55d7e0e9c24de722de10e921983c4a156481f95637de9a686",
+      "byte_size": 40518
+    },
+    {
+      "filename": "groq_val_performance.svg",
+      "sha256": "3f2233e47184c1008e2b0a814993cef8062e2d572ad0b660215171b29f636f77",
+      "byte_size": 40730
+    }
+  ]
+}
