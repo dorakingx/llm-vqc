@@ -2116,3 +2116,21 @@ environment, resume the exact provider/model condition with:
 ```bash
 .venv/bin/python scripts/groq_pilot_experiment.py pilot
 ```
+
+---
+
+## Publish sanitized mini-experiment presentation artifacts
+
+**Status: COMPLETE.**
+
+Following the same pattern already established for the Groq pilot
+(`docs/presentation/groq_pilot/`), a sanitized presentation package for
+the first real-API OpenAI mini experiment was published at
+`docs/presentation/mini_llm_experiment/`: per-arm results table, real
+API usage table (tokens/latency, no fabricated cost), all 5 required
+plots (PNG+SVG), a CSV summary, and an `artifact_manifest.json`
+generated from `runs/mini_llm_experiment/mini_summary.json`. The raw
+SQLite store, prompts, and any credential material remain
+un-published and git-ignored. `README.md` and
+`docs/presentation/README.md` link to the new package alongside the
+existing Groq pilot one.

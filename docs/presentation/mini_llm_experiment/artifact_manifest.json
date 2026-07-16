@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "publication_status": "completed_time_boxed_smoke_integration",
+  "generated_at_utc": "2026-07-16T23:04:15Z",
+  "analysis_git_commit_sha": "5fe499149101d5617aecf3676a7fa3ee77fbdb84",
+  "analysis_worktree_dirty": null,
+  "source_run_git_shas": [
+    "5fe499149101d5617aecf3676a7fa3ee77fbdb84"
+  ],
+  "source_result_store_relative_path": "runs/mini_llm_experiment/results.sqlite",
+  "analysis_script_path": "scripts/plot_mini_experiment.py",
+  "task": "T1",
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "declared_budget": 2,
+  "seeds": [
+    0
+  ],
+  "arm_names": [
+    "random",
+    "evolutionary",
+    "greedy",
+    "llm_iter_open",
+    "llm_iter_closed"
+  ],
+  "omitted_arms": [
+    "llm_evo (omitted: kept combined real-call count safely under the 12-call cap)"
+  ],
+  "wall_clock_seconds": 9.824593207798898,
+  "max_real_calls": 12,
+  "real_calls_made": 4,
+  "run_status": [
+    {
+      "run_id": "random",
+      "status": "complete",
+      "consumed_budget": 2,
+      "n_proposals": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "selected_val_metric_value": 0.29294223404754405,
+      "protected_test_result_present": true,
+      "protected_test_metric_value": 0.29231110495995705
+    },
+    {
+      "run_id": "evolutionary",
+      "status": "complete",
+      "consumed_budget": 2,
+      "n_proposals": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "selected_val_metric_value": 0.1313428339814309,
+      "protected_test_result_present": true,
+      "protected_test_metric_value": 0.13347636485881365
+    },
+    {
+      "run_id": "greedy",
+      "status": "complete",
+      "consumed_budget": 2,
+      "n_proposals": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "selected_val_metric_value": 0.13007386941641372,
+      "protected_test_result_present": true,
+      "protected_test_metric_value": 0.13282453898788918
+    },
+    {
+      "run_id": "llm_iter_open",
+      "status": "complete",
+      "consumed_budget": 2,
+      "n_proposals": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "selected_val_metric_value": 0.17441293342041606,
+      "protected_test_result_present": true,
+      "protected_test_metric_value": 0.17272543647915647
+    },
+    {
+      "run_id": "llm_iter_closed",
+      "status": "complete",
+      "consumed_budget": 2,
+      "n_proposals": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "selected_val_metric_value": 0.13211593146090778,
+      "protected_test_result_present": true,
+      "protected_test_metric_value": 0.13202411129993713
+    }
+  ],
+  "llm_calls": [
+    {
+      "run_id": "llm_iter_open:0",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 302,
+      "output_tokens": 138,
+      "estimated_cost_usd": null,
+      "latency_seconds": 1.9913834161125124,
+      "validation_errors": []
+    },
+    {
+      "run_id": "llm_iter_open:1",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 302,
+      "output_tokens": 242,
+      "estimated_cost_usd": null,
+      "latency_seconds": 1.630973624996841,
+      "validation_errors": []
+    },
+    {
+      "run_id": "llm_iter_closed:0",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 308,
+      "output_tokens": 139,
+      "estimated_cost_usd": null,
+      "latency_seconds": 3.600455750245601,
+      "validation_errors": []
+    },
+    {
+      "run_id": "llm_iter_closed:1",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 335,
+      "output_tokens": 137,
+      "estimated_cost_usd": null,
+      "latency_seconds": 1.265020583756268,
+      "validation_errors": []
+    }
+  ]
+}

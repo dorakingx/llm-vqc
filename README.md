@@ -271,11 +271,16 @@ research direction. See the master plan and `DECISIONS.md` for what each
 phase delivered, and `DECISIONS.md`'s final report for the full pilot
 results, statistics, and recommended next steps.
 
-### Latest Groq pilot artifacts
+### Presentation artifacts
 
-See [`docs/presentation/groq_pilot/`](docs/presentation/groq_pilot/)
-for the sanitized CSV, JSON, report, and plots from the interrupted
-Groq GPT-OSS 20B pilot.
+Sanitized, repository-safe CSV/JSON/report/plot packages generated from
+durable experiment data, without raw stores, prompts, or credentials —
+see [`docs/presentation/`](docs/presentation/):
+
+- [`mini_llm_experiment/`](docs/presentation/mini_llm_experiment/) — the
+  first real-API (OpenAI) time-boxed smoke integration run.
+- [`groq_pilot/`](docs/presentation/groq_pilot/) — the interrupted Groq
+  GPT-OSS 20B free-tier pilot.
 
 ---
 
