@@ -1,7 +1,10 @@
 .venv/
 .env
-outputs/
+outputs/*
+!outputs/archive_pre_negative_zero_fix_2026-07/
+!outputs/archive_pre_negative_zero_fix_2026-07/**
 runs/
+.DS_Store
 __pycache__/
 *.py[cod]
 *.egg-info/
