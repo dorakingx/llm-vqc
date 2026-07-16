@@ -61,6 +61,13 @@ SEARCH_SEED = 0
 BUDGET_PER_ARM = 2
 MAX_REAL_CALLS = 12
 MAX_REPAIR_ATTEMPTS = 1
+# Conservative per-call charge against the dollar cap. OpenAI's chat
+# completions API never returns an actual dollar cost, so the driver
+# charges this estimate instead (see LLMDriver); 5 cents/call is far above
+# the true cost of a ~500-token mini-model call, so the cap can only be
+# hit early, never silently overrun. Without a nonzero value here the
+# dollar cap would accumulate zero spend and be decorative.
+COST_ESTIMATE_PER_CALL_USD = 0.05
 WALL_CLOCK_LIMIT_S = 300
 TARGET_S = 240
 TASK_DESCRIPTION = "T1 1D Gaussian-peak regression (predict the peak location)"
@@ -187,6 +194,7 @@ def main() -> None:
                 lower_is_better=lower_is_better, task_description=TASK_DESCRIPTION,
                 provider=shared_provider, result_store=store, run_id="llm_iter_open",
                 budget=budget, max_repair_attempts=MAX_REPAIR_ATTEMPTS, open_loop=True,
+                cost_estimate_per_call_usd=COST_ESTIMATE_PER_CALL_USD,
             ),
         ),
         (
@@ -195,6 +203,7 @@ def main() -> None:
                 lower_is_better=lower_is_better, task_description=TASK_DESCRIPTION,
                 provider=shared_provider, result_store=store, run_id="llm_iter_closed",
                 budget=budget, max_repair_attempts=MAX_REPAIR_ATTEMPTS, open_loop=False,
+                cost_estimate_per_call_usd=COST_ESTIMATE_PER_CALL_USD,
             ),
         ),
     ]
@@ -258,6 +267,9 @@ def main() -> None:
         "model": model,
         "provider": "OpenAIProvider (real)",
         "real_calls_made": real_calls_made,
+        "dollar_cap_usd": budget.cap_usd,
+        "dollar_cap_spent_estimated_usd": budget.spent_usd,
+        "cost_estimate_per_call_usd": COST_ESTIMATE_PER_CALL_USD,
         "max_real_calls": MAX_REAL_CALLS,
         "elapsed_seconds": elapsed,
         "budget_per_arm": BUDGET_PER_ARM,

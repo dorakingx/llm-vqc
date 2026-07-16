@@ -179,6 +179,68 @@ def test_driver_gives_up_after_max_repair_attempts_never_unlimited():
     assert len(outcome.call_records) == 3  # 1 first attempt + 2 repair retries, no more
 
 
+def test_driver_charges_the_estimate_when_provider_reports_no_cost():
+    """A real provider (e.g. OpenAI chat completions) reports cost=None.
+    The driver must then charge the pre-call estimate against the dollar
+    cap -- otherwise the cap would accumulate zero spend and be decorative."""
+
+    class _NoCostProvider:
+        model_name = "no-cost-test-provider"
+
+        def complete(self, system_prompt, user_prompt, temperature):
+            return LLMResponse(
+                raw_text="not json",
+                model=self.model_name,
+                input_tokens=10,
+                output_tokens=10,
+                estimated_cost_usd=None,
+                latency_seconds=0.01,
+            )
+
+    budget = LLMApiBudget(cap_usd=1.0)
+    driver = LLMDriver(
+        _NoCostProvider(), max_repair_attempts=1, budget=budget, cost_estimate_per_call_usd=0.25
+    )
+    driver.propose("p1", "sys", "user", 0.7)
+    # 2 calls (first + one repair), 0.25 charged each despite cost=None.
+    assert budget.spent_usd == pytest.approx(0.5)
+
+
+def test_call_count_limited_provider_stops_at_exact_cap():
+    from llm_vqc.llm.openai_provider import CallBudgetExceededError, CallCountLimitedProvider
+
+    class _FakeInner:
+        model_name = "fake"
+
+        def complete(self, system_prompt, user_prompt, temperature):
+            return LLMResponse(
+                raw_text="{}", model="fake", input_tokens=1, output_tokens=1,
+                latency_seconds=0.0,
+            )
+
+    provider = CallCountLimitedProvider(_FakeInner(), max_calls=2)
+    provider.complete("s", "u", 0.1)
+    provider.complete("s", "u", 0.1)
+    assert provider.calls_made == 2
+    with pytest.raises(CallBudgetExceededError):
+        provider.complete("s", "u", 0.1)
+    assert provider.calls_made == 2  # the rejected call was never made
+
+
+def test_proposal_outcome_total_cost_is_none_when_no_call_reported_cost():
+    from llm_vqc.llm.records import LLMCallRecord, LLMProposalOutcome
+
+    record = LLMCallRecord(
+        proposal_id="p1", call_index=0, system_prompt="s", user_prompt="u",
+        model="m", temperature=0.7, raw_response="{}", parsed_proposal={},
+        input_tokens=1, output_tokens=1, estimated_cost_usd=None, latency_seconds=0.0,
+    )
+    outcome = LLMProposalOutcome(
+        proposal={}, valid_schema=True, retry_count=0, call_records=[record]
+    )
+    assert outcome.total_cost_usd is None  # never fabricated as 0.0
+
+
 def test_driver_enforces_cost_cap_before_every_call_including_retries():
     class _ExpensiveMalformedProvider:
         model_name = "expensive-test-provider"
