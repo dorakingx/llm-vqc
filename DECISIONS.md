@@ -1996,3 +1996,123 @@ Fixed: the script now passes a conservative `COST_ESTIMATE_PER_CALL_USD
 regression tests added (`test_driver_charges_the_estimate_when_provider_
 reports_no_cost`, `test_call_count_limited_provider_stops_at_exact_cap`,
 `test_proposal_outcome_total_cost_is_none_when_no_call_reported_cost`).
+
+---
+
+## Groq GPT-OSS 20B free-tier pilot — interrupted
+
+**Status: INTERRUPTED. Descriptive integration pilot, not a completed
+budget-matched LLM comparison.**
+
+### Why Groq was introduced and how it was isolated
+
+Groq's free tier was introduced to exercise a second real provider and a real
+open-weight model without mixing its results or quota accounting with the
+completed OpenAI mini experiment. The condition is fixed to provider `groq`,
+model `openai/gpt-oss-20b`, run-id prefix `groq_gpt_oss_20b_`, and the isolated
+store `runs/groq_pilot_t1/results.sqlite`. Provider and model are part of the
+resume compatibility identity, so an OpenAI or different-model process cannot
+resume these runs.
+
+The provider uses Groq strict JSON Schema output with every object closed to
+additional properties and every field required. Compatibility fixes replaced
+the IR's string-or-array wire shorthand with integer arrays only and made
+logically optional strict-schema fields nullable. Every returned object still
+passes the repository's unchanged semantic CircuitIR validators; schema
+validity alone is not treated as scientific validity.
+
+The free-tier controller uses sequential calls, an 8-second minimum interval,
+an internal 180,000-token cap, a 250-request cap for the pilot, and one retry
+for transient rate-limit/server failures while honoring retry delay metadata.
+It checkpoints before stopping so the matrix can resume under the identical
+provider/model condition.
+
+### Predeclared protocol
+
+- Task T1, frozen data split seed 0.
+- Candidate budget B=10 for every arm and seed.
+- Repetition seeds 0, 1, 2.
+- Arms: random, evolutionary, greedy, LLM open-loop, LLM closed-loop, and
+  LLM evolutionary.
+- Fixed full training: AdamW, 20 epochs, batch 16, float64 CPU.
+- Validation-only feedback during search; protected final test after a
+  completed run only.
+- LLM decoding: reasoning effort `low`, temperature 0.2, at most 512 output
+  tokens, no repair calls after a strict-schema failure.
+
+### Exact completion matrix
+
+| Arm | Seed 0 | Seed 1 | Seed 2 |
+|---|---|---|---|
+| random | complete 10/10 | complete 10/10 | complete 10/10 |
+| evolutionary | complete 10/10 | complete 10/10 | complete 10/10 |
+| greedy | complete 10/10 | complete 10/10 | complete 10/10 |
+| llm_open | interrupted 4/10 | interrupted 1/10 | not started |
+| llm_closed | not started | not started | not started |
+| llm_evo | not started | not started | not started |
+
+There are 9 complete, 2 interrupted, and 7 not-started cells. The matrix
+remains incomplete because rate-limit backoff made continuation impractical
+during the pilot window.
+
+### API usage and partial LLM behavior
+
+The durable store contains 31 Groq call records and 7,529 reported tokens:
+22 calls / 6,020 tokens for `llm_open` seed 0 and 9 calls / 1,509 tokens for
+seed 1. Seed 0 made 22 proposals (18 invalid, 3 valid, 1 duplicate), consumed
+4/10 budget, and reached validation RMSE 0.024052. Seed 1 made 9 proposals
+(8 invalid, 1 valid), consumed 1/10 budget, and reached validation RMSE
+0.042719. Neither interrupted run received a protected final-test result.
+
+Across these partial cells, 26/31 proposals were invalid (83.9%). Stored
+validation categories show repeated string-like wire encodings where arrays of
+integer indices were required. The defensible provisional observation is:
+under the tested low-reasoning configuration, GPT-OSS 20B frequently failed to
+produce semantically valid CircuitIR proposals. This must not be generalized to
+other prompts, models, providers, reasoning settings, or open-source LLMs.
+
+Mean call latency was 9.38 s for seed 0 and 657.69 s for seed 1; seed 1's
+median was 767.02 s, consistent with severe free-tier rate-limit backoff.
+
+### Completed non-LLM results
+
+| Run | Validation RMSE | Protected test RMSE |
+|---|---:|---:|
+| random s0 / s1 / s2 | 0.009216 / 0.021769 / 0.020101 | 0.010305 / 0.023468 / 0.017630 |
+| evolutionary s0 / s1 / s2 | 0.023310 / 0.020298 / 0.017298 | 0.025868 / 0.024421 / 0.020915 |
+| greedy s0 / s1 / s2 | 0.028831 / 0.026678 / 0.034912 | 0.032229 / 0.028523 / 0.038617 |
+
+These n=3 results are descriptive. They are not combined with the interrupted
+LLM observations as though all cells had equal completion status.
+
+### Test quarantine and claims
+
+Protected test results exist only for the 9 completed cells. The two
+interrupted rows and all not-started rows have no test result; no test metric
+entered search feedback.
+
+Supported claims are limited to successful end-to-end Groq integration,
+durable partial-run accounting, the exact completion state above, observed
+model-specific semantic-output failures, and observed rate-limit delays. No LLM
+superiority or inferiority, completed model comparison, quantum advantage, or
+HEP-domain claim is supported by this interrupted T1 pilot.
+
+### Sanitized artifacts and reproduction
+
+Presentation-safe CSV, JSON, detailed report, checksummed manifest, and PNG/SVG
+plots are published under `docs/presentation/groq_pilot/`. Raw databases, run
+directories, prompts, responses, headers, weights, and credentials remain
+excluded from version control.
+
+Regenerate analysis without API calls:
+
+```bash
+.venv/bin/python scripts/analyze_groq_pilot.py
+```
+
+After securely supplying the required Groq credential to the process
+environment, resume the exact provider/model condition with:
+
+```bash
+.venv/bin/python scripts/groq_pilot_experiment.py pilot
+```
