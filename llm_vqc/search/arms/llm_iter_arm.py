@@ -83,6 +83,8 @@ class LLMIterArm(SearchArm[LLMIterState]):
         budget: LLMApiBudget | None = None,
         cost_estimate_per_call_usd: float = 0.0,
         open_loop: bool = False,
+        history_window: int | None = None,
+        user_prompt_suffix: str = "",
     ) -> None:
         self.lower_is_better = lower_is_better
         self.system_prompt = build_system_prompt(task_description)
@@ -91,6 +93,16 @@ class LLMIterArm(SearchArm[LLMIterState]):
         self.run_id = run_id
         self.temperature = temperature
         self.open_loop = open_loop
+        # Compact-feedback mode (token-limited providers): instead of the
+        # full raw history, the prompt carries one deterministic
+        # best-so-far line plus only the last `history_window` feedback
+        # lines. None = full history (the original behavior, used for the
+        # OpenAI runs). Fixed per experiment condition, identical across
+        # seeds; only master-plan-approved fields ever appear either way.
+        self.history_window = history_window
+        # Fixed format-reminder appended to every user prompt (recorded
+        # verbatim in provenance; never carries result information).
+        self.user_prompt_suffix = user_prompt_suffix
 
     def initialize(self, seed: int) -> LLMIterState:
         return LLMIterState(seed=seed)
@@ -99,7 +111,16 @@ class LLMIterArm(SearchArm[LLMIterState]):
         if self.open_loop:
             user_prompt = build_open_loop_user_prompt(state.n_proposed)
         else:
-            user_prompt = build_iter_user_prompt(state.history_lines)
+            lines = state.history_lines
+            if self.history_window is not None and lines:
+                summary = (
+                    f"Best so far: {state.best_metric:.4f}"
+                    if state.best_metric is not None
+                    else "Best so far: none yet"
+                )
+                lines = [summary, *lines[-self.history_window:]]
+            user_prompt = build_iter_user_prompt(lines)
+        user_prompt += self.user_prompt_suffix
 
         proposal_id = f"{self.run_id}:{state.n_proposed}"
         outcome = self.driver.propose(
