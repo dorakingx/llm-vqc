@@ -1931,3 +1931,68 @@ the first real pilot experiment (for every arm executable under the
 available budget) completed with reproducible statistical analysis. No
 publication-scale experiment is launched automatically — see the final
 report for recommended next steps.**
+
+---
+
+## Mini real-API experiment (time-boxed, human-directed)
+
+**Status: COMPLETE. First real OpenAI API execution of the LLM path.**
+
+The user explicitly directed a 5-minute-capped, 12-call-capped mini
+experiment using a clipboard-supplied OpenAI API key (never persisted,
+never printed, never committed; used only as a one-shot process env var
+and confirmed absent from the shell, git diff, and all generated files
+afterward). This supersedes G4-A's "no paid calls" default **for that
+single run only** — the run-specific override used the existing
+sanctioned `LLMApiBudget.from_env()` mechanism (`LLM_API_BUDGET_USD=2.00`
+for one process); no safety implementation or test was deleted or
+weakened.
+
+### What ran (git_sha `5fe4991` + uncommitted work, later committed as
+`5e4e503`)
+
+`scripts/mini_llm_experiment.py`: T1, one frozen split (seed 0), one
+search seed (0), budget=2/arm, epochs=1, batch=16, arms = random /
+evolutionary / greedy / llm_iter(open-loop) / llm_iter(closed-loop);
+`llm_evo` deliberately omitted to stay under the call cap. New
+`llm_vqc/llm/openai_provider.py` provides `OpenAIProvider` (real SDK
+wrapper; reports cost as `None` because OpenAI returns no dollar figure
+— never fabricated) and `CallCountLimitedProvider` (hard shared cap on
+total real calls). `LLMResponse.estimated_cost_usd` / `LLMCallRecord.
+estimated_cost_usd` became `float | None`; when a provider reports
+`None`, the driver charges the pre-call estimate against the dollar cap
+(conservative, never fabricates the record's own cost field). The
+network-import AST guard now exempts exactly `openai_provider.py`.
+
+### Results (n=1 seed, budget=2/arm, 1 epoch — descriptive only, NOT
+publication evidence, no significance claims)
+
+| arm | val RMSE | test RMSE | real calls |
+|---|---|---|---|
+| random | 0.293 | 0.292 | 0 |
+| evolutionary | 0.131 | 0.133 | 0 |
+| greedy | 0.130 | 0.133 | 0 |
+| llm_iter (open) | 0.174 | 0.173 | 2 |
+| llm_iter (closed) | 0.131 | 0.132 | 2 |
+
+4/12 real calls used; model snapshot `gpt-5.4-mini-2026-03-17`; 302-335
+input / 137-242 output tokens per call; latencies 1.2-3.6 s; 9.8 s total
+wall clock. One real API incompatibility surfaced and was fixed
+(`max_tokens` → `max_completion_tokens` for this model family). Budget
+reconstruction verified consistent for all 5 run_ids; test quarantine
+intact (final test run once per arm, after search, via
+`evaluate_on_test`). Plots/CSV/report generated from stored results into
+`outputs/mini_llm_experiment/` (git-ignored); raw store stays in
+`runs/mini_llm_experiment/`.
+
+### Post-run review finding (fixed)
+
+The mini script originally passed `budget=budget` but left
+`cost_estimate_per_call_usd` at its 0.0 default — combined with the
+provider's `None` cost this made the $2.00 dollar cap accumulate zero
+spend (decorative). The 12-call count cap was the real bound and held.
+Fixed: the script now passes a conservative `COST_ESTIMATE_PER_CALL_USD
+= 0.05` and records `dollar_cap_spent_estimated_usd` in the summary;
+regression tests added (`test_driver_charges_the_estimate_when_provider_
+reports_no_cost`, `test_call_count_limited_provider_stops_at_exact_cap`,
+`test_proposal_outcome_total_cost_is_none_when_no_call_reported_cost`).

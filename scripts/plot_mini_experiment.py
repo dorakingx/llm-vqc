@@ -25,11 +25,13 @@ from llm_vqc.evaluation.seeds import train_seed_for_circuit  # noqa: E402
 from llm_vqc.evaluation.store import ResultStore  # noqa: E402
 from llm_vqc.ir.budget import ProposalOutcome  # noqa: E402
 
-RUN_DIR = Path(__file__).resolve().parent.parent / "runs" / "mini_llm_experiment"
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+RUN_DIR = _REPO_ROOT / "runs" / "mini_llm_experiment"  # raw SQLite/JSON results
+OUTPUT_DIR = _REPO_ROOT / "outputs" / "mini_llm_experiment"  # generated figures/report
 DB_PATH = RUN_DIR / "results.sqlite"
 SUMMARY_PATH = RUN_DIR / "mini_summary.json"
-CSV_PATH = RUN_DIR / "mini_results.csv"
-REPORT_PATH = RUN_DIR / "mini_report.md"
+CSV_PATH = OUTPUT_DIR / "mini_results.csv"
+REPORT_PATH = OUTPUT_DIR / "mini_report.md"
 
 ARM_LABELS = {
     "random": "random",
@@ -60,6 +62,7 @@ def anytime_curve(
 
 
 def main() -> None:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     summary = json.loads(SUMMARY_PATH.read_text())
     store = ResultStore(DB_PATH)
     run_ids = [r["run_id"] for r in summary["runs"] if "ledger_summary" in r]
@@ -102,8 +105,8 @@ def main() -> None:
     ax.set_title(f"Mini experiment: selected-circuit validation RMSE by arm\n({DESCRIPTIVE_NOTE})")
     plt.xticks(rotation=20, ha="right")
     fig.tight_layout()
-    fig.savefig(RUN_DIR / "mini_val_performance.png", dpi=150)
-    fig.savefig(RUN_DIR / "mini_val_performance.svg")
+    fig.savefig(OUTPUT_DIR / "mini_val_performance.png", dpi=150)
+    fig.savefig(OUTPUT_DIR / "mini_val_performance.svg")
     plt.close(fig)
 
     # --- 2. final-test performance by arm ----------------------------------
@@ -114,8 +117,8 @@ def main() -> None:
     ax.set_title(f"Mini experiment: protected final-test RMSE by arm\n({DESCRIPTIVE_NOTE})")
     plt.xticks(rotation=20, ha="right")
     fig.tight_layout()
-    fig.savefig(RUN_DIR / "mini_test_performance.png", dpi=150)
-    fig.savefig(RUN_DIR / "mini_test_performance.svg")
+    fig.savefig(OUTPUT_DIR / "mini_test_performance.png", dpi=150)
+    fig.savefig(OUTPUT_DIR / "mini_test_performance.svg")
     plt.close(fig)
 
     # --- 3. anytime best-so-far validation curve ---------------------------
@@ -123,15 +126,14 @@ def main() -> None:
     for run_id in run_ids:
         curve = anytime_curve(store, run_id, "T1", 0)
         xs = list(range(1, len(curve) + 1))
-        ys = [v for v in curve]
-        ax.plot(xs, ys, marker="o", label=ARM_LABELS.get(run_id, run_id))
+        ax.plot(xs, curve, marker="o", label=ARM_LABELS.get(run_id, run_id))
     ax.set_xlabel("Evaluated candidates (this run)")
     ax.set_ylabel("Best-so-far validation RMSE")
     ax.set_title(f"Mini experiment: anytime best-so-far validation RMSE\n({DESCRIPTIVE_NOTE})")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(RUN_DIR / "mini_anytime_curve.png", dpi=150)
-    fig.savefig(RUN_DIR / "mini_anytime_curve.svg")
+    fig.savefig(OUTPUT_DIR / "mini_anytime_curve.png", dpi=150)
+    fig.savefig(OUTPUT_DIR / "mini_anytime_curve.svg")
     plt.close(fig)
 
     # --- 4. invalid/duplicate rates by arm ----------------------------------
@@ -150,8 +152,8 @@ def main() -> None:
     ax.set_title(f"Mini experiment: invalid/duplicate proposal rates by arm\n({DESCRIPTIVE_NOTE})")
     ax.legend(fontsize=8)
     fig.tight_layout()
-    fig.savefig(RUN_DIR / "mini_proposal_rates.png", dpi=150)
-    fig.savefig(RUN_DIR / "mini_proposal_rates.svg")
+    fig.savefig(OUTPUT_DIR / "mini_proposal_rates.png", dpi=150)
+    fig.savefig(OUTPUT_DIR / "mini_proposal_rates.svg")
     plt.close(fig)
 
     # --- 5. LLM call latency and token usage --------------------------------
@@ -181,8 +183,8 @@ def main() -> None:
     ax2.legend(fontsize=8)
     fig.suptitle(f"Mini experiment: real LLM call latency/tokens ({DESCRIPTIVE_NOTE})")
     fig.tight_layout()
-    fig.savefig(RUN_DIR / "mini_llm_usage.png", dpi=150)
-    fig.savefig(RUN_DIR / "mini_llm_usage.svg")
+    fig.savefig(OUTPUT_DIR / "mini_llm_usage.png", dpi=150)
+    fig.savefig(OUTPUT_DIR / "mini_llm_usage.svg")
     plt.close(fig)
 
     store.close()
@@ -196,14 +198,14 @@ def main() -> None:
         "mini_llm_usage.png", "mini_llm_usage.svg",
     ]
     for name in plot_files:
-        path = RUN_DIR / name
+        path = OUTPUT_DIR / name
         size = path.stat().st_size if path.exists() else 0
         print(f"CHECK {name}: exists={path.exists()} size={size}")
         assert path.exists() and size > 0, f"{name} missing or empty"
 
     # --- render-verify each PNG programmatically (re-decode via matplotlib) -
     for name in [n for n in plot_files if n.endswith(".png")]:
-        img = plt.imread(RUN_DIR / name)
+        img = plt.imread(OUTPUT_DIR / name)
         print(f"RENDER_CHECK {name}: shape={img.shape}")
         assert img.size > 0
 
