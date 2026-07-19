@@ -1,0 +1,103 @@
+{
+  "note": "v2: 3 splits x 10 seeds; lower RMSE better; every controlled candidate = 105 params.",
+  "per_arm_test": {
+    "controlled_random": {
+      "n": 30,
+      "median": 0.01774967460428819,
+      "iqr": 0.0020567551712185016,
+      "mean": 0.017762689493077893,
+      "sd": 0.0021441507291498755,
+      "boot_ci95_median": [
+        0.016863082539893163,
+        0.01817530383785159
+      ]
+    },
+    "controlled_evolutionary": {
+      "n": 30,
+      "median": 0.017145714658932033,
+      "iqr": 0.0017067519219056727,
+      "mean": 0.017343371727418743,
+      "sd": 0.0015122667970191718,
+      "boot_ci95_median": [
+        0.016669092071814558,
+        0.017839407300302763
+      ]
+    },
+    "controlled_greedy": {
+      "n": 30,
+      "median": 0.01688622750399229,
+      "iqr": 0.00202416586127966,
+      "mean": 0.01683513561913158,
+      "sd": 0.0017370547192459536,
+      "boot_ci95_median": [
+        0.016137426855807782,
+        0.01773028909971073
+      ]
+    }
+  },
+  "per_arm_val": {
+    "controlled_random": {
+      "n": 30,
+      "median": 0.015138308255672202,
+      "iqr": 0.0024095750630132706
+    },
+    "controlled_evolutionary": {
+      "n": 30,
+      "median": 0.01507355831936475,
+      "iqr": 0.0008724325600120795
+    },
+    "controlled_greedy": {
+      "n": 30,
+      "median": 0.014854957977891162,
+      "iqr": 0.002241709986020527
+    }
+  },
+  "kruskal_wallis_test": {
+    "H": 2.891721611721607,
+    "p_value": 0.23554323226880375
+  },
+  "pairwise_test": [
+    {
+      "a": "controlled_random",
+      "b": "controlled_evolutionary",
+      "U": 501.0,
+      "p_raw": 0.4552969069031376,
+      "cliffs_delta": 0.11333333333333333,
+      "p_holm": 0.5675560958912484
+    },
+    {
+      "a": "controlled_random",
+      "b": "controlled_greedy",
+      "U": 559.0,
+      "p_raw": 0.1086897732144474,
+      "cliffs_delta": 0.24222222222222223,
+      "p_holm": 0.3260693196433422
+    },
+    {
+      "a": "controlled_evolutionary",
+      "b": "controlled_greedy",
+      "U": 523.0,
+      "p_raw": 0.2837780479456242,
+      "cliffs_delta": 0.1622222222222222,
+      "p_holm": 0.5675560958912484
+    }
+  ],
+  "equivalence_summary": {
+    "all_pairs_equivalent_at_0.002": true
+  },
+  "baselines_test_median": {
+    "A1_argmax": 0.014513408561207019,
+    "A2_quadratic_peak": 0.005364250146090854,
+    "A3_weighted_centroid": 0.006192476673416069,
+    "A4_gaussian_nlls": 0.0011608933711153213,
+    "Q0_no_quantum": 0.05345433437029845,
+    "QF_frozen_random": 0.022750403543277953,
+    "QP_product_state": 0.03495003461937122,
+    "QE_fixed_entangled": 0.02206764828125194,
+    "QR_fixed_random": 0.02219356875543605,
+    "C1_bottleneck": 0.051690682362089777,
+    "C2_param_matched_mlp": 0.02943667284890783,
+    "C3_classical_search": 0.023686437268530362,
+    "QS_searched_best_arm": 0.01688622750399229
+  }
+}

@@ -1,0 +1,54 @@
+{
+  "note": "Predeclared power analysis; v1 variance is a small-sample estimate.",
+  "design": {
+    "n_paired_cells": 30,
+    "splits": 3,
+    "seeds": 10,
+    "equivalence_margin": 0.002,
+    "alpha": 0.05,
+    "n_sim": 20000
+  },
+  "assumptions": {
+    "v1_within_arm_test_sd": 0.0025,
+    "correlated_cells_sd_diff": 0.0025,
+    "independent_cells_sd_diff": 0.00354
+  },
+  "correlated_cells": {
+    "0.000": {
+      "P_conclude_equivalence": 0.9911,
+      "P_detect_difference": 0.0508
+    },
+    "0.001": {
+      "P_conclude_equivalence": 0.68925,
+      "P_detect_difference": 0.5681
+    },
+    "0.002": {
+      "P_conclude_equivalence": 0.04855,
+      "P_detect_difference": 0.99055
+    },
+    "0.003": {
+      "P_conclude_equivalence": 0.00015,
+      "P_detect_difference": 1.0
+    }
+  },
+  "independent_cells": {
+    "0.000": {
+      "P_conclude_equivalence": 0.83165,
+      "P_detect_difference": 0.05015
+    },
+    "0.001": {
+      "P_conclude_equivalence": 0.4463,
+      "P_detect_difference": 0.3217
+    },
+    "0.002": {
+      "P_conclude_equivalence": 0.0496,
+      "P_detect_difference": 0.85265
+    },
+    "0.003": {
+      "P_conclude_equivalence": 0.0009,
+      "P_detect_difference": 0.9946
+    }
+  },
+  "interpretation": "Under the correlated-cell assumption (sd_diff=0.0025), TOST at delta=0.002 has high power to conclude equivalence when the true arm difference is <=0.001, and low false-equivalence when the true difference is >=0.003. Power is weaker under the independent-cell assumption (sd_diff~0.0035). Actual v2 paired-diff SD is reported in equivalence_analysis.json and should be compared against these assumptions.",
+  "limitation": "v1 SD comes from n=5 seeds on a single split; true multi-split paired-diff variance may be larger."
+}

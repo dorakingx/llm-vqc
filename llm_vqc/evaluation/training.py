@@ -88,6 +88,7 @@ def train_model(
     config: TrainingConfig,
     train_seed: int,
     init_policy: Callable[[HybridQNNModel, int], None] | None = None,
+    freeze_quantum: bool = False,
 ) -> TrainingOutput:
     """Train a fresh model on `ir` against `train_val`, deterministic given
     `(ir, train_val, config, train_seed)`. Never raises — training failures
@@ -101,6 +102,11 @@ def train_model(
     the only behavior any legacy run used), the model keeps PyTorch/PennyLane
     dependency-default initialization under the seeded RNG — legacy runs are
     never silently re-initialized.
+
+    `freeze_quantum` (optional, backward compatible, default False): when True,
+    the quantum layer's angles are initialized (by `init_policy` if given) and
+    then frozen — only the classical embed and head are trained. Used by the v2
+    "frozen random quantum features" ablation; `False` reproduces all prior runs.
     """
     seeds = TrainingSeeds.from_train_seed(train_seed)
     start = time.perf_counter()
@@ -113,9 +119,12 @@ def train_model(
     )
     if init_policy is not None:
         init_policy(model, seeds.param_init)
+    if freeze_quantum:
+        model.q_layer.weights.requires_grad_(False)
 
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+        trainable_params, lr=config.learning_rate, weight_decay=config.weight_decay
     )
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=list(config.lr_decay_epochs), gamma=config.lr_decay_factor
