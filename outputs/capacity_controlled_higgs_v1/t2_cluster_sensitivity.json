@@ -1,0 +1,81 @@
+{
+  "note": "Post-hoc cluster-aware reanalysis of stored T2-v1 paired ablations. No simulation rerun; T2 package unchanged. Clusters: data split (5) and architecture/pair (20); seeds (3) nested. statsmodels unavailable -> hierarchical bootstrap + cluster-averaged t-tests instead of mixed-effects.",
+  "freeze_vs_train": {
+    "contrast": "frozen_minus_trainable",
+    "positive_means": "positive => trainable better than frozen",
+    "naive_iid": {
+      "n_obs": 300,
+      "mean": -0.007582010582010577,
+      "median": 0.0,
+      "naive_wilcoxon_p_treating_iid": 0.11968537446217503,
+      "frac_positive": 0.23
+    },
+    "architecture_averaged": {
+      "n_clusters": 20,
+      "mean_of_cluster_means": -0.007582010582010579,
+      "ci95": [
+        -0.01952178374273091,
+        0.004357762578709751
+      ],
+      "t_p_value": 0.1995507483201174,
+      "frac_clusters_positive": 0.4
+    },
+    "split_averaged": {
+      "n_clusters": 5,
+      "mean_of_cluster_means": -0.007582010582010579,
+      "ci95": [
+        -0.016586740585224247,
+        0.0014227194212030891
+      ],
+      "t_p_value": 0.07957179714732214,
+      "frac_clusters_positive": 0.2
+    },
+    "hierarchical_bootstrap_split_then_unit": {
+      "ci95_mean_diff": [
+        -0.02848462301587302,
+        0.002682539682539672
+      ],
+      "boot_mean": -0.007606550595238091
+    },
+    "conclusion_survives_clustering": true
+  },
+  "product_vs_entangled": {
+    "contrast": "product_minus_entangled",
+    "positive_means": "positive => entangled better than product",
+    "naive_iid": {
+      "n_obs": 300,
+      "mean": 6.613756613758071e-06,
+      "median": 0.0,
+      "naive_wilcoxon_p_treating_iid": 0.02835786385838964,
+      "frac_positive": 0.17666666666666667
+    },
+    "architecture_averaged": {
+      "n_clusters": 20,
+      "mean_of_cluster_means": 6.613756613758209e-06,
+      "ci95": [
+        -0.008092787730288322,
+        0.008106015243515839
+      ],
+      "t_p_value": 0.9986541471815875,
+      "frac_clusters_positive": 0.35
+    },
+    "split_averaged": {
+      "n_clusters": 5,
+      "mean_of_cluster_means": 6.613756613758123e-06,
+      "ci95": [
+        -0.006220172208494216,
+        0.006233399721721733
+      ],
+      "t_p_value": 0.9977882611899247,
+      "frac_clusters_positive": 0.2
+    },
+    "hierarchical_bootstrap_split_then_unit": {
+      "ci95_mean_diff": [
+        -0.011138988095238082,
+        0.01496111111111112
+      ],
+      "boot_mean": -4.9274801587300195e-05
+    },
+    "conclusion_survives_clustering": true
+  }
+}

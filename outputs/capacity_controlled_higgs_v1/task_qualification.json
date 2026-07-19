@@ -1,0 +1,67 @@
+{
+  "criteria": {
+    "auroc_min": 0.65,
+    "auroc_max": 0.92,
+    "min_classification_error": 0.05,
+    "min_val_logloss": 0.1,
+    "balance_lo": 0.4,
+    "balance_hi": 0.6,
+    "min_distinct_families": 2
+  },
+  "attempts": [
+    {
+      "dataset": "HIGGS_low_level",
+      "n_features": 21,
+      "passed": true,
+      "checks": {
+        "best_auroc_in_range": true,
+        "not_saturated_error": true,
+        "val_logloss_above_zero": true,
+        "class_balance_ok": true,
+        "at_least_two_families_distinct": true,
+        "no_duplicate_across_boundary": true
+      },
+      "summary": {
+        "best_auroc": 0.6729293791892356,
+        "min_error": 0.3752,
+        "min_logloss": 0.6455080413123826,
+        "balance": 0.5263,
+        "dup": 0
+      },
+      "models": [
+        {
+          "model": "logreg",
+          "val_auroc": 0.5989004570571067,
+          "val_logloss": 0.6766030136653655,
+          "val_classification_error": 0.4288
+        },
+        {
+          "model": "linear_svm",
+          "val_auroc": 0.5983267287586544,
+          "val_logloss": 0.6770738503320678,
+          "val_classification_error": 0.4268
+        },
+        {
+          "model": "rbf_svm",
+          "val_auroc": 0.6729293791892356,
+          "val_logloss": 0.6455080413123826,
+          "val_classification_error": 0.3752
+        },
+        {
+          "model": "hist_gb",
+          "val_auroc": 0.6621079697126657,
+          "val_logloss": 0.6511440451151107,
+          "val_classification_error": 0.3846
+        },
+        {
+          "model": "mlp",
+          "val_auroc": 0.6576713835781648,
+          "val_logloss": 0.6597789836425333,
+          "val_classification_error": 0.387
+        }
+      ]
+    }
+  ],
+  "decision": "D1",
+  "selected_dataset": "HIGGS_low_level"
+}

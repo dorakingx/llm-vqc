@@ -20,3 +20,8 @@ dist/
 build/
 !outputs/capacity_controlled_t2_v1/
 !outputs/capacity_controlled_t2_v1/**
+
+# Raw UCI datasets (never committed)
+data/
+!outputs/capacity_controlled_higgs_v1/
+!outputs/capacity_controlled_higgs_v1/**

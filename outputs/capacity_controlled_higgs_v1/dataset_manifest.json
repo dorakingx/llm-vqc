@@ -1,0 +1,74 @@
+{
+  "dataset": {
+    "name": "UCI HIGGS",
+    "id": 280,
+    "doi": "10.24432/C5V312",
+    "license": "CC BY 4.0",
+    "source": "https://archive.ics.uci.edu/dataset/280/higgs"
+  },
+  "retrieval_date": "2026-07-19",
+  "compressed_sha256": "ea302c18164d4e3d916a1e2e83a9a8d07069fa6ebc7771e4c0540d54e593b698",
+  "compressed_bytes": 2816407858,
+  "row_count_verified": 11000000,
+  "expected_row_count": 11000000,
+  "n_columns": 29,
+  "n_low_level": 21,
+  "n_high_level": 7,
+  "label_definition": "column 0: 1 = signal (Higgs), 0 = background",
+  "low_level_feature_names": [
+    "lepton_pT",
+    "lepton_eta",
+    "lepton_phi",
+    "missing_energy_magnitude",
+    "missing_energy_phi",
+    "jet1_pt",
+    "jet1_eta",
+    "jet1_phi",
+    "jet1_b_tag",
+    "jet2_pt",
+    "jet2_eta",
+    "jet2_phi",
+    "jet2_b_tag",
+    "jet3_pt",
+    "jet3_eta",
+    "jet3_phi",
+    "jet3_b_tag",
+    "jet4_pt",
+    "jet4_eta",
+    "jet4_phi",
+    "jet4_b_tag"
+  ],
+  "high_level_feature_names": [
+    "m_jj",
+    "m_jjj",
+    "m_lv",
+    "m_jlv",
+    "m_bb",
+    "m_wbb",
+    "m_wwbb"
+  ],
+  "holdout": {
+    "convention": "last 500,000 rows = official test set",
+    "holdout_start_row": 10500000,
+    "audit_subset_rows": 20000,
+    "audit_subset_range": [
+      10500000,
+      10520000
+    ]
+  },
+  "dev_benchmark_pool": {
+    "rows": 300000,
+    "range": [
+      0,
+      300000
+    ],
+    "sha256_features": "c6364b03fc74605b738ac15c206e31df37d5bb6fa6e877728a80a4fbd6744233"
+  },
+  "holdout_audit_sha256_features": "4218f4cf86a8ff8b45666abcb90c1a036d309acb314c94129f113cb8efdf0b6a",
+  "acquisition_command": "curl -o data/cache/uci_higgs/HIGGS.csv.gz https://archive.ics.uci.edu/ml/machine-learning-databases/00280/HIGGS.csv.gz",
+  "cache_files": [
+    "HIGGS.csv.gz (gitignored)",
+    "dev_benchmark_pool.npz (gitignored)",
+    "holdout_audit.npz (gitignored)"
+  ]
+}
