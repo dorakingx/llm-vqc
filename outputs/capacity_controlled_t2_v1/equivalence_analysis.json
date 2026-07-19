@@ -1,0 +1,145 @@
+{
+  "primary_metric": "balanced_accuracy_error",
+  "margin_primary": 0.03,
+  "pairs": {
+    "controlled_random__vs__controlled_evolutionary": {
+      "n_cells": 30,
+      "paired_diff_sd": 0.012430676456193142,
+      "tost_by_delta": {
+        "0.02": {
+          "mean_diff": -0.0023677248677248706,
+          "ci90": [
+            -0.006223928713156632,
+            0.0014884789777068908
+          ],
+          "tost_p": 7.208817491559229e-09,
+          "equivalent": true
+        },
+        "0.03": {
+          "mean_diff": -0.0023677248677248706,
+          "ci90": [
+            -0.006223928713156632,
+            0.0014884789777068908
+          ],
+          "tost_p": 3.181961329309e-13,
+          "equivalent": true
+        },
+        "0.05": {
+          "mean_diff": -0.0023677248677248706,
+          "ci90": [
+            -0.006223928713156632,
+            0.0014884789777068908
+          ],
+          "tost_p": 2.2136398375224816e-19,
+          "equivalent": true
+        }
+      },
+      "blocked_bootstrap_ci95_median_diff": [
+        -0.006944444444444475,
+        0.0
+      ],
+      "splitmean_cluster_tost_0.03": {
+        "mean_diff": -0.00236772486772487,
+        "ci90": [
+          -0.005937826950687975,
+          0.001202377215238234
+        ],
+        "tost_p": 3.94996371714648e-05,
+        "equivalent": true
+      }
+    },
+    "controlled_random__vs__controlled_greedy": {
+      "n_cells": 30,
+      "paired_diff_sd": 0.013934984886598075,
+      "tost_by_delta": {
+        "0.02": {
+          "mean_diff": 0.0038095238095238256,
+          "ci90": [
+            -0.000513341683364203,
+            0.008132389302411855
+          ],
+          "tost_p": 2.950667686282642e-07,
+          "equivalent": true
+        },
+        "0.03": {
+          "mean_diff": 0.0038095238095238256,
+          "ci90": [
+            -0.000513341683364203,
+            0.008132389302411855
+          ],
+          "tost_p": 1.7018788880176954e-11,
+          "equivalent": true
+        },
+        "0.05": {
+          "mean_diff": 0.0038095238095238256,
+          "ci90": [
+            -0.000513341683364203,
+            0.008132389302411855
+          ],
+          "tost_p": 1.1107853254817024e-17,
+          "equivalent": true
+        }
+      },
+      "blocked_bootstrap_ci95_median_diff": [
+        0.0,
+        0.0
+      ],
+      "splitmean_cluster_tost_0.03": {
+        "mean_diff": 0.003809523809523825,
+        "ci90": [
+          -0.0016573077561567043,
+          0.009276355375204354
+        ],
+        "tost_p": 0.0002589449873244493,
+        "equivalent": true
+      }
+    },
+    "controlled_evolutionary__vs__controlled_greedy": {
+      "n_cells": 30,
+      "paired_diff_sd": 0.013814478650663235,
+      "tost_by_delta": {
+        "0.02": {
+          "mean_diff": 0.006177248677248696,
+          "ci90": [
+            0.001891766235238717,
+            0.010462731119258675
+          ],
+          "tost_p": 3.3390764172327298e-06,
+          "equivalent": true
+        },
+        "0.03": {
+          "mean_diff": 0.006177248677248696,
+          "ci90": [
+            0.001891766235238717,
+            0.010462731119258675
+          ],
+          "tost_p": 1.1848833054196016e-10,
+          "equivalent": true
+        },
+        "0.05": {
+          "mean_diff": 0.006177248677248696,
+          "ci90": [
+            0.001891766235238717,
+            0.010462731119258675
+          ],
+          "tost_p": 3.579892588127524e-17,
+          "equivalent": true
+        }
+      },
+      "blocked_bootstrap_ci95_median_diff": [
+        0.0,
+        0.014285714285714235
+      ],
+      "splitmean_cluster_tost_0.03": {
+        "mean_diff": 0.006177248677248696,
+        "ci90": [
+          -0.0007488433593737338,
+          0.013103340713871127
+        ],
+        "tost_p": 0.0009205876854530151,
+        "equivalent": true
+      }
+    }
+  },
+  "all_pairs_equivalent_at_primary": true
+}
