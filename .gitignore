@@ -6,6 +6,8 @@ outputs/*
 # Sanitized, publication-safe capacity-controlled experiment package (no DBs/weights):
 !outputs/capacity_controlled_t1_v1/
 !outputs/capacity_controlled_t1_v1/**
+!outputs/capacity_controlled_t1_v2/
+!outputs/capacity_controlled_t1_v2/**
 runs/
 .DS_Store
 __pycache__/

@@ -1,0 +1,30 @@
+{
+  "space_name": "T1_capacity_controlled_v1 (inherited)",
+  "version": "v2",
+  "splits": [
+    0,
+    1,
+    2
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "budget": 25,
+  "total_trainable_params": 105,
+  "arms": [
+    "controlled_random",
+    "controlled_evolutionary",
+    "controlled_greedy"
+  ],
+  "equivalence_margin": 0.002,
+  "git_sha": "03ad011dea0001758fbf2fafe52faf294c210217"
+}
