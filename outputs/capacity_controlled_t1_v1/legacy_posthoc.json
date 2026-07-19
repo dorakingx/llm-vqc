@@ -1,0 +1,111 @@
+{
+  "note": "EXPLORATORY post-hoc of the legacy unrestricted B=25 pilot. Not confirmatory; the legacy experiment is not redefined.",
+  "all_evaluated_circuits": {
+    "n": 222,
+    "spearman_val_vs_total_params": {
+      "rho": -0.34084461674558186,
+      "p_value": 1.923866862053179e-07
+    },
+    "val_rmse_by_encoding": {
+      "angle": {
+        "n": 181,
+        "median": 0.04412912203489097
+      },
+      "amplitude": {
+        "n": 41,
+        "median": 0.012623812205402068
+      },
+      "mannwhitney_p": 1.3392860803499475e-12
+    }
+  },
+  "selected_circuits": {
+    "n": 9,
+    "spearman_test_vs_total_params": {
+      "rho": -0.7999999999999999,
+      "p_value": 0.009627924725379839
+    },
+    "amplitude_selected_fraction": 0.5555555555555556,
+    "amplitude_selected_runs": [
+      "random_s0",
+      "random_s1",
+      "random_s2",
+      "evolutionary_s1",
+      "evolutionary_s2"
+    ],
+    "detail": [
+      {
+        "run_id": "random_s0",
+        "arm": "random",
+        "encoding": "amplitude",
+        "total_params": 11279,
+        "val": 0.008114591955414873,
+        "test": 0.009280573578477998
+      },
+      {
+        "run_id": "random_s1",
+        "arm": "random",
+        "encoding": "amplitude",
+        "total_params": 1423,
+        "val": 0.008450209333616815,
+        "test": 0.008908845570578004
+      },
+      {
+        "run_id": "random_s2",
+        "arm": "random",
+        "encoding": "amplitude",
+        "total_params": 11286,
+        "val": 0.00860190900212354,
+        "test": 0.00910191621694384
+      },
+      {
+        "run_id": "evolutionary_s0",
+        "arm": "evolutionary",
+        "encoding": "angle",
+        "total_params": 222,
+        "val": 0.024063813195379476,
+        "test": 0.024700218576210874
+      },
+      {
+        "run_id": "evolutionary_s1",
+        "arm": "evolutionary",
+        "encoding": "amplitude",
+        "total_params": 2831,
+        "val": 0.018966027263848502,
+        "test": 0.020809508798808916
+      },
+      {
+        "run_id": "evolutionary_s2",
+        "arm": "evolutionary",
+        "encoding": "amplitude",
+        "total_params": 22552,
+        "val": 0.008268908625147052,
+        "test": 0.009001938785542543
+      },
+      {
+        "run_id": "greedy_s0",
+        "arm": "greedy",
+        "encoding": "angle",
+        "total_params": 55,
+        "val": 0.019319707986630668,
+        "test": 0.023746119899828517
+      },
+      {
+        "run_id": "greedy_s1",
+        "arm": "greedy",
+        "encoding": "angle",
+        "total_params": 49,
+        "val": 0.024375387672851002,
+        "test": 0.02758869028862125
+      },
+      {
+        "run_id": "greedy_s2",
+        "arm": "greedy",
+        "encoding": "angle",
+        "total_params": 53,
+        "val": 0.028460104054053303,
+        "test": 0.03134456734926588
+      }
+    ]
+  },
+  "interpretation": "In the legacy space, lower validation RMSE is associated with LARGER total capacity, and amplitude-encoding circuits (which carry the largest classical embeddings) dominate the best selections. This is the capacity confound the controlled experiment removes."
+}

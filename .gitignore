@@ -3,6 +3,9 @@
 outputs/*
 !outputs/archive_pre_negative_zero_fix_2026-07/
 !outputs/archive_pre_negative_zero_fix_2026-07/**
+# Sanitized, publication-safe capacity-controlled experiment package (no DBs/weights):
+!outputs/capacity_controlled_t1_v1/
+!outputs/capacity_controlled_t1_v1/**
 runs/
 .DS_Store
 __pycache__/

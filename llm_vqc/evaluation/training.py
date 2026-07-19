@@ -26,6 +26,7 @@ with).
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -86,12 +87,20 @@ def train_model(
     train_val: TrainValData,
     config: TrainingConfig,
     train_seed: int,
+    init_policy: Callable[[HybridQNNModel, int], None] | None = None,
 ) -> TrainingOutput:
     """Train a fresh model on `ir` against `train_val`, deterministic given
     `(ir, train_val, config, train_seed)`. Never raises — training failures
     (divergence, backend errors) are reported in the returned
     `TrainingOutput`, not propagated as exceptions, so the harness can
     record a failed candidate without aborting the whole evaluation loop.
+
+    `init_policy` (optional, backward compatible): a callable
+    `(model, param_init_seed) -> None` applied to the freshly-built model to
+    set an *explicit, versioned* initialization. When `None` (the default, and
+    the only behavior any legacy run used), the model keeps PyTorch/PennyLane
+    dependency-default initialization under the seeded RNG — legacy runs are
+    never silently re-initialized.
     """
     seeds = TrainingSeeds.from_train_seed(train_seed)
     start = time.perf_counter()
@@ -102,6 +111,8 @@ def train_model(
         raw_feature_dim=train_val.spec.raw_feature_dim,
         head_out_dim=train_val.spec.classical_head_out_dim,
     )
+    if init_policy is not None:
+        init_policy(model, seeds.param_init)
 
     optimizer = torch.optim.AdamW(
         model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
