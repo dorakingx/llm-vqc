@@ -232,6 +232,26 @@ def main():
     _csv(OUT / "paired_freeze_train_results.csv", ft_rows)
     _csv(OUT / "paired_entanglement_results.csv", pe_rows)
 
+    # combined quantum-ablation summary (per-condition test bal-acc-error aggregates)
+    def _cond_stats(vals):
+        v = [x for x in vals if x is not None]
+        return {"n": len(v), "median": float(np.median(v)), "mean": float(np.mean(v)),
+                "sd": float(np.std(v, ddof=1)) if len(v) > 1 else 0.0}
+    qa_rows = [
+        {"condition": "QT_trainable", "metric": "balanced_accuracy_error",
+         **_cond_stats([r["trainable_bae"] for r in ft_rows])},
+        {"condition": "QF_frozen", "metric": "balanced_accuracy_error",
+         **_cond_stats([r["frozen_bae"] for r in ft_rows])},
+        {"condition": "QE_entangled", "metric": "balanced_accuracy_error",
+         **_cond_stats([r["entangled_bae"] for r in pe_rows])},
+        {"condition": "QP_product", "metric": "balanced_accuracy_error",
+         **_cond_stats([r["product_bae"] for r in pe_rows])},
+        {"condition": "QS_searched_best_arm", "metric": "balanced_accuracy_error",
+         **_cond_stats([test_cell[min(ARMS, key=lambda a: np.median([x for x in test_cell[a].values() if x is not None]))][c]
+                        for c in test_cell["controlled_random"]])},
+    ]
+    _csv(OUT / "quantum_ablation_summary.csv", qa_rows)
+
     # selection gain
     sel_rows = []
     fixed_dist = [r["trainable_bae"] for r in ft_rows if r["trainable_bae"] is not None]

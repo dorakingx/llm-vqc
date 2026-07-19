@@ -1,0 +1,44 @@
+{
+  "figures": [
+    "fig01_test_bae_by_arm_split.png",
+    "fig02_val_logloss_by_arm_split.png",
+    "fig03_equivalence_intervals.png",
+    "fig04_anytime_proposals.png",
+    "fig05_anytime_unique_trainings.png",
+    "fig06_anytime_walltime.png",
+    "fig07_classical_baselines.png",
+    "fig08_vqc_vs_fair_classical.png",
+    "fig09_freeze_vs_train.png",
+    "fig10_product_vs_entangled.png",
+    "fig11_selection_gain.png",
+    "fig12_capacity_verification.png",
+    "fig13_proposal_rates.png",
+    "fig14_runtime.png",
+    "fig15_confusion_matrices.png",
+    "fig16_roc.png",
+    "fig17_calibration.png",
+    "fig18_split_variability.png"
+  ],
+  "tables": [
+    "candidate_results.csv",
+    "classical_baseline_summary.csv",
+    "classical_search_summary.csv",
+    "paired_entanglement_results.csv",
+    "paired_freeze_train_results.csv",
+    "quantum_ablation_summary.csv",
+    "resource_accounting.csv",
+    "run_summary.csv",
+    "selection_gain_summary.csv",
+    "split_summary.csv"
+  ],
+  "analyses": [
+    "artifact_manifest.json",
+    "equivalence_analysis.json",
+    "experiment_config.json",
+    "experiment_manifest.json",
+    "power_analysis.json",
+    "protocol.json",
+    "run_summary.json",
+    "statistical_analysis.json"
+  ]
+}
