@@ -1,0 +1,46 @@
+{
+  "reference_point": {
+    "logloss": 1.0,
+    "transpiled_two_qubit": 40.0
+  },
+  "per_arm": {
+    "controlled_random": {
+      "n_points": 60,
+      "pareto_front": [
+        [
+          0.6970502028168413,
+          12
+        ],
+        [
+          0.6983140852551617,
+          0
+        ]
+      ],
+      "hypervolume": 12.102825298066506
+    },
+    "controlled_evolutionary": {
+      "n_points": 60,
+      "pareto_front": [
+        [
+          0.693377118524207,
+          21
+        ],
+        [
+          0.6999528504832109,
+          0
+        ]
+      ],
+      "hypervolume": 12.126824887892639
+    },
+    "controlled_greedy": {
+      "n_points": 60,
+      "pareto_front": [
+        [
+          0.698822428429116,
+          0
+        ]
+      ],
+      "hypervolume": 12.04710286283536
+    }
+  }
+}

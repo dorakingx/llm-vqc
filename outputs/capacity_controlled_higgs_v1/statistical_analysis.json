@@ -1,0 +1,127 @@
+{
+  "note": "HIGGS-v1 10 blocks x 3 seeds; primary metric log-loss; BLOCK is the inference unit; every candidate 53 params.",
+  "per_arm_test_logloss": {
+    "controlled_random": {
+      "n_cells": 30,
+      "median": 0.7287210955300418,
+      "mean": 0.7263789058008062,
+      "sd": 0.017620785675221105
+    },
+    "controlled_evolutionary": {
+      "n_cells": 30,
+      "median": 0.7139441593392488,
+      "mean": 0.7233400323178453,
+      "sd": 0.024199467213538585
+    },
+    "controlled_greedy": {
+      "n_cells": 30,
+      "median": 0.7266513798765828,
+      "mean": 0.7291386217835248,
+      "sd": 0.015775973102899493
+    }
+  },
+  "kruskal_wallis_block_medians": {
+    "H": 6.0800000000000125,
+    "p_value": 0.047834889494198084
+  },
+  "ablation_freeze_minus_train": {
+    "n_pairs": 400,
+    "n_blocks": 10,
+    "n_architectures": 20,
+    "n_seeds": 2,
+    "overall_mean": -0.006200105334011014,
+    "arch_averaged_mean": -0.006200105334011016,
+    "block_averaged_mean": -0.006200105334011015,
+    "hierarchical_bootstrap_ci95": [
+      -0.00972724884896172,
+      -0.002676301576477256
+    ],
+    "cohen_dz_block": -1.8440576412758902,
+    "ci_includes_zero": false,
+    "frac_positive": 0.3825,
+    "positive_means": "trainable better than frozen"
+  },
+  "ablation_product_minus_entangled": {
+    "n_pairs": 400,
+    "n_blocks": 10,
+    "n_architectures": 20,
+    "n_seeds": 2,
+    "overall_mean": -0.008748256317868576,
+    "arch_averaged_mean": -0.008748256317868578,
+    "block_averaged_mean": -0.008748256317868578,
+    "hierarchical_bootstrap_ci95": [
+      -0.011398638395183834,
+      -0.006109534486444534
+    ],
+    "cohen_dz_block": -3.924367233124657,
+    "ci_includes_zero": false,
+    "frac_positive": 0.2675,
+    "positive_means": "entangled better than product"
+  },
+  "baselines_test_logloss_median": {
+    "C0_majority": 0.6916904772869695,
+    "C1_logreg": 0.6962863446249712,
+    "C2_linear_svm_cal": 0.6917018658369237,
+    "C3_rbf_svm_cal": 0.691038234317146,
+    "C4_hist_gb": 0.715895605693498,
+    "C5_random_forest": 0.6936603604191403,
+    "C6_fixed_mlp": 0.7266102613170438,
+    "C7_fair_nas": 0.6959143027121566,
+    "QS_best_arm": 0.7139441593392488
+  },
+  "selection_gain": {
+    "fixed_arch_expected_test_logloss": 0.7522370174143946,
+    "best_of_B_median": {
+      "1": 0.7709448221055983,
+      "5": 0.7371644368078448,
+      "10": 0.7258427164519953,
+      "25": 0.7287210955300418
+    }
+  },
+  "hardware": {
+    "reference_point": {
+      "logloss": 1.0,
+      "transpiled_two_qubit": 40.0
+    },
+    "per_arm": {
+      "controlled_random": {
+        "n_points": 60,
+        "pareto_front": [
+          [
+            0.6970502028168413,
+            12
+          ],
+          [
+            0.6983140852551617,
+            0
+          ]
+        ],
+        "hypervolume": 12.102825298066506
+      },
+      "controlled_evolutionary": {
+        "n_points": 60,
+        "pareto_front": [
+          [
+            0.693377118524207,
+            21
+          ],
+          [
+            0.6999528504832109,
+            0
+          ]
+        ],
+        "hypervolume": 12.126824887892639
+      },
+      "controlled_greedy": {
+        "n_points": 60,
+        "pareto_front": [
+          [
+            0.698822428429116,
+            0
+          ]
+        ],
+        "hypervolume": 12.04710286283536
+      }
+    }
+  }
+}

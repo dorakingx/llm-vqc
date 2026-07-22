@@ -1,0 +1,113 @@
+{
+  "primary_metric": "logloss",
+  "margin": 0.01,
+  "inference_unit": "block",
+  "pairs": {
+    "controlled_random__vs__controlled_evolutionary": {
+      "n_blocks": 10,
+      "block_contrast_mean": 0.0030388734829608867,
+      "block_contrast_sd": 0.01838025209322395,
+      "tost_by_delta": {
+        "0.005": {
+          "mean_diff": 0.0030388734829608867,
+          "ci90": [
+            -0.00761581324552097,
+            0.013693560211442742
+          ],
+          "equivalent": false
+        },
+        "0.01": {
+          "mean_diff": 0.0030388734829608867,
+          "ci90": [
+            -0.00761581324552097,
+            0.013693560211442742
+          ],
+          "equivalent": false
+        },
+        "0.02": {
+          "mean_diff": 0.0030388734829608867,
+          "ci90": [
+            -0.00761581324552097,
+            0.013693560211442742
+          ],
+          "equivalent": true
+        }
+      },
+      "block_bootstrap_ci95": [
+        -0.007543111804117483,
+        0.013308054356299307
+      ]
+    },
+    "controlled_random__vs__controlled_greedy": {
+      "n_blocks": 10,
+      "block_contrast_mean": -0.002759715982718569,
+      "block_contrast_sd": 0.009923236976818782,
+      "tost_by_delta": {
+        "0.005": {
+          "mean_diff": -0.002759715982718569,
+          "ci90": [
+            -0.008512029976250217,
+            0.0029925980108130787
+          ],
+          "equivalent": false
+        },
+        "0.01": {
+          "mean_diff": -0.002759715982718569,
+          "ci90": [
+            -0.008512029976250217,
+            0.0029925980108130787
+          ],
+          "equivalent": true
+        },
+        "0.02": {
+          "mean_diff": -0.002759715982718569,
+          "ci90": [
+            -0.008512029976250217,
+            0.0029925980108130787
+          ],
+          "equivalent": true
+        }
+      },
+      "block_bootstrap_ci95": [
+        -0.008241900761235783,
+        0.002905106201586881
+      ]
+    },
+    "controlled_evolutionary__vs__controlled_greedy": {
+      "n_blocks": 10,
+      "block_contrast_mean": -0.005798589465679457,
+      "block_contrast_sd": 0.015901233695321666,
+      "tost_by_delta": {
+        "0.005": {
+          "mean_diff": -0.005798589465679457,
+          "ci90": [
+            -0.01501623581572552,
+            0.003419056884366606
+          ],
+          "equivalent": false
+        },
+        "0.01": {
+          "mean_diff": -0.005798589465679457,
+          "ci90": [
+            -0.01501623581572552,
+            0.003419056884366606
+          ],
+          "equivalent": false
+        },
+        "0.02": {
+          "mean_diff": -0.005798589465679457,
+          "ci90": [
+            -0.01501623581572552,
+            0.003419056884366606
+          ],
+          "equivalent": true
+        }
+      },
+      "block_bootstrap_ci95": [
+        -0.01377477374197906,
+        0.004193273398122077
+      ]
+    }
+  },
+  "all_pairs_equivalent_at_primary": false
+}

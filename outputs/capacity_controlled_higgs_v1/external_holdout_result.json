@@ -1,0 +1,28 @@
+{
+  "note": "External-holdout audit, evaluated ONCE after design freeze. No design change made.",
+  "consensus_rule": "selected structural hash with lowest mean selected-validation log-loss across 10 blocks",
+  "consensus_architecture": {
+    "structural_hash": "9beb2d83be0e",
+    "n_selections": 1,
+    "mean_selected_val_logloss": 0.6704663766438173,
+    "blocks": [
+      3
+    ]
+  },
+  "combined_training_samples": 5000,
+  "holdout_audit_rows": 20000,
+  "holdout_range": "holdout_audit.npz",
+  "external_holdout_metrics": {
+    "logloss": 0.686692663012095,
+    "auc": 0.5721862335968178,
+    "accuracy": 0.55565,
+    "balanced_accuracy_error": 0.4506696509519277,
+    "brier": 0.24666636661623842
+  },
+  "confusion": {
+    "tn": 4230,
+    "fp": 5117,
+    "fn": 3770,
+    "tp": 6883
+  }
+}
