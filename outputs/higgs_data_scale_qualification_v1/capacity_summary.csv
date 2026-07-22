@@ -1,0 +1,13 @@
+embed_params,frozen_quantum_params,head_params,input_dim,model,quantum_params,representation,total_params,total_trainable_params
+,,,21,M2_mlp,,R1_raw21,93,93
+88,0,5,21,M3_product,12,R1_raw21,105,105
+88,0,5,21,M4_entangled,12,R1_raw21,105,105
+88,12,5,21,M5_frozen,12,R1_raw21,105,93
+,,,8,M2_mlp,,R2_pca8,41,41
+36,0,5,8,M3_product,12,R2_pca8,53,53
+36,0,5,8,M4_entangled,12,R2_pca8,53,53
+36,12,5,8,M5_frozen,12,R2_pca8,53,41
+,,,16,M2_mlp,,R3_pca16,73,73
+68,0,5,16,M3_product,12,R3_pca16,85,85
+68,0,5,16,M4_entangled,12,R3_pca16,85,85
+68,12,5,16,M5_frozen,12,R3_pca16,85,73
