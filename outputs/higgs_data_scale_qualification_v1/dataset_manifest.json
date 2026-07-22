@@ -1,0 +1,27 @@
+{
+  "source": "UCI HIGGS (id 280)",
+  "compressed_sha256_of_source": "ea302c18164d4e3d916a1e2e83a9a8d07069fa6ebc7771e4c0540d54e593b698",
+  "qualification_row_range": [
+    1000000,
+    1200000
+  ],
+  "rows": 200000,
+  "disjoint_from": {
+    "v1_dev": [
+      0,
+      60000
+    ],
+    "v1_blocks_region": [
+      60000,
+      300000
+    ],
+    "official_holdout": [
+      10500000,
+      11000000
+    ]
+  },
+  "features_sha256": "ea17e6b851d269a478b01851d53653447d60874735289ca3e1be403af4274468",
+  "label_definition": "column 0: 1 = signal, 0 = background",
+  "n_low_level": 21,
+  "source_rows_verified": 11000000
+}
