@@ -1,6 +1,6 @@
 # free_amplitude_fixed_readout_v1 (joint structure-and-theta search)
 
-> **MOCK/NON-LLM JOINT-SEARCH RUN**
+> **REAL-LLM JOINT-SEARCH RUN (OpenAI)**
 
 Main mode: the LLM/sampler proposes a COMPLETE candidate (structure + numerical
 theta); the circuit is evaluated at exactly those angles with NO optimizer and
@@ -11,7 +11,7 @@ NO classical layer. Prediction: `mu_hat = (1 - <Z_0>) / 2`.
 - dataset_profile: amplitude_n3_smoke_v1
 - n_qubits: 3, feature_count: 8 (= 2^3)
 - readout_qubit: 0 (fixed). max_gates: 5.
-- budget per arm: 4. seeds: 3.
+- budget per arm: 4. seeds: 2.
 - Arms: Random, LLM Open-loop, LLM Closed-loop. Duplicate detection is by
   `candidate_hash` (structure + theta) and is arm-and-seed-local.
 

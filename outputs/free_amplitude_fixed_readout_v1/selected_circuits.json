@@ -31,54 +31,8 @@
     "seed": 0,
     "arm": "llm_open_loop",
     "n_qubits": 3,
-    "selected_candidate_hash": "16acefadaec4ec9a8cbd0c756a7ba19c6be11a91d545b6284a827e639ae91091",
-    "selected_architecture_hash": "0a63a212b5da09fd5642eec8ff430dfbeee145d195e3a561c9f1e2cd65c25ba7",
-    "selected_operations": [
-      {
-        "gate": "CRX",
-        "wires": [
-          0,
-          2
-        ],
-        "theta": -1.4313175168825238
-      },
-      {
-        "gate": "CRZ",
-        "wires": [
-          2,
-          0
-        ],
-        "theta": -3.1360625499608794
-      },
-      {
-        "gate": "CRZ",
-        "wires": [
-          2,
-          0
-        ],
-        "theta": 1.362542504229433
-      }
-    ],
-    "selected_theta": [
-      -1.431317517,
-      -3.13606255,
-      1.362542504
-    ],
-    "selected_val_rmse": 0.20047269958251107,
-    "protected_test_rmse": 0.20781756706875387,
-    "protected_test_mae": 0.18348752421623699,
-    "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 27.631021115927403,
-    "intrinsic_entanglement_capability_mean": 0.0,
-    "task_conditioned_entanglement_mean": 0.3525933585193894,
-    "task_conditioned_entanglement_median": 0.2917003208211648
-  },
-  {
-    "seed": 0,
-    "arm": "llm_closed_loop",
-    "n_qubits": 3,
-    "selected_candidate_hash": "74ed2be5c18af43ecaf320f14f3a470ba9db0c4820b53eaca8889f32c8ce1edc",
-    "selected_architecture_hash": "55b0ea3c339ef71776daf03b0d992a19f2494d2e15140f5f09e110bb613fd796",
+    "selected_candidate_hash": "7fca7f059bdb34029885cba7bc96355574559807bfa0ae2079a9dfeb0c549258",
+    "selected_architecture_hash": "8d801d6c34db96c075d47f36181e9f7ce9e0a9f3e97686050c160409a38668cd",
     "selected_operations": [
       {
         "gate": "H",
@@ -88,25 +42,93 @@
         "theta": null
       },
       {
-        "gate": "CRZ",
+        "gate": "CRY",
+        "wires": [
+          1,
+          0
+        ],
+        "theta": 1.247
+      },
+      {
+        "gate": "RZ",
+        "wires": [
+          2
+        ],
+        "theta": -0.381
+      }
+    ],
+    "selected_theta": [
+      1.247,
+      -0.381
+    ],
+    "selected_val_rmse": 0.14230177423033788,
+    "protected_test_rmse": 0.15283678020506994,
+    "protected_test_mae": 0.13050600268052281,
+    "classical_parameter_count": 0,
+    "intrinsic_expressibility_kl": 7.643180842067788,
+    "intrinsic_entanglement_capability_mean": 0.3051754476682165,
+    "task_conditioned_entanglement_mean": 0.45853357608175416,
+    "task_conditioned_entanglement_median": 0.4217812294309359
+  },
+  {
+    "seed": 0,
+    "arm": "llm_closed_loop",
+    "n_qubits": 3,
+    "selected_candidate_hash": "802b3b859f843849fea667c52b0a72f1ad2848f74ad1e112a3a44ebd5746d568",
+    "selected_architecture_hash": "aea63861353a473bb973ddcbc28d742fe8e8308ef48081945ce811cf21ef21af",
+    "selected_operations": [
+      {
+        "gate": "H",
+        "wires": [
+          1
+        ],
+        "theta": null
+      },
+      {
+        "gate": "CRY",
+        "wires": [
+          1,
+          0
+        ],
+        "theta": 1.571
+      },
+      {
+        "gate": "RY",
+        "wires": [
+          0
+        ],
+        "theta": 0.393
+      },
+      {
+        "gate": "CRX",
         "wires": [
           2,
           0
         ],
-        "theta": 0.16583191935406266
+        "theta": -0.524
+      },
+      {
+        "gate": "RZ",
+        "wires": [
+          0
+        ],
+        "theta": -0.157
       }
     ],
     "selected_theta": [
-      0.165831919
+      1.571,
+      0.393,
+      -0.524,
+      -0.157
     ],
-    "selected_val_rmse": 0.20047269958251104,
-    "protected_test_rmse": 0.20781756706875382,
-    "protected_test_mae": 0.18348752421623693,
+    "selected_val_rmse": 0.12485339405861401,
+    "protected_test_rmse": 0.12850328440706943,
+    "protected_test_mae": 0.09901473510233258,
     "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 27.631021115927403,
-    "intrinsic_entanglement_capability_mean": 8.881784197001252e-16,
-    "task_conditioned_entanglement_mean": 0.3692588998520759,
-    "task_conditioned_entanglement_median": 0.29854838775934944
+    "intrinsic_expressibility_kl": 1.4195476241492495,
+    "intrinsic_entanglement_capability_mean": 0.37032687012948295,
+    "task_conditioned_entanglement_mean": 0.5052691121809442,
+    "task_conditioned_entanglement_median": 0.45844450864531994
   },
   {
     "seed": 1,
@@ -173,238 +195,120 @@
     "seed": 1,
     "arm": "llm_open_loop",
     "n_qubits": 3,
-    "selected_candidate_hash": "7c1d2362da82c24b867e72f37fa2eff39261287bb9d4fe3bdd93d23ba0c25e77",
-    "selected_architecture_hash": "b28dfccb3fa92c106c18c44c853b4fc719851cc9fc1924775a6c7a738cfe6fcc",
+    "selected_candidate_hash": "9637c1cc7fa5d67837133573b6f5acbe43b7d8fcc7b1cfe655f690cb4239c231",
+    "selected_architecture_hash": "68e29b0bf1a6dc84f399dc278b5833814e76a8b814e8d34271f50ef5557f217e",
     "selected_operations": [
+      {
+        "gate": "H",
+        "wires": [
+          1
+        ],
+        "theta": null
+      },
+      {
+        "gate": "CRY",
+        "wires": [
+          1,
+          0
+        ],
+        "theta": 1.571
+      },
+      {
+        "gate": "RY",
+        "wires": [
+          0
+        ],
+        "theta": 0.785
+      },
       {
         "gate": "CRZ",
         "wires": [
-          0,
-          1
+          2,
+          0
         ],
-        "theta": -3.0204364083180115
+        "theta": -1.047
       },
       {
         "gate": "RX",
         "wires": [
-          1
+          0
         ],
-        "theta": -1.8741861027529299
+        "theta": -0.524
       }
     ],
     "selected_theta": [
-      -3.020436408,
-      -1.874186103
+      1.571,
+      0.785,
+      -1.047,
+      -0.524
     ],
-    "selected_val_rmse": 0.20970239346330005,
-    "protected_test_rmse": 0.20446002145139164,
-    "protected_test_mae": 0.17846035656926734,
+    "selected_val_rmse": 0.14712054294239416,
+    "protected_test_rmse": 0.15619934406657615,
+    "protected_test_mae": 0.1163127602510309,
     "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 5.396181895395394,
-    "intrinsic_entanglement_capability_mean": 8.770761894538737e-17,
-    "task_conditioned_entanglement_mean": 0.25280107413425396,
-    "task_conditioned_entanglement_median": 0.18780615043472837
+    "intrinsic_expressibility_kl": 1.5964935433143714,
+    "intrinsic_entanglement_capability_mean": 0.35078089321903005,
+    "task_conditioned_entanglement_mean": 0.4707202935165934,
+    "task_conditioned_entanglement_median": 0.42318684242712135
   },
   {
     "seed": 1,
     "arm": "llm_closed_loop",
     "n_qubits": 3,
-    "selected_candidate_hash": "95392a5c50649990b5544cda9bef1182e0c051f77d00c9efaf122598bac03f68",
-    "selected_architecture_hash": "ee4579777d376a88cc63dbcd9293a921f8706f503bd971c7fb94f6d604f774af",
+    "selected_candidate_hash": "fe0d02d014bf50969bcef4d21b7db22b53e85da605cf637b1bd622c0081ff769",
+    "selected_architecture_hash": "080e6db9f49c1af7e7e6dce41323801ff4528cb864d103e2a444f9f6d520ed75",
     "selected_operations": [
-      {
-        "gate": "CRY",
-        "wires": [
-          2,
-          0
-        ],
-        "theta": -2.5663334647785785
-      },
-      {
-        "gate": "RX",
-        "wires": [
-          2
-        ],
-        "theta": 0.15663969804796427
-      },
-      {
-        "gate": "CRX",
-        "wires": [
-          2,
-          0
-        ],
-        "theta": -2.652706392405838
-      },
-      {
-        "gate": "CRZ",
-        "wires": [
-          1,
-          2
-        ],
-        "theta": -2.0356551334180306
-      }
-    ],
-    "selected_theta": [
-      -2.566333465,
-      0.156639698,
-      -2.652706392,
-      -2.035655133
-    ],
-    "selected_val_rmse": 0.16259550792396982,
-    "protected_test_rmse": 0.15781535749249564,
-    "protected_test_mae": 0.1319610125213489,
-    "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 2.720814416842041,
-    "intrinsic_entanglement_capability_mean": 0.1570631999776565,
-    "task_conditioned_entanglement_mean": 0.38499686073785255,
-    "task_conditioned_entanglement_median": 0.3335637055470855
-  },
-  {
-    "seed": 2,
-    "arm": "random",
-    "n_qubits": 3,
-    "selected_candidate_hash": "57d78d86d26ee25bc14a822660dbd60065afc707dedc4a7280907bfb8b769623",
-    "selected_architecture_hash": "960571268979739c02728e60032ff310609c93686a8bb126293feb21a1477a04",
-    "selected_operations": [
-      {
-        "gate": "CRY",
-        "wires": [
-          0,
-          1
-        ],
-        "theta": 1.401084326743583
-      },
-      {
-        "gate": "RZ",
-        "wires": [
-          1
-        ],
-        "theta": 0.14974670306501087
-      },
-      {
-        "gate": "CRY",
-        "wires": [
-          1,
-          0
-        ],
-        "theta": -1.1612908717390726
-      },
-      {
-        "gate": "RZ",
-        "wires": [
-          0
-        ],
-        "theta": 1.9383254535474006
-      }
-    ],
-    "selected_theta": [
-      1.401084327,
-      0.149746703,
-      -1.161290872,
-      1.938325454
-    ],
-    "selected_val_rmse": 0.12769610262145037,
-    "protected_test_rmse": 0.12306606328800082,
-    "protected_test_mae": 0.10665156359324747,
-    "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 27.63102111592692,
-    "intrinsic_entanglement_capability_mean": 4.773959005888173e-17,
-    "task_conditioned_entanglement_mean": 0.3539096070298457,
-    "task_conditioned_entanglement_median": 0.3480865734847425
-  },
-  {
-    "seed": 2,
-    "arm": "llm_open_loop",
-    "n_qubits": 3,
-    "selected_candidate_hash": "664177c44dd3e74b275b5dd66e1e89eb72a012438c83e3154bc6119172ab8712",
-    "selected_architecture_hash": "6f9ec11df7d62fc4f7bf0e4b03532eb14f3ab8d4937dee9821c44c3d3bbd0ff1",
-    "selected_operations": [
-      {
-        "gate": "RX",
-        "wires": [
-          2
-        ],
-        "theta": 2.7883077751706717
-      },
-      {
-        "gate": "RZ",
-        "wires": [
-          0
-        ],
-        "theta": 1.4563628659059495
-      },
-      {
-        "gate": "CRX",
-        "wires": [
-          0,
-          1
-        ],
-        "theta": -1.8718517185428052
-      },
-      {
-        "gate": "CRZ",
-        "wires": [
-          0,
-          2
-        ],
-        "theta": -2.3509298697495797
-      }
-    ],
-    "selected_theta": [
-      2.788307775,
-      1.456362866,
-      -1.871851719,
-      -2.35092987
-    ],
-    "selected_val_rmse": 0.20346517607782494,
-    "protected_test_rmse": 0.20337251432968717,
-    "protected_test_mae": 0.17697540603162062,
-    "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 5.303231192334444,
-    "intrinsic_entanglement_capability_mean": 1.021405182655144e-16,
-    "task_conditioned_entanglement_mean": 0.2845646340437031,
-    "task_conditioned_entanglement_median": 0.24098885349824806
-  },
-  {
-    "seed": 2,
-    "arm": "llm_closed_loop",
-    "n_qubits": 3,
-    "selected_candidate_hash": "d01dc7735b3faf08545c44c1901c38f91f925504567af5b3ea9949059ccafe9d",
-    "selected_architecture_hash": "b53073df320ed1bd636f4be2d8e6b7cccdceed4725105f9386cfd6de73a021d2",
-    "selected_operations": [
-      {
-        "gate": "RY",
-        "wires": [
-          2
-        ],
-        "theta": -0.30667384786970986
-      },
-      {
-        "gate": "RY",
-        "wires": [
-          1
-        ],
-        "theta": 1.2700276958340395
-      },
       {
         "gate": "H",
         "wires": [
-          2
+          1
         ],
         "theta": null
+      },
+      {
+        "gate": "CRY",
+        "wires": [
+          1,
+          0
+        ],
+        "theta": 1.571
+      },
+      {
+        "gate": "RY",
+        "wires": [
+          0
+        ],
+        "theta": 0.785
+      },
+      {
+        "gate": "CRZ",
+        "wires": [
+          0,
+          2
+        ],
+        "theta": -1.047
+      },
+      {
+        "gate": "RX",
+        "wires": [
+          0
+        ],
+        "theta": -0.524
       }
     ],
     "selected_theta": [
-      -0.306673848,
-      1.270027696
+      1.571,
+      0.785,
+      -1.047,
+      -0.524
     ],
-    "selected_val_rmse": 0.20346517607782486,
-    "protected_test_rmse": 0.2033725143296871,
-    "protected_test_mae": 0.17697540603162054,
+    "selected_val_rmse": 0.19439028691354068,
+    "protected_test_rmse": 0.20459745433835003,
+    "protected_test_mae": 0.1564640559521406,
     "classical_parameter_count": 0,
-    "intrinsic_expressibility_kl": 1.3282817122385981,
-    "intrinsic_entanglement_capability_mean": 6.628031457012184e-16,
-    "task_conditioned_entanglement_mean": 0.300502342027096,
-    "task_conditioned_entanglement_median": 0.24805804368830098
+    "intrinsic_expressibility_kl": 1.420784129456991,
+    "intrinsic_entanglement_capability_mean": 0.3779718698803046,
+    "task_conditioned_entanglement_mean": 0.47072029351659345,
+    "task_conditioned_entanglement_median": 0.42318684242712135
   }
 ]

@@ -1,24 +1,21 @@
-# MOCK/NON-LLM JOINT-SEARCH RUN
+# REAL-LLM JOINT-SEARCH RUN (OpenAI)
 
 # Free-Amplitude Fixed-Readout -- Joint Structure-and-Theta Search
 
 **Main mode: the LLM/sampler proposes both the circuit structure AND the numerical angles; there is NO optimizer and NO classical layer (`classical_parameter_count = 0`). The prediction is `mu_hat = (1 - <Z_0>) / 2`.** This is an integration/smoke demonstration, not a scientific performance claim.
 
-Elapsed: 0.4s.
+Elapsed: 24.3s.
 
 ## Selected candidate per arm/seed
 
 | seed | arm | val RMSE | test RMSE | test MAE | q params | body depth | classical params |
 |---|---|---|---|---|---|---|---|
 | 0 | Random | 0.1691 | 0.1741 | 0.1478 | 1 | 1 | 0 |
-| 0 | LLM Open-loop | 0.2005 | 0.2078 | 0.1835 | 3 | 3 | 0 |
-| 0 | LLM Closed-loop | 0.2005 | 0.2078 | 0.1835 | 1 | 1 | 0 |
+| 0 | LLM Open-loop | 0.1423 | 0.1528 | 0.1305 | 2 | 2 | 0 |
+| 0 | LLM Closed-loop | 0.1249 | 0.1285 | 0.0990 | 4 | 5 | 0 |
 | 1 | Random | 0.1987 | 0.2042 | 0.1639 | 4 | 5 | 0 |
-| 1 | LLM Open-loop | 0.2097 | 0.2045 | 0.1785 | 2 | 2 | 0 |
-| 1 | LLM Closed-loop | 0.1626 | 0.1578 | 0.1320 | 4 | 4 | 0 |
-| 2 | Random | 0.1277 | 0.1231 | 0.1067 | 4 | 4 | 0 |
-| 2 | LLM Open-loop | 0.2035 | 0.2034 | 0.1770 | 4 | 3 | 0 |
-| 2 | LLM Closed-loop | 0.2035 | 0.2034 | 0.1770 | 2 | 2 | 0 |
+| 1 | LLM Open-loop | 0.1471 | 0.1562 | 0.1163 | 4 | 5 | 0 |
+| 1 | LLM Closed-loop | 0.1944 | 0.2046 | 0.1565 | 4 | 5 | 0 |
 
 ## Cross-seed aggregates
 See `cross_seed_summary.json` for mean / median / std / IQR / 95% bootstrap CI of selected validation and test RMSE by arm.
@@ -78,5 +75,5 @@ Expressibility (fidelity KL vs Haar; lower = more expressible) and entanglement 
 L2 amplitude normalization removes overall multiplicative scale: two samples differing only by a positive amplitude factor A become the same normalized quantum state before noise. Only the peak location (mu) is targeted; absolute signal magnitude is not recoverable.
 
 ---
-# MOCK/NON-LLM JOINT-SEARCH RUN
+# REAL-LLM JOINT-SEARCH RUN (OpenAI)
 Mock / non-LLM demonstration; zero real API calls; not a scientific claim.

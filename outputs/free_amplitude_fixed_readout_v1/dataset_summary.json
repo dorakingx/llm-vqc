@@ -52,32 +52,5 @@
         "test_max": 7.48175129088877
       }
     }
-  },
-  "2": {
-    "train_val": {
-      "pre_normalization_l2_norm": {
-        "train_mean": 3.8275918936897764,
-        "train_min": 1.638301884772178,
-        "train_max": 6.882593343422867,
-        "val_mean": 3.599726737588482,
-        "val_min": 1.649615901373973,
-        "val_max": 6.9021349195919255
-      },
-      "resolution": {
-        "feature_count": 8,
-        "grid_spacing": 0.14285714285714285,
-        "sigma_min": 0.08,
-        "sigma_min_over_grid_spacing": 0.56,
-        "warning": true,
-        "message": "sigma_min=0.08 is only 0.56x the grid spacing (0.1429); narrow peaks may not be resolvable on this grid."
-      }
-    },
-    "test": {
-      "pre_normalization_l2_norm": {
-        "test_mean": 3.8192757965336694,
-        "test_min": 1.4328697747066725,
-        "test_max": 7.577864532739665
-      }
-    }
   }
 }
