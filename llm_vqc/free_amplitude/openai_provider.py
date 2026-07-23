@@ -140,14 +140,25 @@ class CompleteCandidateOpenAIProvider:
         model: str,
         max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
         request_timeout_s: float = DEFAULT_REQUEST_TIMEOUT_S,
+        min_seconds_between_calls: float = 3.0,
     ) -> None:
         self.model_name = model
         self.max_output_tokens = max_output_tokens
         self.request_timeout_s = request_timeout_s
+        # Client-side pacing: back-to-back requests at 25+ calls tripped a
+        # rate limit in the seeds=5 first attempt; spacing requests keeps a
+        # sustained run under typical RPM windows instead of relying on
+        # retries after the fact.
+        self.min_seconds_between_calls = min_seconds_between_calls
+        self._last_call_at = 0.0
         self.outbound_attempts = 0
         self._client = OpenAI(api_key=api_key, timeout=request_timeout_s, max_retries=0)
 
     def complete(self, system_prompt: str, user_prompt: str, temperature: float) -> LLMResponse:
+        pace_wait = self.min_seconds_between_calls - (time.monotonic() - self._last_call_at)
+        if pace_wait > 0:
+            time.sleep(pace_wait)
+        self._last_call_at = time.monotonic()
         start = time.monotonic()
         self.outbound_attempts += 1
         response = self._client.chat.completions.create(
@@ -207,12 +218,20 @@ class BudgetEnforcedProvider:
         return response
 
 
-#: Manual-retry policy defaults (user-requested): one retry per logical
-#: call on a TRANSIENT failure, after a short backoff. Cap violations
-#: (call-count / dollar-budget) are never retried -- they are limits, not
-#: transients.
-DEFAULT_MAX_MANUAL_RETRIES = 1
-DEFAULT_RETRY_BACKOFF_SECONDS = 2.0
+#: Manual-retry policy (user-requested): up to two retries per logical
+#: call on a TRANSIENT failure. Rate-limit errors get a LONG linear
+#: backoff (an RPM/TPM window needs tens of seconds to clear -- a 2s nap
+#: does nothing, as the seeds=5 first attempt demonstrated); other
+#: transients get a short one. Cap violations (call-count /
+#: dollar-budget) are never retried -- they are limits, not transients.
+DEFAULT_MAX_MANUAL_RETRIES = 2
+DEFAULT_RETRY_BACKOFF_SECONDS = 3.0
+DEFAULT_RATE_LIMIT_BACKOFF_SECONDS = 15.0
+
+
+def _is_rate_limit_error(exc: Exception) -> bool:
+    name = type(exc).__name__
+    return "RateLimit" in name or "429" in str(exc)
 
 
 class RetryingProvider:
@@ -233,11 +252,13 @@ class RetryingProvider:
         inner: LLMProvider,
         max_manual_retries: int = DEFAULT_MAX_MANUAL_RETRIES,
         backoff_seconds: float = DEFAULT_RETRY_BACKOFF_SECONDS,
+        rate_limit_backoff_seconds: float = DEFAULT_RATE_LIMIT_BACKOFF_SECONDS,
     ) -> None:
         self.model_name = inner.model_name
         self._inner = inner
         self.max_manual_retries = max_manual_retries
         self.backoff_seconds = backoff_seconds
+        self.rate_limit_backoff_seconds = rate_limit_backoff_seconds
         self.retried_logical_calls = 0
 
     def complete(self, system_prompt: str, user_prompt: str, temperature: float) -> LLMResponse:
@@ -254,6 +275,11 @@ class RetryingProvider:
                 last_exc = exc
                 if attempt < self.max_manual_retries:
                     self.retried_logical_calls += 1
-                    time.sleep(self.backoff_seconds)
+                    if _is_rate_limit_error(exc):
+                        # Linear ramp: 15s, then 30s -- enough for an RPM
+                        # window to clear before the next attempt.
+                        time.sleep(self.rate_limit_backoff_seconds * (attempt + 1))
+                    else:
+                        time.sleep(self.backoff_seconds)
         assert last_exc is not None
         raise last_exc

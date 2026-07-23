@@ -353,6 +353,10 @@ def _write_cross_seed_summary(output_dir, arm_outcomes):
             "n_seeds": len(arm_out),
             "selected_validation_rmse": _agg_stats(selected_val),
             "selected_test_rmse": _agg_stats(selected_test),
+            # Honest per-seed stop reasons (None = budget exhausted normally):
+            # an arm that died on an API error is visibly incomplete here,
+            # never silently averaged away.
+            "stop_reasons": {str(o.seed): o.stop_reason for o in arm_out},
         }
     (output_dir / "cross_seed_summary.json").write_text(json.dumps(summary, indent=2))
 

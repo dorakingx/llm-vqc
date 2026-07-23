@@ -285,9 +285,10 @@ def main() -> None:
         for outcome in arm_outcomes:
             if outcome.seed == seed:
                 evaluate_protected_test_main(outcome, readout_qubit, test_split)
+                stop = f" stop={outcome.stop_reason}" if outcome.stop_reason else ""
                 print(
                     f"[seed={seed} {outcome.arm}] sel_val="
-                    f"{outcome.selected_val_rmse} test={outcome.protected_test_rmse}"
+                    f"{outcome.selected_val_rmse} test={outcome.protected_test_rmse}{stop}"
                 )
 
     elapsed = time.monotonic() - t_start
