@@ -38,7 +38,10 @@ from openai import OpenAI
 from llm_vqc.llm.budget import LLMApiBudget
 from llm_vqc.llm.provider import LLMProvider, LLMResponse
 
-DEFAULT_MAX_OUTPUT_TOKENS = 300
+#: Generous headroom: reasoning-family models spend completion tokens on
+#: internal reasoning before the JSON; a tight cap would silently return
+#: an empty message. The structured JSON itself is ~100 tokens.
+DEFAULT_MAX_OUTPUT_TOKENS = 2000
 DEFAULT_REQUEST_TIMEOUT_S = 45.0
 #: Conservative per-call charge against the dollar cap -- far above the
 #: true cost of a ~1500-token mini-model call, so the cap can only bind
@@ -155,21 +158,23 @@ class CompleteCandidateOpenAIProvider:
         self._client = OpenAI(api_key=api_key, timeout=request_timeout_s, max_retries=0)
 
     def complete(self, system_prompt: str, user_prompt: str, temperature: float) -> LLMResponse:
+        from openai import BadRequestError
+
         pace_wait = self.min_seconds_between_calls - (time.monotonic() - self._last_call_at)
         if pace_wait > 0:
             time.sleep(pace_wait)
         self._last_call_at = time.monotonic()
         start = time.monotonic()
         self.outbound_attempts += 1
-        response = self._client.chat.completions.create(
-            model=self.model_name,
-            messages=[
+        kwargs = {
+            "model": self.model_name,
+            "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=temperature,
-            max_completion_tokens=self.max_output_tokens,
-            response_format={
+            "temperature": temperature,
+            "max_completion_tokens": self.max_output_tokens,
+            "response_format": {
                 "type": "json_schema",
                 "json_schema": {
                     "name": "complete_candidate",
@@ -177,8 +182,21 @@ class CompleteCandidateOpenAIProvider:
                     "schema": COMPLETE_CANDIDATE_STRICT_SCHEMA,
                 },
             },
-            timeout=self.request_timeout_s,
-        )
+            "timeout": self.request_timeout_s,
+        }
+        try:
+            response = self._client.chat.completions.create(**kwargs)
+        except BadRequestError as exc:
+            # Model-compat adaptation, not a billed retry: some reasoning
+            # models reject a non-default `temperature`. A 400 is rejected
+            # before generation; re-issue once without the offending
+            # parameter, still one logical call.
+            if "temperature" in str(exc):
+                self.outbound_attempts += 1
+                kwargs.pop("temperature", None)
+                response = self._client.chat.completions.create(**kwargs)
+            else:
+                raise
         latency = time.monotonic() - start
 
         raw_text = response.choices[0].message.content or ""
