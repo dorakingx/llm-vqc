@@ -419,9 +419,11 @@ def _fig_arm_comparison_summary(output_dir, arm_outcomes):
     ax.set_xticks(x)
     ax.set_xticklabels([_label(a) for a in _ARM_ORDER], fontsize=13, fontweight="bold")
     ax.set_ylabel("RMSE")
-    ax.set_title("Method comparison: selected-candidate RMSE (mean ± 95% CI; dots = seeds)")
+    ax.set_title("Selected-candidate RMSE by method (mean ± 95% CI)")
+    # 35% headroom so value labels, CI whiskers, and the legend never collide.
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.35)
     _annotate_lower_better(ax)
-    ax.legend(loc="upper left")
+    ax.legend(loc="upper center", ncols=2)
     _save_fig(fig, output_dir, "arm_comparison_summary")
     _save_source_csv(output_dir, "arm_comparison_summary",
                      ["arm", "seed", "metric", "value"], rows)
@@ -528,8 +530,10 @@ def _fig_test_rmse_by_arm(output_dir, arm_outcomes):
     ax.set_xticklabels([_label(a) for a in _ARM_ORDER], fontsize=13, fontweight="bold")
     ax.set_ylabel("selected protected-test RMSE")
     ax.set_title("Final comparison: protected-test RMSE (mean ± 95% CI)")
+    # Headroom so value labels, whiskers, and the legend never collide.
+    ax.set_ylim(0, ax.get_ylim()[1] * 1.3)
     _annotate_lower_better(ax)
-    ax.legend(loc="upper left")
+    ax.legend(loc="upper center")
     _save_fig(fig, output_dir, "test_rmse_by_arm")
     _save_source_csv(output_dir, "test_rmse_by_arm", ["arm", "seed", "test_rmse"], rows)
 

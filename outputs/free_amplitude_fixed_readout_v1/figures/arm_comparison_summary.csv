@@ -1,0 +1,13 @@
+arm,seed,metric,value
+random,0,Validation RMSE,0.16905486301990255
+random,1,Validation RMSE,0.1986696252605835
+llm_open_loop,0,Validation RMSE,0.14230177423033788
+llm_open_loop,1,Validation RMSE,0.14712054294239416
+llm_closed_loop,0,Validation RMSE,0.12485339405861401
+llm_closed_loop,1,Validation RMSE,0.19439028691354068
+random,0,Test RMSE,0.17405107268471467
+random,1,Test RMSE,0.20418801186995908
+llm_open_loop,0,Test RMSE,0.15283678020506994
+llm_open_loop,1,Test RMSE,0.15619934406657615
+llm_closed_loop,0,Test RMSE,0.12850328440706943
+llm_closed_loop,1,Test RMSE,0.20459745433835003
