@@ -19,7 +19,10 @@ import json
 
 import numpy as np
 
-from llm_vqc.free_amplitude.sampler import sample_free_gate_proposal
+from llm_vqc.free_amplitude.sampler import (
+    sample_complete_candidate,
+    sample_free_gate_proposal,
+)
 from llm_vqc.llm.provider import LLMResponse
 
 
@@ -68,6 +71,31 @@ class MockFreeGateProvider:
         stable = _stable_seed(str(self.seed), system_prompt, user_prompt, str(temperature))
         rng = np.random.default_rng(stable)
         proposal = sample_free_gate_proposal(rng, self.n_qubits, self.max_gates)
+        raw_text = json.dumps(proposal.model_dump())
+        return LLMResponse(
+            raw_text=raw_text, model=self.model_name,
+            input_tokens=len(system_prompt), output_tokens=len(raw_text),
+            estimated_cost_usd=0.0, latency_seconds=0.0,
+        )
+
+
+class MockCompleteCandidateProvider:
+    """Main-mode mock: deterministically emits a COMPLETE candidate
+    (structure + `theta`), sampled the same way the main-mode random arm
+    does. Offline, zero-cost, a pure function of the prompt text (not a
+    call counter) so resume determinism holds."""
+
+    model_name = "mock-complete-candidate-provider-v1"
+
+    def __init__(self, seed: int, n_qubits: int, max_gates: int = 5) -> None:
+        self.seed = seed
+        self.n_qubits = n_qubits
+        self.max_gates = max_gates
+
+    def complete(self, system_prompt: str, user_prompt: str, temperature: float) -> LLMResponse:
+        stable = _stable_seed(str(self.seed), system_prompt, user_prompt, str(temperature))
+        rng = np.random.default_rng(stable)
+        proposal = sample_complete_candidate(rng, self.n_qubits, self.max_gates)
         raw_text = json.dumps(proposal.model_dump())
         return LLMResponse(
             raw_text=raw_text, model=self.model_name,

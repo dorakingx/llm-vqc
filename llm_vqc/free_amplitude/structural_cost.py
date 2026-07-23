@@ -82,20 +82,26 @@ def _total_decomposed_cost(ir: CircuitIR) -> tuple[IntOrUnavailable, IntOrUnavai
 
 
 def _searched_body_depth(ir: CircuitIR) -> IntOrUnavailable:
-    """Depth of the searched body ALONE (excluding state preparation) --
-    computed by compiling a copy of `ir` with a trivial (angle, single-RY,
-    reupload=0 on wire 0) encoding standing in for amplitude, purely to
-    isolate the body's own depth via the same Qiskit depth calculation
-    `circuit_cost_summary` otherwise uses for the full circuit. Reported as
-    `"unavailable"` rather than guessed if this substitution fails."""
-    try:
-        from llm_vqc.ir.schema import EncodingSpec
+    """Depth of the searched body ALONE -- built from ONLY the body's gate
+    instructions, with NO encoding of any kind.
 
-        body_only_ir = ir.model_copy(
-            update={"encoding": EncodingSpec(type="angle", gate="RY", wires=[0], reupload=0)}
-        )
-        cost = circuit_cost_summary(body_only_ir)
-        return cost.depth
+    The previous implementation substituted an `angle RY` encoding on wire
+    0 to "isolate" the body; that substitution actually ADDED an RY gate on
+    wire 0 to the compiled circuit, inflating the reported body depth (and
+    fabricating a dependency on wire 0). This version applies only
+    `program.body` to an otherwise-empty Qiskit circuit and takes its depth
+    -- the true depth of the searched gates in isolation. `"unavailable"`
+    (never a guess) if Qiskit is not available.
+    """
+    try:
+        from qiskit import QuantumCircuit
+
+        from llm_vqc.ir.compiler_qiskit import _apply_body
+
+        program = build_program(ir)
+        circuit = QuantumCircuit(program.n_qubits)
+        _apply_body(circuit, program, [0.0] * program.num_parameters)
+        return circuit.depth()
     except Exception:
         return "unavailable"
 

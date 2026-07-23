@@ -107,3 +107,45 @@ def sample_free_gate_proposal(
         f"failed to sample a valid free-gate proposal for n_qubits={n_qubits} "
         f"after {max_attempts} attempts"
     )
+
+
+def sample_complete_candidate(
+    rng: np.random.Generator,
+    n_qubits: int,
+    max_gates: int = MAX_OPERATIONS,
+    max_attempts: int = DEFAULT_MAX_SAMPLE_ATTEMPTS,
+):
+    """Draw one valid **complete** candidate for the main mode: a random
+    valid structure PLUS a random angle `theta ~ Uniform[-pi, pi]` for each
+    parameterized gate (`H` gets none). Rejection-sampled against
+    `validate_complete_candidate` -- the identical check every complete
+    candidate goes through.
+    """
+    # Imported here (not at module top) to avoid a candidate_schema ->
+    # sampler import cycle at load time.
+    from llm_vqc.free_amplitude.candidate_schema import (
+        CompleteCandidateProposal,
+        CompleteGateOperation,
+        validate_complete_candidate,
+    )
+    from llm_vqc.free_amplitude.schema import PARAMETERIZED_GATES
+
+    actions = _enumerate_actions(n_qubits)
+    for _ in range(max_attempts):
+        length = int(rng.integers(1, max_gates + 1))
+        indices = rng.integers(0, len(actions), size=length)
+        operations = []
+        for i in indices:
+            gate, wires = actions[i]
+            theta = (
+                float(rng.uniform(-np.pi, np.pi)) if gate in PARAMETERIZED_GATES else None
+            )
+            operations.append(CompleteGateOperation(gate=gate, wires=list(wires), theta=theta))
+        candidate = CompleteCandidateProposal(n_qubits=n_qubits, operations=operations)
+        result = validate_complete_candidate(candidate, expected_n_qubits=n_qubits)
+        if result.valid:
+            return candidate
+    raise FreeGateSamplingError(
+        f"failed to sample a valid complete candidate for n_qubits={n_qubits} "
+        f"after {max_attempts} attempts"
+    )

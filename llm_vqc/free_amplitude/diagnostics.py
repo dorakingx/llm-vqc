@@ -41,12 +41,12 @@ NEAR_ZERO_GRADIENT_ATOL = 1e-4
 CONSTANT_PREDICTION_STD_ATOL = 1e-9
 
 
-def compute_q0_causal_cone_indices(
-    proposal: FreeGateProposal, readout_qubit: int
-) -> set[int]:
-    """Backward-lightcone operation indices: which operations could
-    possibly influence the `readout_qubit` expectation value, for *any*
-    parameter assignment.
+def compute_q0_causal_cone_indices_from_ops(operations, readout_qubit: int) -> set[int]:
+    """Backward-lightcone operation indices over a generic operations list
+    (each element having `.gate` and `.wires`) -- shared by both the
+    structure-only `FreeGateProposal` and the main-mode
+    `CompleteCandidateProposal`, whose operations differ only by an extra
+    `theta` field that is irrelevant to the causal structure.
 
     Standard reverse-time lightcone construction: start with the single
     relevant wire (the readout), scan operations from last to first, and
@@ -56,12 +56,19 @@ def compute_q0_causal_cone_indices(
     """
     relevant_wires = {readout_qubit}
     causal_indices: set[int] = set()
-    for i in reversed(range(len(proposal.operations))):
-        op = proposal.operations[i]
+    for i in reversed(range(len(operations))):
+        op = operations[i]
         if set(op.wires) & relevant_wires:
             causal_indices.add(i)
             relevant_wires |= set(op.wires)
     return causal_indices
+
+
+def compute_q0_causal_cone_indices(
+    proposal: FreeGateProposal, readout_qubit: int
+) -> set[int]:
+    """Structure-only convenience wrapper -- see `_from_ops`."""
+    return compute_q0_causal_cone_indices_from_ops(proposal.operations, readout_qubit)
 
 
 @dataclass
@@ -77,10 +84,10 @@ class CausalConeSummary:
         return self.parameter_count_in_causal_cone / self.total_quantum_parameter_count
 
 
-def causal_cone_summary(proposal: FreeGateProposal, readout_qubit: int) -> CausalConeSummary:
-    causal_indices = compute_q0_causal_cone_indices(proposal, readout_qubit)
+def causal_cone_summary_from_ops(operations, readout_qubit: int) -> CausalConeSummary:
+    causal_indices = compute_q0_causal_cone_indices_from_ops(operations, readout_qubit)
     parameterized_positions = [
-        i for i, op in enumerate(proposal.operations) if op.gate in PARAMETERIZED_GATES
+        i for i, op in enumerate(operations) if op.gate in PARAMETERIZED_GATES
     ]
     in_cone = sum(1 for i in parameterized_positions if i in causal_indices)
     return CausalConeSummary(
@@ -88,6 +95,10 @@ def causal_cone_summary(proposal: FreeGateProposal, readout_qubit: int) -> Causa
         parameter_count_in_causal_cone=in_cone,
         total_quantum_parameter_count=len(parameterized_positions),
     )
+
+
+def causal_cone_summary(proposal: FreeGateProposal, readout_qubit: int) -> CausalConeSummary:
+    return causal_cone_summary_from_ops(proposal.operations, readout_qubit)
 
 
 @dataclass
