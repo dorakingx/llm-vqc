@@ -1,0 +1,4 @@
+# Random seed0
+amplitude encoding on all wires (state preparation), then:
+  CRX(2, 0) theta=0.6155
+measure Z on qubit 0; mu_hat = (1 - <Z>) / 2

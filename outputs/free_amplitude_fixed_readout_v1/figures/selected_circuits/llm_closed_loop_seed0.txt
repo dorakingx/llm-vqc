@@ -1,0 +1,5 @@
+# LLM Closed-loop seed0
+amplitude encoding on all wires (state preparation), then:
+  H(1)
+  CRZ(2, 0) theta=0.1658
+measure Z on qubit 0; mu_hat = (1 - <Z>) / 2

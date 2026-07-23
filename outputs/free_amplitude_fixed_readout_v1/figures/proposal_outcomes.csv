@@ -1,0 +1,13 @@
+arm,category,count
+random,valid_unique,12
+llm_open_loop,valid_unique,3
+llm_closed_loop,valid_unique,12
+random,invalid,0
+llm_open_loop,invalid,0
+llm_closed_loop,invalid,0
+random,duplicate,0
+llm_open_loop,duplicate,9
+llm_closed_loop,duplicate,0
+random,failed,0
+llm_open_loop,failed,0
+llm_closed_loop,failed,0
