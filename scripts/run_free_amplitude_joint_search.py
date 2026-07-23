@@ -48,8 +48,18 @@ from llm_vqc.free_amplitude.tasks import (  # noqa: E402
 
 WALL_CLOCK_LIMIT_S = 600
 MOCK_RUN_LABEL = "MOCK/NON-LLM JOINT-SEARCH RUN"
+REAL_RUN_LABEL = "REAL-LLM JOINT-SEARCH RUN (OpenAI)"
 MOCK_RUN_LABEL_EXTRA = "NOT A REAL LLM COMPARISON. NOT A SCIENTIFIC PERFORMANCE CLAIM."
+REAL_RUN_LABEL_EXTRA = (
+    "Real OpenAI proposals; n is small -- an integration demonstration, "
+    "NOT a statistically powered performance claim."
+)
 _MOCK_SCRIPTED_ARMS = {"random", "scripted_open_loop", "scripted_closed_loop"}
+_REAL_ARMS = {"real_open_loop", "real_closed_loop"}
+#: Hard cap on total real, billed LLM calls across ALL real arms and seeds
+#: in one execution (seeds x arms x budget nominal, plus headroom for
+#: invalid proposals that consume an LLM call but no search budget).
+MAX_REAL_LLM_CALLS = 24
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -85,17 +95,22 @@ def validate_config(args: argparse.Namespace, profile: AmplitudeDatasetProfile) 
     if not (1 <= args.max_gates <= 5):
         raise ConfigError(f"max_gates ({args.max_gates}) must satisfy 1 <= max_gates <= 5")
     for arm in args.arms:
-        if arm not in _MOCK_SCRIPTED_ARMS:
+        if arm in _MOCK_SCRIPTED_ARMS:
+            continue
+        if arm in _REAL_ARMS:
+            # Real, billed API arms may only run from a CLEAN worktree, so
+            # the recorded execution_code_sha is the true implementation.
             provenance = collect_provenance(_REPO_ROOT)
             if provenance["execution_git_dirty"]:
                 raise ConfigError(
-                    f"arm {arm!r} is not a recognized mock/scripted arm and the worktree is "
-                    "dirty -- real API execution is blocked from a dirty worktree"
+                    f"real-API arm {arm!r} is blocked from a dirty worktree -- commit "
+                    "the implementation first, then run from that clean SHA"
                 )
-            raise ConfigError(
-                f"unknown arm {arm!r}; this implementation pass supports only: "
-                f"{sorted(_MOCK_SCRIPTED_ARMS)}"
-            )
+            continue
+        raise ConfigError(
+            f"unknown arm {arm!r}; supported: "
+            f"{sorted(_MOCK_SCRIPTED_ARMS | _REAL_ARMS)}"
+        )
 
 
 def main() -> None:
@@ -151,6 +166,42 @@ def main() -> None:
         sys.exit(1)
 
     provenance = collect_provenance(_REPO_ROOT)
+
+    # Real-API setup (only when a real arm was requested): load the local
+    # gitignored .env, run preflight (key + explicit model + positive dollar
+    # cap), and build ONE shared budget-enforced, call-capped provider chain
+    # used by every real arm across every seed. Imported lazily so mock runs
+    # never touch the OpenAI SDK.
+    use_real = any(arm in _REAL_ARMS for arm in args.arms)
+    shared_real_provider = None
+    real_model = None
+    real_budget = None
+    if use_real:
+        from dotenv import load_dotenv
+
+        from llm_vqc.free_amplitude.openai_provider import (
+            BudgetEnforcedProvider,
+            CompleteCandidateOpenAIProvider,
+            RealRunPreflightError,
+            preflight_real_run,
+        )
+        from llm_vqc.llm.openai_provider import CallCountLimitedProvider
+
+        load_dotenv(_REPO_ROOT / ".env")
+        import os
+
+        try:
+            real_cfg = preflight_real_run(os.environ)
+        except RealRunPreflightError as exc:
+            print(f"BLOCKED: {exc}")
+            sys.exit(1)
+        real_model = real_cfg.model
+        real_budget = real_cfg.budget
+        inner = CompleteCandidateOpenAIProvider(api_key=real_cfg.api_key, model=real_cfg.model)
+        shared_real_provider = CallCountLimitedProvider(
+            BudgetEnforcedProvider(inner, real_cfg.budget), max_calls=MAX_REAL_LLM_CALLS
+        )
+
     training_config_reproducibility = {
         "dataset_profile": profile.name, "n_qubits": n_qubits, "budget": args.budget,
         "max_gates": args.max_gates, "readout_qubit": readout_qubit, "mode": "main_joint_search",
@@ -166,11 +217,18 @@ def main() -> None:
         print(f"BLOCKED: {exc}")
         sys.exit(1)
 
+    run_label = REAL_RUN_LABEL if use_real else MOCK_RUN_LABEL
+    run_label_extra = REAL_RUN_LABEL_EXTRA if use_real else MOCK_RUN_LABEL_EXTRA
     print(
-        f"{MOCK_RUN_LABEL}\n{MOCK_RUN_LABEL_EXTRA}\n"
+        f"{run_label}\n{run_label_extra}\n"
         f"profile={profile.name} n_qubits={n_qubits} feature_count={feature_count} "
         f"readout_qubit={readout_qubit} max_gates={args.max_gates} budget={args.budget} "
         f"seeds={args.seeds} arms={args.arms}"
+        + (
+            f" model={real_model} dollar_cap=${real_budget.cap_usd:.2f} "
+            f"max_real_calls={MAX_REAL_LLM_CALLS}"
+            if use_real else ""
+        )
     )
 
     task = AmplitudeGaussianPeakTask(profile)
@@ -204,6 +262,18 @@ def main() -> None:
                 provider, deadline, feature_count, args.max_gates,
             )
             arm_outcomes.append(outcome)
+        if "real_open_loop" in args.arms:
+            outcome = run_open_loop_arm_main(
+                seed, task_name, n_qubits, readout_qubit, train_val, args.budget, store,
+                shared_real_provider, deadline, feature_count, args.max_gates,
+            )
+            arm_outcomes.append(outcome)
+        if "real_closed_loop" in args.arms:
+            outcome = run_closed_loop_arm_main(
+                seed, task_name, n_qubits, readout_qubit, train_val, args.budget, store,
+                shared_real_provider, deadline, feature_count, args.max_gates,
+            )
+            arm_outcomes.append(outcome)
 
         for outcome in arm_outcomes:
             if outcome.seed == seed:
@@ -220,14 +290,30 @@ def main() -> None:
         arm_outcomes=arm_outcomes, dataset_diagnostics_by_seed=dataset_diagnostics_by_seed,
         search_space_report=search_space_size_report(n_qubits, args.max_gates),
         diagnostics_cache=diagnostics_cache, task=task, readout_qubit=readout_qubit,
-        elapsed_seconds=elapsed, run_label=MOCK_RUN_LABEL,
+        elapsed_seconds=elapsed, run_label=run_label,
     )
     store.close()
 
-    print(f"\n{MOCK_RUN_LABEL}")
-    print(MOCK_RUN_LABEL_EXTRA)
+    print(f"\n{run_label}")
+    print(run_label_extra)
     print("Mode: main joint structure-and-theta search (NO optimizer, NO classical layers).")
-    print("Zero real API calls were made.")
+    if use_real:
+        total_tokens = sum(
+            (c.input_tokens or 0) + (c.output_tokens or 0)
+            for o in arm_outcomes for c in o.candidates
+        )
+        total_latency = sum(
+            c.api_latency_seconds or 0.0 for o in arm_outcomes for c in o.candidates
+        )
+        successful = sum(o.api_successful_calls for o in arm_outcomes)
+        failed = sum(o.api_failed_calls for o in arm_outcomes)
+        print(
+            f"Real LLM calls: {successful} ok / {failed} failed "
+            f"(cap {MAX_REAL_LLM_CALLS}); total tokens: {total_tokens}; "
+            f"total API latency: {total_latency:.2f}s; model: {real_model}"
+        )
+    else:
+        print("Zero real API calls were made.")
     print(f"Total elapsed: {elapsed:.1f}s")
 
 

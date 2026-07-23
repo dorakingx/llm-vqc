@@ -223,7 +223,14 @@ def test_closed_loop_feedback_prompt_never_mentions_test():
 
 
 def test_free_amplitude_package_contains_no_network_or_sdk_imports():
+    """No module may import a network/SDK library EXCEPT `openai_provider.py`,
+    whose entire purpose is the explicitly-authorized real-API path (still
+    gated by preflight: key + explicit model + positive LLM_API_BUDGET_USD).
+    Same sanctioned-exception pattern as `llm_vqc/llm`'s equivalent test.
+    It must also stay import-isolated: no other module in the package may
+    import it, so mock runs and tests can never touch the SDK by accident."""
     forbidden = {"requests", "httpx", "urllib", "urllib2", "socket", "openai", "anthropic"}
+    sanctioned_exceptions = {"openai_provider.py"}
     pkg = pathlib.Path("llm_vqc/free_amplitude")
     for path in pkg.glob("*.py"):
         tree = ast.parse(path.read_text())
@@ -233,7 +240,11 @@ def test_free_amplitude_package_contains_no_network_or_sdk_imports():
                 targets.append((node.module or "").split(".")[0])
             elif isinstance(node, ast.Import):
                 targets.extend(a.name.split(".")[0] for a in node.names)
+        if path.name in sanctioned_exceptions:
+            continue
         assert not (set(targets) & forbidden), (path.name, targets)
+        # And no offline module may import the sanctioned real-API module.
+        assert "openai_provider" not in path.read_text() or path.name == "__init__.py", path.name
 
 
 # --- no raw responses/secrets in written outputs -----------------------------
