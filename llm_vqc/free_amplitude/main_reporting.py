@@ -42,6 +42,44 @@ _ARM_LABELS = {
     "llm_closed_loop": "LLM Closed-loop",
 }
 _ARM_ORDER = ["random", "llm_open_loop", "llm_closed_loop"]
+#: One fixed color per method across EVERY figure, so a reader can track a
+#: method between slides without re-reading legends: Random = neutral gray,
+#: Open-loop = blue, Closed-loop = red.
+_ARM_COLORS = {
+    "random": "#7f7f7f",
+    "llm_open_loop": "#1f77b4",
+    "llm_closed_loop": "#d62728",
+}
+
+
+def _apply_slide_style() -> None:
+    """Slide-ready defaults: large readable fonts, bold titles, no chart
+    clutter -- applied once before any figure is drawn."""
+    plt.rcParams.update({
+        "font.size": 13,
+        "axes.titlesize": 15,
+        "axes.titleweight": "bold",
+        "axes.labelsize": 13,
+        "axes.spines.top": False,
+        "axes.spines.right": False,
+        "legend.fontsize": 11,
+        "legend.frameon": False,
+        "xtick.labelsize": 12,
+        "ytick.labelsize": 12,
+        "savefig.dpi": 200,
+        "axes.grid": True,
+        "grid.alpha": 0.25,
+        "grid.linestyle": "--",
+    })
+
+
+def _annotate_lower_better(ax, axis: str = "y") -> None:
+    """A single glance-parseable cue that smaller values win."""
+    text = "↓ lower is better" if axis == "y" else "← lower is better"
+    ax.text(
+        0.99, 0.98, text, transform=ax.transAxes, ha="right", va="top",
+        fontsize=11, style="italic", color="#444444",
+    )
 
 
 def _now_iso() -> str:
@@ -107,6 +145,7 @@ def write_all_outputs(
 ) -> None:
     (output_dir / "figures").mkdir(parents=True, exist_ok=True)
     (output_dir / "figures" / "selected_circuits").mkdir(parents=True, exist_ok=True)
+    _apply_slide_style()
 
     # Compute intrinsic diagnostics for every unique architecture_hash.
     arch_diag = _compute_architecture_diagnostics(
@@ -125,7 +164,8 @@ def write_all_outputs(
     _write_architecture_diagnostics_csv(output_dir, arch_diag)
     _write_cross_seed_summary(output_dir, arm_outcomes)
 
-    # 15 figures.
+    # Headline slide figure + the 15 required figures.
+    _fig_arm_comparison_summary(output_dir, arm_outcomes)
     _fig_best_so_far_rmse(output_dir, arm_outcomes)
     _fig_validation_rmse_distribution(output_dir, arm_outcomes)
     _fig_test_rmse_by_arm(output_dir, arm_outcomes)
@@ -328,33 +368,105 @@ def _evaluated(outcome: MainArmRunOutcome):
 # --- figures (1-15) ----------------------------------------------------------
 
 
-def _fig_best_so_far_rmse(output_dir, arm_outcomes):
-    """1. proposal index vs best-so-far validation RMSE by arm/seed."""
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+def _fig_arm_comparison_summary(output_dir, arm_outcomes):
+    """Headline slide figure: selected validation & test RMSE per method as
+    grouped bars with 95% bootstrap-CI whiskers, per-seed dots, and value
+    labels -- one glance shows which method won and by how much."""
+    fig, ax = plt.subplots(figsize=(9, 5.5))
     rows = []
-    for outcome in arm_outcomes:
-        xs = [c.proposal_index for c in outcome.candidates]
-        ys = [c.best_so_far_val_rmse for c in outcome.candidates]
-        if not xs:
-            continue
-        ax.plot(xs, ys, marker="o", label=f"{_label(outcome.arm)} s{outcome.seed}")
-        for x, y in zip(xs, ys, strict=True):
-            rows.append({"arm": outcome.arm, "seed": outcome.seed, "proposal_index": x,
-                         "best_so_far_val_rmse": y})
+    x = np.arange(len(_ARM_ORDER))
+    width = 0.36
+    for j, (metric, attr, hatch) in enumerate([
+        ("Validation RMSE", "selected_val_rmse", None),
+        ("Test RMSE", "protected_test_rmse", "//"),
+    ]):
+        means, err_lo, err_hi, colors = [], [], [], []
+        for arm in _ARM_ORDER:
+            vals = [
+                getattr(o, attr) for o in arm_outcomes
+                if o.arm == arm and getattr(o, attr) is not None
+            ]
+            mean = float(np.mean(vals)) if vals else 0.0
+            lo, hi = _bootstrap_ci(vals) if vals else (mean, mean)
+            means.append(mean)
+            err_lo.append(mean - (lo if lo is not None else mean))
+            err_hi.append((hi if hi is not None else mean) - mean)
+            colors.append(_ARM_COLORS[arm])
+            for o in arm_outcomes:
+                if o.arm == arm and getattr(o, attr) is not None:
+                    rows.append({"arm": arm, "seed": o.seed, "metric": metric,
+                                 "value": getattr(o, attr)})
+        offset = (j - 0.5) * width
+        bars = ax.bar(
+            x + offset, means, width, yerr=[err_lo, err_hi], capsize=5,
+            color=colors, alpha=1.0 if j == 0 else 0.55, hatch=hatch,
+            edgecolor="white", linewidth=0.8,
+            label=metric,
+        )
+        ax.bar_label(bars, fmt="%.3f", padding=3, fontsize=11, fontweight="bold")
+        # per-seed dots over each bar
+        for i, arm in enumerate(_ARM_ORDER):
+            vals = [
+                getattr(o, attr) for o in arm_outcomes
+                if o.arm == arm and getattr(o, attr) is not None
+            ]
+            ax.scatter([x[i] + offset] * len(vals), vals, s=22, color="black",
+                       alpha=0.55, zorder=3)
+    ax.set_xticks(x)
+    ax.set_xticklabels([_label(a) for a in _ARM_ORDER], fontsize=13, fontweight="bold")
+    ax.set_ylabel("RMSE")
+    ax.set_title("Method comparison: selected-candidate RMSE (mean ± 95% CI; dots = seeds)")
+    _annotate_lower_better(ax)
+    ax.legend(loc="upper left")
+    _save_fig(fig, output_dir, "arm_comparison_summary")
+    _save_source_csv(output_dir, "arm_comparison_summary",
+                     ["arm", "seed", "metric", "value"], rows)
+
+
+def _fig_best_so_far_rmse(output_dir, arm_outcomes):
+    """1. proposal index vs best-so-far validation RMSE: one BOLD mean line
+    per method (fixed method color) + thin per-seed traces behind it."""
+    fig, ax = plt.subplots(figsize=(9, 5.5))
+    rows = []
+    for arm in _ARM_ORDER:
+        color = _ARM_COLORS[arm]
+        per_seed: dict[int, list] = {}
+        for outcome in arm_outcomes:
+            if outcome.arm != arm:
+                continue
+            xs = [c.proposal_index for c in outcome.candidates]
+            ys = [c.best_so_far_val_rmse for c in outcome.candidates]
+            if not xs:
+                continue
+            per_seed[outcome.seed] = ys
+            ax.plot(xs, ys, color=color, alpha=0.25, lw=1.2)
+            for x_val, y in zip(xs, ys, strict=True):
+                rows.append({"arm": arm, "seed": outcome.seed, "proposal_index": x_val,
+                             "best_so_far_val_rmse": y})
+        if per_seed:
+            max_len = max(len(v) for v in per_seed.values())
+            mean_curve = [
+                float(np.mean([v[i] for v in per_seed.values() if len(v) > i and v[i] is not None]))
+                for i in range(max_len)
+            ]
+            ax.plot(range(max_len), mean_curve, color=color, lw=3.2, marker="o",
+                    markersize=7, label=f"{_label(arm)} (mean)")
     ax.set_xlabel("proposal index")
-    ax.set_ylabel("best-so-far validation RMSE (lower is better)")
-    ax.set_title("Best-so-far validation RMSE by arm/seed")
-    ax.legend(fontsize=7)
+    ax.set_ylabel("best-so-far validation RMSE")
+    ax.set_title("Search progress: best-so-far validation RMSE (bold = mean over seeds)")
+    _annotate_lower_better(ax)
+    ax.legend()
     _save_fig(fig, output_dir, "best_so_far_rmse")
     _save_source_csv(output_dir, "best_so_far_rmse",
                      ["arm", "seed", "proposal_index", "best_so_far_val_rmse"], rows)
 
 
 def _fig_validation_rmse_distribution(output_dir, arm_outcomes):
-    """2. candidate validation RMSE distribution by arm."""
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    """2. candidate validation RMSE distribution by arm -- method-colored
+    boxes so the same color means the same method on every slide."""
+    fig, ax = plt.subplots(figsize=(8, 5))
     rows = []
-    data, labels = [], []
+    data, labels, colors = [], [], []
     for arm in _ARM_ORDER:
         vals = [
             c.val_rmse for o in arm_outcomes if o.arm == arm for c in _evaluated(o)
@@ -362,36 +474,58 @@ def _fig_validation_rmse_distribution(output_dir, arm_outcomes):
         if vals:
             data.append(vals)
             labels.append(_label(arm))
+            colors.append(_ARM_COLORS[arm])
             for v in vals:
                 rows.append({"arm": arm, "val_rmse": v})
     if data:
-        ax.boxplot(data, tick_labels=labels, showmeans=True)
-    ax.set_ylabel("validation RMSE (lower is better)")
-    ax.set_title("Candidate validation-RMSE distribution by arm")
+        box = ax.boxplot(data, tick_labels=labels, showmeans=True, patch_artist=True)
+        for patch, color in zip(box["boxes"], colors, strict=True):
+            patch.set_facecolor(color)
+            patch.set_alpha(0.55)
+        for median in box["medians"]:
+            median.set_color("black")
+            median.set_linewidth(2)
+    ax.set_ylabel("candidate validation RMSE")
+    ax.set_title("All evaluated candidates: validation-RMSE distribution by method")
+    _annotate_lower_better(ax)
     _save_fig(fig, output_dir, "validation_rmse_distribution")
     _save_source_csv(output_dir, "validation_rmse_distribution", ["arm", "val_rmse"], rows)
 
 
 def _fig_test_rmse_by_arm(output_dir, arm_outcomes):
-    """3. selected Test RMSE by arm/seed with aggregate 95% CI."""
-    fig, ax = plt.subplots(figsize=(7, 4.5))
+    """3. selected Test RMSE by arm/seed: method-colored bars (mean) with
+    95% CI whiskers, value labels, and per-seed dots."""
+    fig, ax = plt.subplots(figsize=(8, 5))
     rows = []
-    for i, arm in enumerate(_ARM_ORDER):
+    means, err_lo, err_hi, colors = [], [], [], []
+    for arm in _ARM_ORDER:
         arm_out = [o for o in arm_outcomes if o.arm == arm]
         tests = [o.protected_test_rmse for o in arm_out if o.protected_test_rmse is not None]
         for o in arm_out:
-            ax.scatter(i, o.protected_test_rmse, color="tab:gray", zorder=2)
             rows.append({"arm": arm, "seed": o.seed, "test_rmse": o.protected_test_rmse})
-        if tests:
-            lo, hi = _bootstrap_ci(tests)
-            mean = float(np.mean(tests))
-            ax.errorbar(i, mean, yerr=[[mean - lo], [hi - mean]], fmt="D", color="tab:blue",
-                        capsize=5, zorder=3, label="mean + 95% CI" if i == 0 else None)
-    ax.set_xticks(range(len(_ARM_ORDER)))
-    ax.set_xticklabels([_label(a) for a in _ARM_ORDER])
-    ax.set_ylabel("selected protected-test RMSE (lower is better)")
-    ax.set_title("Selected test RMSE by arm (with aggregate 95% bootstrap CI)")
-    ax.legend(fontsize=8)
+        mean = float(np.mean(tests)) if tests else 0.0
+        lo, hi = _bootstrap_ci(tests) if tests else (mean, mean)
+        means.append(mean)
+        err_lo.append(mean - (lo if lo is not None else mean))
+        err_hi.append((hi if hi is not None else mean) - mean)
+        colors.append(_ARM_COLORS[arm])
+    x = np.arange(len(_ARM_ORDER))
+    bars = ax.bar(x, means, 0.55, yerr=[err_lo, err_hi], capsize=6, color=colors,
+                  edgecolor="white")
+    ax.bar_label(bars, fmt="%.3f", padding=4, fontsize=12, fontweight="bold")
+    for i, arm in enumerate(_ARM_ORDER):
+        vals = [
+            o.protected_test_rmse for o in arm_outcomes
+            if o.arm == arm and o.protected_test_rmse is not None
+        ]
+        ax.scatter([x[i]] * len(vals), vals, s=26, color="black", alpha=0.6, zorder=3,
+                   label="individual seeds" if i == 0 else None)
+    ax.set_xticks(x)
+    ax.set_xticklabels([_label(a) for a in _ARM_ORDER], fontsize=13, fontweight="bold")
+    ax.set_ylabel("selected protected-test RMSE")
+    ax.set_title("Final comparison: protected-test RMSE (mean ± 95% CI)")
+    _annotate_lower_better(ax)
+    ax.legend(loc="upper left")
     _save_fig(fig, output_dir, "test_rmse_by_arm")
     _save_source_csv(output_dir, "test_rmse_by_arm", ["arm", "seed", "test_rmse"], rows)
 
@@ -455,7 +589,7 @@ def _fig_complexity_vs_rmse(output_dir, arm_outcomes):
                         ys.append(c.val_rmse)
                         rows.append({"arm": arm, "metric": xlabel, "x": x, "val_rmse": c.val_rmse})
             if xs:
-                ax.scatter(xs, ys, alpha=0.5, label=_label(arm))
+                ax.scatter(xs, ys, alpha=0.6, s=45, color=_ARM_COLORS[arm], label=_label(arm))
         ax.set_xlabel(xlabel)
         ax.set_ylabel("validation RMSE (lower is better)")
         ax.legend(fontsize=7)
@@ -611,7 +745,10 @@ def _fig_expressibility_vs_rmse(output_dir, arm_outcomes, arch_diag):
         pts = [(v, r) for a, s, r, v, c in _arm_arch_values(arm_outcomes, arch_diag,
                lambda d: d.expressibility_kl) if a == arm]
         if pts:
-            ax.scatter([p[0] for p in pts], [p[1] for p in pts], alpha=0.5, label=_label(arm))
+            ax.scatter(
+                [p[0] for p in pts], [p[1] for p in pts], alpha=0.6, s=45,
+                color=_ARM_COLORS[arm], label=_label(arm),
+            )
             for v, r in pts:
                 rows.append({"arm": arm, "expressibility_kl": v, "val_rmse": r})
     ax.set_xlabel("expressibility KL (lower = more expressible)")
@@ -631,7 +768,10 @@ def _fig_entanglement_vs_rmse(output_dir, arm_outcomes, arch_diag):
         pts = [(v, r) for a, s, r, v, c in _arm_arch_values(arm_outcomes, arch_diag,
                lambda d: d.entanglement_capability.mean) if a == arm]
         if pts:
-            ax.scatter([p[0] for p in pts], [p[1] for p in pts], alpha=0.5, label=_label(arm))
+            ax.scatter(
+                [p[0] for p in pts], [p[1] for p in pts], alpha=0.6, s=45,
+                color=_ARM_COLORS[arm], label=_label(arm),
+            )
             for v, r in pts:
                 rows.append({"arm": arm, "entanglement_capability_mean": v, "val_rmse": r})
     ax.set_xlabel("mean Meyer-Wallach Q")
@@ -657,13 +797,13 @@ def _fig_expressibility_vs_entanglement(output_dir, arm_outcomes, arch_diag):
             d = arch_diag[c.architecture_hash]
             size = 20 + 15 * (c.searched_body_gate_count or 1)
             ax.scatter(d.expressibility_kl, d.entanglement_capability.mean, s=size, alpha=0.5,
-                       color=f"C{_ARM_ORDER.index(arm)}")
+                       color=_ARM_COLORS[arm])
             rows.append({"arm": arm, "seed": s, "expressibility_kl": d.expressibility_kl,
                          "entanglement_capability_mean": d.entanglement_capability.mean,
                          "gate_count": c.searched_body_gate_count})
     # legend proxies
-    for i, arm in enumerate(_ARM_ORDER):
-        ax.scatter([], [], color=f"C{i}", label=_label(arm))
+    for arm in _ARM_ORDER:
+        ax.scatter([], [], color=_ARM_COLORS[arm], label=_label(arm))
     ax.set_xlabel("expressibility KL (lower = more expressible)")
     ax.set_ylabel("mean Meyer-Wallach Q")
     ax.set_title("Expressibility vs entanglement (marker size = gate count)")
@@ -788,6 +928,7 @@ def _draw_selected_circuits(output_dir, arm_outcomes, n_qubits, readout_qubit):
 # --- report + readme ---------------------------------------------------------
 
 _FIGURES = [
+    "arm_comparison_summary",
     "best_so_far_rmse", "validation_rmse_distribution", "test_rmse_by_arm",
     "prediction_vs_target", "complexity_vs_rmse", "closed_loop_theta_trajectory",
     "proposal_outcomes", "expressibility_by_arm", "entangling_capability_by_arm",

@@ -56,10 +56,12 @@ REAL_RUN_LABEL_EXTRA = (
 )
 _MOCK_SCRIPTED_ARMS = {"random", "scripted_open_loop", "scripted_closed_loop"}
 _REAL_ARMS = {"real_open_loop", "real_closed_loop"}
-#: Hard cap on total real, billed LLM calls across ALL real arms and seeds
-#: in one execution (seeds x arms x budget nominal, plus headroom for
-#: invalid proposals that consume an LLM call but no search budget).
-MAX_REAL_LLM_CALLS = 24
+#: Hard cap on total real, billed OUTBOUND request attempts across ALL
+#: real arms and seeds in one execution -- retries count against this cap
+#: too (the retry wrapper sits outside the call-count wrapper). Sized for
+#: seeds x arms x budget nominal plus headroom for retries and invalid
+#: proposals (which consume an LLM call but no search budget).
+MAX_REAL_LLM_CALLS = 60
 
 _REPO_ROOT = Path(__file__).resolve().parent.parent
 
@@ -118,8 +120,8 @@ def main() -> None:
     parser.add_argument("--dataset-profile", type=str, default="amplitude_n3_smoke_v1")
     parser.add_argument("--readout-qubit", type=int, default=0)
     parser.add_argument("--max-gates", type=int, default=5)
-    parser.add_argument("--budget", type=int, default=3)
-    parser.add_argument("--seeds", type=int, default=2)
+    parser.add_argument("--budget", type=int, default=4)
+    parser.add_argument("--seeds", type=int, default=5)
     parser.add_argument(
         "--arms", type=str, default="random,scripted_open_loop,scripted_closed_loop"
     )
@@ -183,6 +185,7 @@ def main() -> None:
             BudgetEnforcedProvider,
             CompleteCandidateOpenAIProvider,
             RealRunPreflightError,
+            RetryingProvider,
             preflight_real_run,
         )
         from llm_vqc.llm.openai_provider import CallCountLimitedProvider
@@ -198,8 +201,12 @@ def main() -> None:
         real_model = real_cfg.model
         real_budget = real_cfg.budget
         inner = CompleteCandidateOpenAIProvider(api_key=real_cfg.api_key, model=real_cfg.model)
-        shared_real_provider = CallCountLimitedProvider(
-            BudgetEnforcedProvider(inner, real_cfg.budget), max_calls=MAX_REAL_LLM_CALLS
+        # Chain order: retry OUTSIDE the caps, so every retry attempt is
+        # individually call-counted and budget-checked.
+        shared_real_provider = RetryingProvider(
+            CallCountLimitedProvider(
+                BudgetEnforcedProvider(inner, real_cfg.budget), max_calls=MAX_REAL_LLM_CALLS
+            )
         )
 
     training_config_reproducibility = {
@@ -307,9 +314,10 @@ def main() -> None:
         )
         successful = sum(o.api_successful_calls for o in arm_outcomes)
         failed = sum(o.api_failed_calls for o in arm_outcomes)
+        retried = getattr(shared_real_provider, "retried_logical_calls", 0)
         print(
-            f"Real LLM calls: {successful} ok / {failed} failed "
-            f"(cap {MAX_REAL_LLM_CALLS}); total tokens: {total_tokens}; "
+            f"Real LLM calls: {successful} ok / {failed} failed / {retried} retried "
+            f"(attempt cap {MAX_REAL_LLM_CALLS}); total tokens: {total_tokens}; "
             f"total API latency: {total_latency:.2f}s; model: {real_model}"
         )
     else:

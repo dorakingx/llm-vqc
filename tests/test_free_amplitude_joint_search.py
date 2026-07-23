@@ -333,6 +333,7 @@ def test_per_seed_namespaces_and_results_are_independent(tmp_path):
 
 
 REQUIRED_FIGURES = [
+    "arm_comparison_summary",
     "best_so_far_rmse", "validation_rmse_distribution", "test_rmse_by_arm",
     "prediction_vs_target", "complexity_vs_rmse", "closed_loop_theta_trajectory",
     "proposal_outcomes", "expressibility_by_arm", "entangling_capability_by_arm",

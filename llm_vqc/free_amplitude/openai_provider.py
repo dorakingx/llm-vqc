@@ -205,3 +205,55 @@ class BudgetEnforcedProvider:
             else self._estimate
         )
         return response
+
+
+#: Manual-retry policy defaults (user-requested): one retry per logical
+#: call on a TRANSIENT failure, after a short backoff. Cap violations
+#: (call-count / dollar-budget) are never retried -- they are limits, not
+#: transients.
+DEFAULT_MAX_MANUAL_RETRIES = 1
+DEFAULT_RETRY_BACKOFF_SECONDS = 2.0
+
+
+class RetryingProvider:
+    """Wraps a provider chain and retries a failed logical call up to
+    `max_manual_retries` times.
+
+    Placement matters: this sits OUTSIDE the budget/call-count wrappers
+    (`RetryingProvider(CallCountLimited(BudgetEnforced(real)))`), so every
+    retry attempt is itself individually budget-checked and counted
+    against the hard call cap -- a retry can never bypass either limit.
+    `CallBudgetExceededError` / `LLMBudgetExceededError` propagate
+    immediately without a retry. The SDK client itself keeps
+    `max_retries=0`, so all retrying is visible at this one layer and
+    `retried_logical_calls` is an exact audit count."""
+
+    def __init__(
+        self,
+        inner: LLMProvider,
+        max_manual_retries: int = DEFAULT_MAX_MANUAL_RETRIES,
+        backoff_seconds: float = DEFAULT_RETRY_BACKOFF_SECONDS,
+    ) -> None:
+        self.model_name = inner.model_name
+        self._inner = inner
+        self.max_manual_retries = max_manual_retries
+        self.backoff_seconds = backoff_seconds
+        self.retried_logical_calls = 0
+
+    def complete(self, system_prompt: str, user_prompt: str, temperature: float) -> LLMResponse:
+        from llm_vqc.llm.budget import LLMBudgetExceededError
+        from llm_vqc.llm.openai_provider import CallBudgetExceededError
+
+        last_exc: Exception | None = None
+        for attempt in range(self.max_manual_retries + 1):
+            try:
+                return self._inner.complete(system_prompt, user_prompt, temperature)
+            except (CallBudgetExceededError, LLMBudgetExceededError):
+                raise  # caps are limits, not transients -- never retried
+            except Exception as exc:
+                last_exc = exc
+                if attempt < self.max_manual_retries:
+                    self.retried_logical_calls += 1
+                    time.sleep(self.backoff_seconds)
+        assert last_exc is not None
+        raise last_exc
