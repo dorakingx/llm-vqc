@@ -1,7 +1,0 @@
-arm,proposal_id,structural_hash,circuit_depth,controlled_gate_count,quantum_parameter_count,parameter_count_in_causal_cone,zero_gradient_parameter_count,initial_gradient_norm,final_gradient_norm
-random,random:0,1f51d83fc6305f1b44cee84d7be53ce883189128424d9c03424a3a2b0cb765bf,5,3,4,3,4,7.417711804664624e-18,7.008311034921363e-18
-random,random:1,8fcb19e1854636da8c1be406e99bf0f87057714cf1381c333bcaf5fc31f569b2,2,1,1,1,1,6.651550847204624e-19,2.3340419052354313e-18
-llm_open_loop,llm_open_loop:0,67abc3cffbe56f0c9c7861ad18bb3f7a1a4b0be3abbad9962ce9cbb0ff237032,4,1,4,3,2,0.21909659037869325,0.018784731164144534
-llm_open_loop,llm_open_loop:1,67abc3cffbe56f0c9c7861ad18bb3f7a1a4b0be3abbad9962ce9cbb0ff237032,4,1,4,3,2,0.21909659037869325,0.018784731164144534
-llm_closed_loop,llm_closed_loop:0,44e525abcb7d1793526fc0c5fd98fc23a9303f63b9370516e186a8d6eee4b68a,3,1,2,0,2,2.971076474225805e-17,7.661589362595678e-18
-llm_closed_loop,llm_closed_loop:1,4e32834701984139155b712e9c10ea310ccaff5b4513190a45dfa0f11e3be199,5,2,3,0,3,1.446913617538462e-17,1.9042246275787764e-17
