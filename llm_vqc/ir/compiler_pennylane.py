@@ -34,7 +34,9 @@ from llm_vqc.ir.schema import CircuitIR
 _ROTATION_GATES: dict[str, Callable[..., Any]] = {"RX": qml.RX, "RY": qml.RY, "RZ": qml.RZ}
 _NONPARAM_ROTATION_GATES: dict[str, Callable[..., Any]] = {"H": qml.Hadamard}
 _ENTANGLE_GATES: dict[str, Callable[..., Any]] = {"CNOT": qml.CNOT, "CZ": qml.CZ}
-_ENTANGLE_PARAM_GATES: dict[str, Callable[..., Any]] = {"CRZ": qml.CRZ}
+_ENTANGLE_PARAM_GATES: dict[str, Callable[..., Any]] = {
+    "CRX": qml.CRX, "CRY": qml.CRY, "CRZ": qml.CRZ,
+}
 _OBSERVABLES: dict[str, Callable[..., Any]] = {"X": qml.PauliX, "Y": qml.PauliY, "Z": qml.PauliZ}
 
 

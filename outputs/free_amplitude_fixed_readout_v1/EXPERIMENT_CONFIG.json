@@ -1,0 +1,41 @@
+{
+  "run_label": "MOCK/NON-LLM AMPLITUDE-ENCODING SMOKE RUN",
+  "experiment_name": "free_amplitude_fixed_readout_v1",
+  "scientific_status": "integration/smoke demonstration only; not a statistically powered result",
+  "n_qubits": 3,
+  "feature_count": 8,
+  "readout_qubit": 0,
+  "max_gates": 5,
+  "encoding": "amplitude",
+  "measurement": {
+    "observable": "Z",
+    "wires": [
+      0
+    ]
+  },
+  "classical_parameter_count": 0,
+  "initialization_policy": "free_amplitude_init_v1",
+  "training_config_version": "free_amplitude_training_v1",
+  "differentiation_method": "backprop",
+  "duplicate_detection_scope": "arm_local",
+  "dataset_profile": "amplitude_n3_smoke_v1",
+  "seed": null,
+  "budget_per_arm": 2,
+  "epochs_per_candidate": 5,
+  "search_arms": [
+    "random",
+    "llm_open_loop",
+    "llm_closed_loop"
+  ],
+  "generated_at_utc": "2026-07-23T19:40:23.080696+00:00",
+  "execution_code_sha": "24d6f1e5d942ccdb17944e0dd74ffb690e0aac29",
+  "execution_git_dirty": true,
+  "python_version": "3.14.4",
+  "library_versions": {
+    "torch": "2.13.0",
+    "pennylane": "0.45.1",
+    "openai": "2.41.1",
+    "numpy": "2.4.6",
+    "qiskit": "2.4.1"
+  }
+}

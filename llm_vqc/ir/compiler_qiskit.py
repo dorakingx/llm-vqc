@@ -44,7 +44,7 @@ from llm_vqc.ir.schema import CircuitIR
 _ROTATION_METHODS = {"RX": "rx", "RY": "ry", "RZ": "rz"}
 _NONPARAM_ROTATION_METHODS = {"H": "h"}
 _ENTANGLE_METHODS = {"CNOT": "cx", "CZ": "cz"}
-_ENTANGLE_PARAM_METHODS = {"CRZ": "crz"}
+_ENTANGLE_PARAM_METHODS = {"CRX": "crx", "CRY": "cry", "CRZ": "crz"}
 
 
 def _apply_body(circuit: QuantumCircuit, program: CircuitProgram, weight_params: Sequence) -> None:

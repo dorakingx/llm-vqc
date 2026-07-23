@@ -32,8 +32,11 @@ ROTATION_GATE_NAMES = ("RX", "RY", "RZ", "H")
 PARAMETERIZED_ROTATION_GATES = frozenset({"RX", "RY", "RZ"})
 NONPARAMETERIZED_ROTATION_GATES = frozenset({"H"})
 
-ENTANGLE_GATE_NAMES = ("CNOT", "CZ", "CRZ")
-PARAMETERIZED_ENTANGLE_GATES = frozenset({"CRZ"})
+# CRX/CRY added for the free-amplitude-fixed-readout experiment's free-gate
+# search space (llm_vqc/free_amplitude), which needs the full controlled-
+# rotation trio, not just CRZ -- see llm_vqc/ir/README.md.
+ENTANGLE_GATE_NAMES = ("CNOT", "CZ", "CRX", "CRY", "CRZ")
+PARAMETERIZED_ENTANGLE_GATES = frozenset({"CRX", "CRY", "CRZ"})
 NONPARAMETERIZED_ENTANGLE_GATES = frozenset({"CNOT", "CZ"})
 
 ENTANGLE_PATTERNS = ("ring", "line", "star", "all_to_all", "pairs", "none")
@@ -44,7 +47,7 @@ ENCODING_GATE_NAMES = ("RX", "RY", "RZ")
 OBSERVABLES = ("X", "Y", "Z")
 
 RotationGateName = Literal["RX", "RY", "RZ", "H"]
-EntangleGateName = Literal["CNOT", "CZ", "CRZ"]
+EntangleGateName = Literal["CNOT", "CZ", "CRX", "CRY", "CRZ"]
 EntanglePattern = Literal["ring", "line", "star", "all_to_all", "pairs", "none"]
 EncodingType = Literal["angle", "amplitude"]
 EncodingGateName = Literal["RX", "RY", "RZ"]

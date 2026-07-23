@@ -46,7 +46,7 @@ and forbidden for `"amplitude"`. `reupload` must be `0` for `"amplitude"`
 WireSpec}`. Each gate in `gates` is applied, in order, to every wire in
 `wires`.
 
-**`EntangleLayer`** — `{type: "entangle", pattern, gate: CNOT|CZ|CRZ,
+**`EntangleLayer`** — `{type: "entangle", pattern, gate: CNOT|CZ|CRX|CRY|CRZ,
 wires: WireSpec, center: int|None, pairs: list[[int,int]]|None}`.
 `pattern` is one of `ring | line | star | all_to_all | pairs | none`; see
 "Entangle patterns" below for exact edge sets. `center` is used (and
@@ -71,8 +71,12 @@ illustrative grammar, and adding it would be scope creep for Phase 1).
 
 | Rotation gates | Parameterized? | Entangle gates | Parameterized? |
 |---|---|---|---|
-| RX, RY, RZ | yes (1 param/application) | CRZ | yes (1 param/application) |
+| RX, RY, RZ | yes (1 param/application) | CRX, CRY, CRZ | yes (1 param/application) |
 | H | no | CNOT, CZ | no |
+
+CRX and CRY were added alongside CRZ for the free-amplitude-fixed-readout
+experiment's free-gate search space (`llm_vqc/free_amplitude`), which needs
+the full controlled-rotation trio, not just CRZ.
 
 ### Grammar extension beyond the master plan's illustrative example
 
