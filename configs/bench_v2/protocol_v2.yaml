@@ -1,0 +1,146 @@
+# Machine-readable mirror of docs/research/BENCHMARK_V2_PROTOCOL.md.
+# FROZEN: changes after the Phase 6 gate require protocol_version bump and
+# new run namespaces. Never edited after protected-test inspection.
+protocol_version: bench_v2
+frozen_doc: docs/research/BENCHMARK_V2_PROTOCOL.md
+
+model_contract:
+  encoding: amplitude
+  feature_count: pow2_n_qubits
+  readout_qubit: 0
+  observable: Z
+  prediction: "mu_hat = (1 - <Z0>) / 2"
+  classical_parameter_count: 0
+  simulator: pennylane_default_qubit_statevector
+  dtype: float64
+
+task_suite:
+  package: llm_vqc/tasks/signal_suite
+  version: signal_suite_v1
+  tasks: [gauss_peak, sin_freq, change_point, peak_count]
+  t4_positive_class_meaning: double_peak
+  split_sizes_main: {train: 256, val: 256, test: 2048}   # provisional until sizing gate
+  legacy_t1_profile: amplitude_n3_smoke_v1               # E0 continuity only
+  t2_frequency_rule: "f in [1, N/4] cycles per unit; target=(f-1)/(N/4-1)"
+  t3_changepoint_range: [0.2, 0.8]
+  t4_min_peak_separation_grid_points: 4
+
+search_spaces:
+  compact_free_v1:
+    body_gates: {min: 1, max: 5}
+    gate_set: [H, RX, RY, RZ, CRX, CRY, CRZ]
+  scalable_layered_v1:
+    n_qubits: [3, 4, 5, 6, 8]
+    max_ops_rule: "min(2*n, 16)"
+    rot_gates: [RX, RY, RZ, H]
+    entangle_gates: [CNOT, CZ, CRX, CRY, CRZ]
+    entangle_patterns: [line, ring, star, pairs, all_to_all]
+
+track_a:
+  optimizer: AdamW
+  learning_rate: 0.05
+  weight_decay: 1.0e-5
+  betas: [0.9, 0.999]
+  eps: 1.0e-8
+  epochs_provisional: 40      # frozen at Phase 6 sizing gate
+  batch_size_provisional: 32  # frozen at Phase 6 sizing gate
+  val_metric: {regression: rmse, classification: brier}
+  robustness_reinit_seeds: 5
+
+track_b:
+  theta_treatment: verbatim_no_optimizer
+  candidate_identity: structure_plus_theta
+
+arms:
+  track_a_mandatory:
+    - random_structure
+    - evolutionary_structure
+    - greedy_growth
+    - llm_open_structure
+    - llm_archive_closed_structure
+  track_a_references:
+    - ref_realamp_d1
+    - ref_realamp_d2
+    - ref_strongent_d1
+    - ref_strongent_d2
+  track_b_mandatory:
+    - random_joint
+    - evolutionary_joint
+    - llm_open_joint
+    - llm_closed_joint
+  evolutionary_structure: {scheme: mu_plus_lambda, mu: 4, lambda: 8}
+  llm:
+    batch_candidates_per_call: 3
+    archive_top_k: 8
+    required_env: [OPENAI_API_KEY, LLM_API_BUDGET_USD]
+
+experiments:
+  E0:
+    kind: replication_from_stored_artifacts
+    source: outputs/free_amplitude_fixed_readout_v1
+    api_calls_allowed: 0
+    tasks: [gauss_peak_legacy]
+    n_qubits: [3]
+    arms: [random, llm_open_loop, llm_closed_loop]
+    budget: 4
+    replicates: 2
+  E1:
+    track: B
+    tasks: [gauss_peak_legacy, sin_freq]
+    n_qubits: [3, 5]
+    arms: [random_joint, evolutionary_joint, llm_open_joint, llm_closed_joint]
+    budget_unique: 16
+    checkpoints: [4, 8, 16]
+    replicates: 10
+  E2:
+    track: A
+    tasks: [gauss_peak, sin_freq, change_point, peak_count]
+    n_qubits: [5]
+    arms: [random_structure, evolutionary_structure, greedy_growth,
+           llm_open_structure, llm_archive_closed_structure,
+           ref_realamp_d1, ref_realamp_d2, ref_strongent_d1, ref_strongent_d2]
+    budget_unique: 24
+    checkpoints: [4, 8, 16, 24]
+    replicates: 10
+  E3:
+    track: A
+    tasks: [gauss_peak, sin_freq]
+    n_qubits: [3, 4, 6, 8]
+    arms: [random_structure, evolutionary_structure, llm_open_structure,
+           llm_archive_closed_structure, ref_best_validation]
+    budget_unique: 16
+    checkpoints: [4, 8, 16]
+    replicates: 5
+  E4:
+    kind: selected_circuit_robustness
+    shots: [1024, 4096]
+    noise_profile: {name: depol_ro_v1, p1: 0.001, p2: 0.01, readout: 0.02}
+    coupling_maps: [line, ring, all_to_all]
+    transpile_seed: 7
+  E5:
+    kind: theta_isolation
+    conditions: [llm_theta, random_theta, classical_theta_opt]
+    matching: exact_objective_call_count
+
+statistics:
+  data_seed_base: 1000
+  search_seed_base: 2000
+  bootstrap_resamples: 10000
+  multiple_comparison: holm
+  paired_tests: [wilcoxon, permutation]
+  effect_sizes: [hodges_lehmann, cliffs_delta_paired]
+
+sizing_rule:
+  applies: before_main_matrix_only
+  trigger: "projected E2 wall-clock > 48h"
+  ordered_reductions:
+    - {test_split: 1024}
+    - {epochs: 25}
+    - {budget_unique: 16, checkpoints: [4, 8, 16]}
+  never: reduce mandatory replicates before dropping optional cells
+
+stores:
+  runs_root: runs/bench_v2
+  cell_id: "{task}_{n}q_{arm}_r{replicate}"
+  cell_manifest: "runs/bench_v2/{EID}/cells/{cell_id}.json"
+  outputs_root: outputs/bench_v2
