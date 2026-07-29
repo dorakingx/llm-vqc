@@ -1,0 +1,19 @@
+{
+  "frozen_at": "2026-07-29T04:55:00Z",
+  "rule": "docs/research/BENCHMARK_V2_PROTOCOL.md §10 (prewritten; applied before any main-matrix run)",
+  "pilot_timing_evidence": {
+    "e2_search_cell_seconds": [70.0, 50.1, 86.0, 67.1, 68.6, 43.9],
+    "e2_reference_cell_seconds_estimate": 15,
+    "e1_joint_cell_seconds": 0.3,
+    "projected_e2_wall_clock_hours": 5,
+    "projected_e3_wall_clock_hours": 8,
+    "projected_total_classical_hours": 14
+  },
+  "trigger": "projected E2 wall-clock > 48h",
+  "triggered": false,
+  "epochs": 40,
+  "batch_size": 32,
+  "split_sizes": {"train": 256, "val": 256, "test": 2048},
+  "budgets_unchanged": true,
+  "note": "No reduction applied; provisional values are now FROZEN for every matrix cell."
+}

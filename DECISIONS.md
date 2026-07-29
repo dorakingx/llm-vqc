@@ -2188,3 +2188,13 @@ n=3 by definition). Re-encoded as explicit `task_n_pairs`
 checkpoints, and replicates UNCHANGED. Protocol doc + YAML + hash record
 updated together; no experiment result (validation or test) had been
 inspected before this change.
+
+### Phase 6 sizing gate (2026-07-29, applied BEFORE the main matrix)
+
+Pilot timing (E2 full-config search cells 44-86 s, references ~15 s,
+E1 joint cells ~0.3 s) projects E2 ≈ 5 h and the full classical matrix
+≈ 14 h — far under the prewritten 48 h trigger. Per the frozen rule, NO
+reduction is applied: epochs=40, batch_size=32, splits 256/256/2048, and
+all budgets stand. Recorded in configs/bench_v2/sizing_freeze.json.
+Pilot cells (replicates 0-2, identical frozen config) are matrix cells;
+the remaining replicates extend them.
