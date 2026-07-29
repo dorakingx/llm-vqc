@@ -232,7 +232,7 @@ free.
 | ID | Content | Cells |
 |---|---|---|
 | **E0** | Provenance replication of the committed 2-seed real-LLM joint run from stored artifacts (`outputs/free_amplitude_fixed_readout_v1/`), T1 legacy n=3, arms random/llm_open/llm_closed, B=4, **zero new API calls** | verification, not evidence |
-| **E1** | Direct joint extension: T1 legacy + T2, n∈{3,5}, `random_joint`, `evolutionary_joint`, `llm_open_joint`, `llm_closed_joint`, B=16 unique, checkpoints 4/8/16, 10 paired replicates | 2 tasks × 2 n × 4 arms × 10 |
+| **E1** | Direct joint extension: T1-legacy@n=3 (pinned by its committed definition), T2@n=3, T2@n=5; `random_joint`, `evolutionary_joint`, `llm_open_joint`, `llm_closed_joint`, B=16 unique, checkpoints 4/8/16, 10 paired replicates | 3 task-n pairs × 4 arms × 10 |
 | **E2** | Main Track-A matrix: T1–T4, n=5, 5 search arms + 4 fixed references, B=24, checkpoints 4/8/16/24, 10 paired replicates | 4 × 9 × 10 |
 | **E3** | Scaling: T1, T2; n∈{3,4,6,8}; `random_structure`, `evolutionary_structure`, `llm_open_structure`, `llm_archive_closed_structure`, strongest fixed reference (chosen on *validation*); B=16, checkpoints 4/8/16, ≥5 paired replicates | 2 × 4 × 5 × 5 |
 | **E4** | Selected top circuits from E2/E3: exact vs 1,024/4,096 shots vs one documented noisy profile (depolarizing p1=0.001, p2=0.01 + readout 0.02 — frozen here); fixed transpile seeds/coupling maps; no tuning on test | selected circuits only |

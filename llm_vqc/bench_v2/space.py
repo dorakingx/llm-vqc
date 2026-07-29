@@ -125,6 +125,26 @@ def validate_layered_structure(
     )
     if not result.valid:
         return None, list(result.issues)
+
+    # Grammar rule (added at the Phase 6 gate, before any matrix run, and
+    # applied identically to every arm): a structure must contain at least
+    # one trainable rotation parameter. A parameter-free body (e.g. only
+    # H/CNOT/CZ) has a constant input-output map that the shared trainer
+    # structurally cannot fit — the compact profile has the same rule via
+    # require_at_least_one_parameterized. See DECISIONS.md (bench_v2).
+    from llm_vqc.ir.expand import count_parameters
+
+    if count_parameters(result.ir) == 0:
+        return None, [
+            ValidationIssue(
+                code="bench_v2.no_trainable_parameters",
+                path="operations",
+                message=(
+                    "structure has zero trainable rotation parameters; at least "
+                    "one of RX/RY/RZ/CRX/CRY/CRZ is required"
+                ),
+            )
+        ]
     return result.ir, []
 
 

@@ -45,8 +45,10 @@ Each OP is one of:
       with P in %(patterns)s and E in %(ent_gates)s
 
 Rules: n_qubits = %(n)d; wire indices 0..%(n_max)d; no "repeat" blocks;
-diverse candidates are better than near-duplicates; duplicates of already
-evaluated architectures waste budget."""
+every architecture must contain at least one parameterized rotation
+(RX/RY/RZ or CRX/CRY/CRZ) or it is invalid; diverse candidates are better
+than near-duplicates; duplicates of already evaluated architectures waste
+budget."""
 
 _JOINT_SYSTEM = """You design COMPLETE variational quantum circuits: gate
 sequence AND numeric rotation angles. There is NO training step - your

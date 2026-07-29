@@ -58,24 +58,29 @@ class ContractChecker:
 
     def expected_cells(self, eid: str) -> list[dict]:
         exp = self.protocol["experiments"][eid]
-        if "tasks" not in exp or "arms" not in exp:
+        if "arms" not in exp or ("tasks" not in exp and "task_n_pairs" not in exp):
             return []
+        if "task_n_pairs" in exp:
+            task_n = [(task, int(n)) for task, n in exp["task_n_pairs"]]
+        else:
+            task_n = [
+                (task, n) for task in exp["tasks"] for n in exp.get("n_qubits", [None])
+            ]
         cells = []
         replicates = int(exp.get("replicates", 0))
-        for task in exp["tasks"]:
-            for n in exp.get("n_qubits", [None]):
-                for arm in exp["arms"]:
-                    for r in range(replicates):
-                        cells.append(
-                            {
-                                "experiment": eid,
-                                "task": task,
-                                "n_qubits": n,
-                                "arm": arm,
-                                "replicate": r,
-                                "cell_id": f"{task}_{n}q_{arm}_r{r}",
-                            }
-                        )
+        for task, n in task_n:
+            for arm in exp["arms"]:
+                for r in range(replicates):
+                    cells.append(
+                        {
+                            "experiment": eid,
+                            "task": task,
+                            "n_qubits": n,
+                            "arm": arm,
+                            "replicate": r,
+                            "cell_id": f"{task}_{n}q_{arm}_r{r}",
+                        }
+                    )
         return cells
 
     def load_cell_manifest(self, eid: str, cell_id: str) -> dict | None:

@@ -2162,3 +2162,29 @@ gate is scoped to the bench_v2 surface via `scripts/check_bench_v2.sh`
 (full pytest suite + ruff-clean bench_v2 paths). Pre-existing debt is
 documented, not hidden, and not expanded: an accidental `ruff --fix` on
 four preserved test files during Phase 1 was reverted before commit.
+
+### Phase 6 grammar fix (2026-07-29, BEFORE any matrix/pilot run)
+
+Smoke exposed a degenerate case: `scalable_layered_v1` admitted
+parameter-free bodies (H/CNOT/CZ only), which the shared trainer
+structurally cannot fit — greedy_growth burned its whole smoke budget on
+two such candidates (`peak_count_5q_greedy_growth_r0`, both FAILED).
+Fixed as a GENERAL validity rule in `validate_layered_structure`
+(>=1 trainable rotation parameter; issue code
+`bench_v2.no_trainable_parameters`), identical for every arm — the same
+rule the preserved compact profile already enforced via
+`require_at_least_one_parameterized`. The structure prompt states the
+rule; prompt version stays `bench_v2_prompt_v1` because no real-provider
+run had used the prompt yet (mock smoke only). No test metrics were seen
+before this change (protected-test data untouched by smoke inspection —
+the diagnosis used proposal_events outcomes only).
+
+### Phase 6 protocol-encoding correction (2026-07-29, pre-pilot)
+
+The E1 matrix was encoded as tasks x n_qubits, which named an impossible
+cell (`gauss_peak_legacy` at n=5 — the committed legacy profile is
+n=3 by definition). Re-encoded as explicit `task_n_pairs`
+[[gauss_peak_legacy,3],[sin_freq,3],[sin_freq,5]] with arms, budget,
+checkpoints, and replicates UNCHANGED. Protocol doc + YAML + hash record
+updated together; no experiment result (validation or test) had been
+inspected before this change.

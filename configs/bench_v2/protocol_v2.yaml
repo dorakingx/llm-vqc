@@ -86,8 +86,13 @@ experiments:
     replicates: 2
   E1:
     track: B
-    tasks: [gauss_peak_legacy, sin_freq]
-    n_qubits: [3, 5]
+    # Explicit task-n pairs: the legacy T1 profile is pinned at n=3 by
+    # its committed definition, so the naive tasks-x-n cross would name an
+    # impossible cell (encoding corrected pre-pilot; see DECISIONS.md).
+    task_n_pairs:
+      - [gauss_peak_legacy, 3]
+      - [sin_freq, 3]
+      - [sin_freq, 5]
     arms: [random_joint, evolutionary_joint, llm_open_joint, llm_closed_joint]
     budget_unique: 16
     checkpoints: [4, 8, 16]
