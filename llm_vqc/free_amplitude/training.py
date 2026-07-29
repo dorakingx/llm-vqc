@@ -100,6 +100,7 @@ def train_fixed_readout_model(
     train_val: TrainValData,
     config: FreeAmplitudeTrainingConfig,
     train_seed: int,
+    init_policy=None,
 ) -> FreeAmplitudeTrainingOutput:
     """Train a fresh `FixedReadoutQuantumModel` on `ir`, deterministic given
     `(ir, readout_qubit, train_val, config, train_seed)`. Never raises for
@@ -110,7 +111,15 @@ def train_fixed_readout_model(
     start = time.perf_counter()
 
     model = FixedReadoutQuantumModel(ir, readout_qubit=readout_qubit)
-    free_amplitude_init_policy(model, seeds.param_init)
+    # Backward-compatible extension point (same pattern as
+    # llm_vqc.evaluation.training.train_model's init_policy): bench_v2's
+    # scalable space needs the identical Uniform[-pi, pi] init without the
+    # compact profile's 1-5-parameter postcondition. Default behaviour is
+    # byte-identical to before the kwarg existed.
+    if init_policy is None:
+        free_amplitude_init_policy(model, seeds.param_init)
+    else:
+        init_policy(model, seeds.param_init)
     initial_angles = model.q_layer.weights.detach().cpu().clone().tolist()
 
     optimizer = torch.optim.AdamW(
