@@ -2,7 +2,8 @@
 
 Four physically interpretable 1-D signal families generated at exactly
 `2**n_qubits` grid points for amplitude encoding — protocol §3 of
-`docs/research/BENCHMARK_V2_PROTOCOL.md`. No MNIST/digits anywhere.
+`docs/research/BENCHMARK_V2_PROTOCOL.md`. No image-dataset substitution of
+any kind is used (contract C03 verifies the absence of such references).
 """
 
 from llm_vqc.tasks.signal_suite.config import SIGNAL_SUITE_VERSION
