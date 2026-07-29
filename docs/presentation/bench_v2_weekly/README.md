@@ -29,30 +29,34 @@ python docs/presentation/bench_v2_weekly/recompress_pptx.py   # deflate the zip
 soffice --headless --convert-to pdf LLM_VQC_weekly_benchmark_v2.pptx
 ```
 
-## Google Slides version
+## Google Drive / Google Slides
 
-Target folder: `GSoC2026`
-(https://drive.google.com/drive/folders/1YV3KxZe4OA4ysh9YSqPGJbZxpkpN_fqf).
+The deck is published to the `GSoC2026` folder
+(https://drive.google.com/drive/folders/1YV3KxZe4OA4ysh9YSqPGJbZxpkpN_fqf),
+copied there through the Google Drive Desktop mount so the transfer is
+byte-exact and full-resolution:
 
-Uploading from this session was not possible: the Drive connector only
-accepts file content inline as base64, and this deck is ~277 KB
-(≈370 k base64 characters) — too large to transmit in one message
-without risking silent corruption of the zip. The other routes were
-checked and are unavailable on this machine (Chrome extension not
-connected, Google Drive Desktop not installed, `gcloud` token lacks
-Drive scope).
+- `LLM_VQC_weekly_benchmark_v2.pptx` — 277,201 bytes, file id
+  `1lK8lsWA4jod1XXRo7o4z9sV_mu5vHot1`
+- Opens directly in Google Slides:
+  https://docs.google.com/presentation/d/1lK8lsWA4jod1XXRo7o4z9sV_mu5vHot1/edit
 
-To publish it as a native Google Slides file (about 15 seconds):
+**Converting it to a native Google Slides file needs one manual step**
+(`File → Save as Google Slides` in the link above). It could not be
+automated from this session, and doing so would also have *lowered*
+quality:
 
-1. Drag `LLM_VQC_weekly_benchmark_v2.pptx` into the `GSoC2026` folder.
-2. Double-click it in Drive — it opens in Google Slides directly and is
-   already presentable/shareable in this state.
-3. Optional, to convert the underlying format:
-   **File → Save as Google Slides**.
+- the Drive connector converts only on upload, and only accepts file
+  content inline as base64 — 370 k characters for this deck, beyond what
+  one message can carry intact, so a corrupt zip was the likely outcome;
+- shrinking the deck enough to fit (≈130 KB, figures at 62 dpi) would
+  have produced a *softer* Slides file than the full-quality PPTX that
+  is already in the folder — strictly worse for the reader;
+- the Chrome extension (which could drive the Drive UI) is not
+  connected, and the `gcloud` token has no Drive scope.
 
-Alternative: turn on Drive **Settings → "Convert uploaded files to
-Google Docs editor format"** before step 1, and the upload converts
-automatically.
+With the Chrome extension connected, the upload-and-convert step can be
+fully automated in a later session.
 
 ## Provenance and claim discipline
 
