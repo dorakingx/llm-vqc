@@ -25,8 +25,34 @@ artifacts on branch `research/rigorous-qas-benchmark-v2`.
 ```bash
 .venv/bin/python docs/presentation/bench_v2_weekly/build_deck_figures.py
 node docs/presentation/bench_v2_weekly/generate_deck.js   # needs pptxgenjs
+python docs/presentation/bench_v2_weekly/recompress_pptx.py   # deflate the zip
 soffice --headless --convert-to pdf LLM_VQC_weekly_benchmark_v2.pptx
 ```
+
+## Google Slides version
+
+Target folder: `GSoC2026`
+(https://drive.google.com/drive/folders/1YV3KxZe4OA4ysh9YSqPGJbZxpkpN_fqf).
+
+Uploading from this session was not possible: the Drive connector only
+accepts file content inline as base64, and this deck is ~277 KB
+(≈370 k base64 characters) — too large to transmit in one message
+without risking silent corruption of the zip. The other routes were
+checked and are unavailable on this machine (Chrome extension not
+connected, Google Drive Desktop not installed, `gcloud` token lacks
+Drive scope).
+
+To publish it as a native Google Slides file (about 15 seconds):
+
+1. Drag `LLM_VQC_weekly_benchmark_v2.pptx` into the `GSoC2026` folder.
+2. Double-click it in Drive — it opens in Google Slides directly and is
+   already presentable/shareable in this state.
+3. Optional, to convert the underlying format:
+   **File → Save as Google Slides**.
+
+Alternative: turn on Drive **Settings → "Convert uploaded files to
+Google Docs editor format"** before step 1, and the upload converts
+automatically.
 
 ## Provenance and claim discipline
 

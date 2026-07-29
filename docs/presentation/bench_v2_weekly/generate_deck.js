@@ -296,34 +296,32 @@ function titleBar(slide, title, kicker) {
 {
   const s = pres.addSlide();
   s.background = { color: WHITE };
-  titleBar(s, "E2 classical matrix complete; E3 scaling is running now",
-           "Results — main matrix");
-  s.addImage({ path: FIG("fig_e2_per_seed.png"), x: 0.5, y: 1.55, w: 9.3, h: 2.45 });
-  s.addImage({ path: FIG("fig_e2_anytime.png"), x: 0.5, y: 4.15, w: 9.3, h: 2.1 });
+  titleBar(s, "Classical matrix complete: E2 at n=5, E3 scaling to 8 qubits",
+           "Results — main matrix (complete)");
+  s.addImage({ path: FIG("fig_e2_per_seed.png"), x: 0.5, y: 1.45, w: 7.85, h: 1.96 });
+  s.addImage({ path: FIG("fig_e2_anytime.png"), x: 0.5, y: 3.55, w: 7.85, h: 1.71 });
+  s.addImage({ path: FIG("fig_e3_scaling.png"), x: 8.6, y: 1.45, w: 4.3, h: 1.76 });
 
-  const statusRows = [
-    [{ text: "cells", options: { fill: { color: NAVY }, color: WHITE, bold: true, fontSize: 9.5 } },
-     { text: "done", options: { fill: { color: NAVY }, color: WHITE, bold: true, fontSize: 9.5 } },
-     { text: "state", options: { fill: { color: NAVY }, color: WHITE, bold: true, fontSize: 9.5 } }],
-    ["E1 classical (60)", "60", { text: "complete", options: { color: GREEN, bold: true } }],
-    ["E2 classical (280)", "280", { text: "complete", options: { color: GREEN, bold: true } }],
-    ["E3 classical (120)", "running", { text: "running", options: { color: AMBER, bold: true } }],
-    ["LLM cells (220)", "0", { text: "blocked*", options: { color: ACCENT, bold: true } }],
-    ["E4 / E5", "—", { text: "pending", options: { color: MUTED, bold: true } }],
-  ];
-  s.addTable(statusRows, {
-    x: 10.0, y: 1.6, w: 2.85, colW: [1.45, 0.6, 0.8], fontSize: 9.5,
-    fontFace: "Calibri", border: { type: "solid", color: "D8DDE8", pt: 0.5 },
-    rowH: 0.34, valign: "middle", margin: 0.04,
+  // Status strip (left column, under the two E2 panels).
+  s.addShape(pres.ShapeType.roundRect, {
+    x: 0.5, y: 5.45, w: 7.85, h: 0.62, rectRadius: 0.08,
+    fill: { color: ICE, transparency: 55 }, line: { color: "D8DDE8", width: 0.75 },
   });
   s.addText([
-    { text: "Findings (10 paired reps, Holm-corrected):", options: { bold: true, fontSize: 10.5, color: DARKTEXT, breakLine: true, paraSpaceAfter: 4 } },
-    { text: "Searched circuits beat shallow references on the regression tasks (T1: random vs StrongEnt-d2, p_Holm = 0.032).", options: { fontSize: 9.5, color: MUTED, bullet: true, breakLine: true, paraSpaceAfter: 4 } },
-    { text: "The three classical strategies are statistically indistinguishable from each other on every task.", options: { fontSize: 9.5, color: MUTED, bullet: true, breakLine: true, paraSpaceAfter: 4 } },
-    { text: "T4 (AUROC ≈ 0.73–0.75) is flat across arms.", options: { fontSize: 9.5, color: MUTED, bullet: true, breakLine: true, paraSpaceAfter: 4 } },
+    { text: "460 / 460 classical cells complete, 0 failures", options: { bold: true, fontSize: 10.5, color: GREEN } },
+    { text: "   (E1 60 · E2 280 · E3 120)   |   ", options: { fontSize: 10, color: MUTED } },
+    { text: "LLM 0 / 220 blocked", options: { bold: true, fontSize: 10.5, color: ACCENT } },
+    { text: "   |   E4 / E5 pending", options: { fontSize: 10, color: MUTED } },
+  ], { x: 0.7, y: 5.5, w: 7.5, h: 0.52, fontFace: "Calibri", margin: 0, valign: "middle" });
+
+  s.addText([
+    { text: "Findings", options: { bold: true, fontSize: 11, color: DARKTEXT, breakLine: true, paraSpaceAfter: 5 } },
+    { text: "n=5, 10 paired reps: searched circuits beat the shallow reference on regression tasks (T1 random vs StrongEnt-d2, p_Holm = 0.032).", options: { fontSize: 9.5, color: MUTED, bullet: true, breakLine: true, paraSpaceAfter: 5 } },
+    { text: "random / evolutionary / greedy stay statistically indistinguishable from each other on every task.", options: { fontSize: 9.5, color: MUTED, bullet: true, breakLine: true, paraSpaceAfter: 5 } },
+    { text: "Scaling (descriptive): on T2 the reference degrades with n (median RMSE 0.070 → 0.295 from n=3 to n=8) while searched arms improve (0.102 → 0.050). All 5/5 paired replicates favour search at n=8, but with 5 reps the smallest attainable paired p is 0.0625, so no Holm-corrected significance is claimed.", options: { fontSize: 9.5, color: MUTED, bullet: true, breakLine: true, paraSpaceAfter: 5 } },
     { text: "This is the bar any LLM arm must beat.", options: { bold: true, fontSize: 9.5, color: NAVY, bullet: true } },
-  ], { x: 10.0, y: 3.75, w: 2.9, h: 2.9, fontFace: "Calibri", margin: 0 });
-  footer(s, "*LLM cells await LLM_API_BUDGET_USD (slide 10). Sources: data/fig_e2_per_seed.csv · data/fig_e2_anytime.csv · data/matrix_status.csv");
+  ], { x: 8.6, y: 3.4, w: 4.35, h: 2.7, fontFace: "Calibri", margin: 0, valign: "top" });
+  footer(s, "LLM cells await LLM_API_BUDGET_USD (slide 10). Sources: data/fig_e2_per_seed.csv · data/fig_e2_anytime.csv · data/fig_e3_scaling.csv · data/matrix_status.csv");
 }
 
 // ---------------------------------------------------------------- S9 ----
@@ -355,7 +353,7 @@ function titleBar(slide, title, kicker) {
     x: 0.9, y: 0.55, w: 11.5, h: 0.7, fontSize: 32, bold: true, color: WHITE,
     fontFace: "Cambria", margin: 0 });
   const steps = [
-    "Finish + verify E3 scaling (n ∈ {3,4,6,8}; running, resumable, ~120 classical cells)",
+    "Classical matrix is done: 460 / 460 cells, 0 failures, n=8 actually simulated",
     "Run the real-LLM matrix (220 cells, both tracks) once budget is authorized",
     "Complete dependent analyses: E5 θ-isolation, E4 shot/noise robustness",
     "Regenerate final paper-style figures + statistical report from stores (goal checker must exit 0)",

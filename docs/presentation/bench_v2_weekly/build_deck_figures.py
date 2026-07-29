@@ -48,17 +48,38 @@ ARM_SHORT = {
     "evolutionary_joint": "evo_joint",
 }
 plt.rcParams.update({
-    "figure.dpi": 160, "font.size": 9, "axes.titlesize": 10,
+    "figure.dpi": 130, "font.size": 9, "axes.titlesize": 10,
     "axes.spines.top": False, "axes.spines.right": False,
 })
 
 RNG = np.random.default_rng(7)
 
 
+def _optimize_png(path: Path) -> None:
+    """Flatten onto white and palette-quantize.
+
+    These are line/scatter plots with a few hundred distinct colours, so a
+    192-colour adaptive palette is visually indistinguishable at slide
+    scale while cutting the file ~5x. That matters because the deck is
+    uploaded to Google Drive as a single base64 payload. The .svg beside
+    each .png remains the lossless vector original.
+    """
+    from PIL import Image
+
+    with Image.open(path) as img:
+        rgba = img.convert("RGBA")
+        flat = Image.new("RGB", rgba.size, (255, 255, 255))
+        flat.paste(rgba, mask=rgba.split()[3])
+        flat.quantize(colors=192, method=Image.Quantize.MEDIANCUT).save(
+            path, optimize=True
+        )
+
+
 def _save(fig, stem: str, rows: list[dict]) -> None:
     fig.savefig(FIG_DIR / f"{stem}.png", bbox_inches="tight")
     fig.savefig(FIG_DIR / f"{stem}.svg", bbox_inches="tight")
     plt.close(fig)
+    _optimize_png(FIG_DIR / f"{stem}.png")
     if rows:
         with (DATA_DIR / f"{stem}.csv").open("w", newline="") as handle:
             writer = csv.DictWriter(handle, fieldnames=list(rows[0].keys()))
@@ -205,6 +226,47 @@ def fig_e2_anytime() -> None:
     fig.suptitle("E2 anytime curves (median + IQR over 10 paired replicates; "
                  "validation metric, lower is better)", fontsize=10, y=1.06)
     _save(fig, "fig_e2_anytime", rows)
+
+
+def fig_e3_scaling() -> None:
+    """E3 qubit scaling: per-seed points + median lines per arm."""
+    per_seed = _read_csv(REPO / "outputs" / "bench_v2" / "E3" / "per_seed_E3.csv")
+    arms = ["random_structure", "evolutionary_structure", "ref_strongent_d2"]
+    tasks = [("gauss_peak", "T1 Gaussian peak"), ("sin_freq", "T2 sinusoid frequency")]
+    ns = [3, 4, 6, 8]
+    fig, axes = plt.subplots(1, 2, figsize=(6.6, 2.7))
+    rows = []
+    for ax, (task, label) in zip(axes, tasks, strict=True):
+        for arm in arms:
+            medians = []
+            for n in ns:
+                vals = [float(r["primary_test_value"]) for r in per_seed
+                        if r["task"] == task and int(r["n_qubits"]) == n
+                        and r["arm"] == arm]
+                for r in per_seed:
+                    if (r["task"] == task and int(r["n_qubits"]) == n
+                            and r["arm"] == arm):
+                        rows.append({"task": task, "n_qubits": n, "arm": arm,
+                                     "replicate": r["replicate"],
+                                     "test_rmse": r["primary_test_value"]})
+                medians.append(np.median(vals) if vals else np.nan)
+                if vals:
+                    jitter = RNG.uniform(-0.09, 0.09, len(vals))
+                    ax.scatter(np.full(len(vals), n) + jitter, vals, s=9,
+                               color=ARM_COLORS[arm], alpha=0.55, zorder=2)
+            ax.plot(ns, medians, color=ARM_COLORS[arm], linewidth=1.8,
+                    marker="o", markersize=4, zorder=3,
+                    label="StrongEnt d2 (ref)" if arm.startswith("ref_")
+                    else ARM_SHORT[arm])
+        ax.set_title(label, fontsize=8.5)
+        ax.set_xticks(ns)
+        ax.set_xlabel("qubits", fontsize=8)
+        ax.tick_params(labelsize=7)
+    axes[0].set_ylabel("protected-test RMSE", fontsize=8)
+    axes[0].legend(fontsize=6.5, frameon=False)
+    fig.suptitle("E3 scaling (B=16, 5 paired replicates per cell)",
+                 fontsize=9.5, y=1.04)
+    _save(fig, "fig_e3_scaling", rows)
 
 
 def fig_e2_resources() -> None:
@@ -374,6 +436,7 @@ def main() -> None:
     fig_e1_per_seed()
     fig_e2_per_seed()
     fig_e2_anytime()
+    fig_e3_scaling()
     fig_e2_resources()
     fig_e2_diagnostics()
     status_tables()
