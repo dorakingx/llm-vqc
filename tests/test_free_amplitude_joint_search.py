@@ -133,6 +133,13 @@ def test_no_optimizer_in_main_mode():
                 raise AssertionError(f"{module} references torch.optim.{node.attr}")
             if isinstance(node, ast.ImportFrom) and "optim" in (node.module or ""):
                 raise AssertionError(f"{module} imports {node.module}")
+            # Plain `import torch.optim` is an ast.Import (not ImportFrom);
+            # gap found and closed by the bench_v2 break-test pass
+            # (docs/research/BREAK_TESTS.md).
+            if isinstance(node, ast.Import) and any(
+                "optim" in alias.name for alias in node.names
+            ):
+                raise AssertionError(f"{module} imports an optim module")
         assert "optimizer" not in source.lower() or "no optimizer" in source.lower()
 
 

@@ -225,3 +225,50 @@ def test_arm_registry_has_all_classical_arms():
         "random_joint", "evolutionary_joint",
     ):
         assert name in ARM_FACTORIES
+
+
+def test_duplicates_never_satisfy_unique_budget(tmp_path):
+    """An arm that re-proposes one identical structure forever must hit
+    the pathological-arm guard, NOT falsely complete: duplicates are
+    reported but can never stand in for unique evaluations. (Independent
+    check of the budget axis, added by the break-test pass — see
+    docs/research/BREAK_TESTS.md.)"""
+    from pydantic import BaseModel
+
+    from llm_vqc.bench_v2.runner import BenchV2RunnerError
+    from llm_vqc.search.arm import SearchArm
+
+    class _State(BaseModel):
+        seed: int
+        best_hash: str | None = None
+        best_metric: float | None = None
+
+    class OneTrickArm(SearchArm[_State]):
+        name = "one_trick"
+
+        def initialize(self, seed):
+            return _State(seed=seed)
+
+        def propose(self, state):
+            return {"operations": [{"type": "rot", "gates": ["RY"], "wires": "all"}]}
+
+        def update_state(self, state, proposal, feedback):
+            if feedback.val_metric_value is not None:
+                return state.model_copy(update={
+                    "best_hash": feedback.structural_hash,
+                    "best_metric": feedback.val_metric_value,
+                })
+            return state
+
+        def select_final(self, state):
+            return state.best_hash
+
+        def deserialize_state(self, raw_json):
+            return _State.model_validate_json(raw_json)
+
+    task, train_val = _train_val()
+    store = ResultStore(tmp_path / "s.sqlite")
+    runner = _structure_runner(store, OneTrickArm(), task, train_val, budget=2,
+                               run_id="dup0")
+    with pytest.raises(BenchV2RunnerError):
+        runner.run()
