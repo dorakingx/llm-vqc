@@ -1,0 +1,16 @@
+task,n_qubits,arm,replicate,transpiled_2q_line,test_rmse
+sin_freq,6,evolutionary_structure,0,79,0.14615772313556505
+sin_freq,6,evolutionary_structure,1,229,0.12510561752123253
+sin_freq,6,evolutionary_structure,2,247,0.06122012433020531
+sin_freq,6,evolutionary_structure,3,102,0.0574225912881217
+sin_freq,6,evolutionary_structure,4,89,0.09812750888333932
+sin_freq,6,random_structure,0,177,0.07478077950651818
+sin_freq,6,random_structure,1,248,0.06034971570915063
+sin_freq,6,random_structure,2,147,0.07801898185562632
+sin_freq,6,random_structure,3,219,0.054221035193321734
+sin_freq,6,random_structure,4,206,0.057806617508347376
+sin_freq,6,ref_strongent_d2,0,35,0.19126767254960694
+sin_freq,6,ref_strongent_d2,1,35,0.19646995715785825
+sin_freq,6,ref_strongent_d2,2,35,0.19759617911434776
+sin_freq,6,ref_strongent_d2,3,35,0.20492970526782725
+sin_freq,6,ref_strongent_d2,4,35,0.2039184769850794
