@@ -1,0 +1,4 @@
+task,n_qubits,arm_a,arm_b,n_pairs,mean_diff_a_minus_b,wilcoxon_p,permutation_p,permutation_p_holm
+gauss_peak_legacy,3,evolutionary_joint,random_joint,10,0.015606878677707969,0.275390625,0.27547245275472454,0.27547245275472454
+sin_freq,3,evolutionary_joint,random_joint,10,0.008475624793438821,0.193359375,0.4216578342165783,0.4216578342165783
+sin_freq,5,evolutionary_joint,random_joint,10,-0.00012198992398830822,0.640625,0.963003699630037,0.963003699630037

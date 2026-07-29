@@ -1,0 +1,4 @@
+task,n_qubits,arm_a,arm_b,hodges_lehmann_shift,cliffs_delta_paired,median_a,median_b
+gauss_peak_legacy,3,evolutionary_joint,random_joint,0.014974940751210537,0.2,0.15621348650331246,0.13256828290558892
+sin_freq,3,evolutionary_joint,random_joint,0.01221113213916146,0.6,0.29188944799967376,0.27046574354794434
+sin_freq,5,evolutionary_joint,random_joint,0.00047243942379998627,0.2,0.2927513528778758,0.29075482410518094

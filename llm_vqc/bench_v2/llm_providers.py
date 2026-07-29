@@ -23,6 +23,7 @@ from llm_vqc.bench_v2.space import SpaceProfile
 from llm_vqc.llm.provider import LLMResponse
 
 MOCK_MODEL_PREFIX = "mock-"
+PER_CELL_CALL_CAP = 40
 
 
 def is_mock_provider(provider) -> bool:
@@ -203,10 +204,17 @@ def build_real_provider(track: str, env: dict | None = None):
     else:
         raise ValueError(f"unknown track {track!r}")
 
+    from llm_vqc.llm.openai_provider import CallCountLimitedProvider
+
     config = preflight_real_run(env if env is not None else dict(os.environ))
     inner = CompleteCandidateOpenAIProvider(
         api_key=config.api_key, model=config.model,
         response_schema=schema, response_schema_name=schema_name,
     )
     budgeted = BudgetEnforcedProvider(inner, config.budget)
-    return RetryingProvider(budgeted), config
+    # Hard per-cell call cap: a 24-unique-budget cell at 3 candidates per
+    # batch needs ~8-12 calls; 40 is generous headroom while making a
+    # pathological loop impossible. Retries sit OUTSIDE both caps so every
+    # retry is individually budget-checked and counted.
+    capped = CallCountLimitedProvider(budgeted, max_calls=PER_CELL_CALL_CAP)
+    return RetryingProvider(capped), config
