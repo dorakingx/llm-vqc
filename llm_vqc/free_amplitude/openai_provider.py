@@ -144,7 +144,16 @@ class CompleteCandidateOpenAIProvider:
         max_output_tokens: int = DEFAULT_MAX_OUTPUT_TOKENS,
         request_timeout_s: float = DEFAULT_REQUEST_TIMEOUT_S,
         min_seconds_between_calls: float = 3.0,
+        response_schema: dict | None = None,
+        response_schema_name: str = "complete_candidate",
     ) -> None:
+        # Backward-compatible extension point (bench_v2 batch proposals):
+        # default behaviour is byte-identical to before these kwargs
+        # existed — the original single-complete-candidate strict schema.
+        self.response_schema = (
+            response_schema if response_schema is not None else COMPLETE_CANDIDATE_STRICT_SCHEMA
+        )
+        self.response_schema_name = response_schema_name
         self.model_name = model
         self.max_output_tokens = max_output_tokens
         self.request_timeout_s = request_timeout_s
@@ -177,9 +186,9 @@ class CompleteCandidateOpenAIProvider:
             "response_format": {
                 "type": "json_schema",
                 "json_schema": {
-                    "name": "complete_candidate",
+                    "name": self.response_schema_name,
                     "strict": True,
-                    "schema": COMPLETE_CANDIDATE_STRICT_SCHEMA,
+                    "schema": self.response_schema,
                 },
             },
             "timeout": self.request_timeout_s,
