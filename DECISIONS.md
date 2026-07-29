@@ -2134,3 +2134,31 @@ SQLite store, prompts, and any credential material remain
 un-published and git-ignored. `README.md` and
 `docs/presentation/README.md` link to the new package alongside the
 existing Groq pilot one.
+
+---
+
+## bench_v2 — Rigorous QAS Benchmark (2026-07-29 →)
+
+Protocol: `docs/research/BENCHMARK_V2_PROTOCOL.md` (frozen; hashes in
+`outputs/bench_v2/protocol_hashes.json`). Contract:
+`GOAL_CONTRACT.yaml` + `scripts/check_goal_completion.py`.
+
+### Phase 0 (audit, literature, protocol freeze) — COMPLETE
+
+- Working branch `research/rigorous-qas-benchmark-v2` from `2b9084a`
+  (exact remote audit reference of
+  `experiment/free-amplitude-fixed-readout-v1`). Baseline: 567 passed,
+  12 skipped.
+- No running/resumable experiment found; all prior stores preserved
+  untouched (see `docs/research/CURRENT_STATE_AUDIT.md`).
+
+### Phase 1 decision — lint gate scope (2026-07-29)
+
+`ruff check .` reports ~965 findings at the pristine branch point,
+introduced by ruff version drift (repo targets ruff>=0.6; venv has
+0.15.21). Reformatting the preserved experiment lineage would touch
+frozen provenance for committed artifacts, so the contract's C15 lint
+gate is scoped to the bench_v2 surface via `scripts/check_bench_v2.sh`
+(full pytest suite + ruff-clean bench_v2 paths). Pre-existing debt is
+documented, not hidden, and not expanded: an accidental `ruff --fix` on
+four preserved test files during Phase 1 was reverted before commit.

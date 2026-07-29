@@ -17,9 +17,7 @@ interim progress checks; the final completion claim must run WITHOUT it.
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import hashlib
-import importlib.util
 import json
 import re
 import subprocess
@@ -257,7 +255,9 @@ class ContractChecker:
     def check_resource_metrics_present(self, crit: dict) -> CheckResult:
         path = self.root / "outputs" / "bench_v2" / "E2" / "resource_metrics.csv"
         if not path.is_file():
-            return CheckResult(crit["id"], False, ["missing outputs/bench_v2/E2/resource_metrics.csv"])
+            return CheckResult(
+                crit["id"], False, ["missing outputs/bench_v2/E2/resource_metrics.csv"]
+            )
         header = path.read_text().splitlines()[0] if path.stat().st_size else ""
         details = [f"column missing: {col}" for col in crit["require"] if col not in header]
         return CheckResult(crit["id"], not details, details)
@@ -323,7 +323,8 @@ class ContractChecker:
             if eid in ("E0", "E4", "E5"):
                 marker = self.root / "outputs" / "bench_v2" / eid / "COMPLETE.json"
                 if not marker.is_file():
-                    details.append(f"{eid}: completion marker missing: {marker.relative_to(self.root)}")
+                    rel = marker.relative_to(self.root)
+                    details.append(f"{eid}: completion marker missing: {rel}")
                 continue
             if not cells_dir.is_dir():
                 details.append(f"{eid}: no cell manifests at all")
