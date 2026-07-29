@@ -29,3 +29,5 @@ data/
 !outputs/higgs_data_scale_qualification_v1/**
 !outputs/free_amplitude_fixed_readout_v1/
 !outputs/free_amplitude_fixed_readout_v1/**
+!outputs/bench_v2/
+!outputs/bench_v2/**
