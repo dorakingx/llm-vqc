@@ -46,6 +46,19 @@ function bullets(s, items, o) {
     color: o.color || INK, fontFace: FONT, margin: 0, valign: "top",
     lineSpacingMultiple: 1.12, paraSpaceAfter: o.gap == null ? 9 : o.gap });
 }
+// Every slide that shows a number carries one of these, so a reader never
+// has to remember which of the three conditions or which task it came from.
+function badge(s, condition, scope) {
+  const w = 6.55;
+  s.addShape(pres.ShapeType.roundRect, { x: W - 0.55 - w, y: 0.28, w, h: 0.44,
+    rectRadius: 0.07, fill: { color: BG }, line: { color: RULE, width: 1 } });
+  s.addText([
+    { text: condition, options: { bold: true, fontSize: 11.5, color: NAVY } },
+    { text: "   " + scope, options: { fontSize: 11.5, color: MUTED } },
+  ], { x: W - 0.4 - w, y: 0.3, w: w - 0.3, h: 0.4, fontFace: FONT,
+    margin: 0, valign: "middle", align: "right" });
+}
+
 const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, color: "FFFFFF" } });
 
 // ---------------------------------------------------------------- S1
@@ -117,25 +130,28 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S3
 {
   const s = slide("Search space", "Every rule, stated so you can check any circuit by eye");
+  badge(s, "Applies to all three conditions", "only gate count and B differ between them");
   s.addTable([
     [hdr("Constraint"), hdr("Value")],
-    ["Qubits", "3 for T1 and T2 (2^3 = 8 amplitudes); 5 for T3 and T4 (2^5 = 32)"],
-    ["Gate count", "EXACTLY 5 - not a maximum, not a range. Identical for every method."],
+    ["Tasks", "T1 Gaussian peak position · T2 sinusoid frequency · T3 change-point location · T4 one peak vs two (binary)"],
+    ["Qubits", "3 for T1, T2 (2^3 = 8 amplitudes); 5 for T3, T4 (2^5 = 32) - T3 and T4 are only frozen at n=5"],
+    ["Gate count", "PRIMARY exactly 5 (not a max, not a range); Controls A and B relax it to 1-5. Every arm faces the same setting."],
     ["Gate set (7 types)", "one wire: H, RX, RY, RZ      two wires: CRX, CRY, CRZ"],
     ["Angles", "one continuous theta per gate in [-pi, pi]; H carries none"],
+    ["Budget", "PRIMARY and Control A: B = 8 unique candidates. Control B: B = 4, the pilot's setting. 10 seeds throughout."],
     ["Training", "NONE. The proposed angles are evaluated verbatim - no optimizer exists on this path."],
     ["Encoding / readout", "amplitude encoding; Pauli-Z on qubit 0; prediction = (1 - <Z0>)/2"],
-    ["Classical parameters", "zero - no dense layer can rescue a weak circuit"],
-  ], { x: 0.6, y: 1.6, w: 12.15, colW: [2.75, 9.4], fontSize: 14, fontFace: FONT,
-    border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.44,
-    valign: "middle", margin: 0.07 });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.5, w: 12.15, h: 1.15,
+    ["Classical params", "zero - no dense layer can rescue a weak circuit"],
+  ], { x: 0.6, y: 1.5, w: 12.15, colW: [2.4, 9.75], fontSize: 12.5, fontFace: FONT,
+    border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.4,
+    valign: "middle", margin: 0.06 });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.95, w: 12.15, h: 0.9,
     rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
   s.addText([
     { text: "One operation = one physical gate here.  ", options: { bold: true, fontSize: 16, color: INK } },
     { text: "There are no layer macros: a 5-gate circuit compiles to 5 gates, so \"5\" means the same thing to every arm and to the reader.",
       options: { fontSize: 16, color: INK } },
-  ], { x: 0.85, y: 5.62, w: 11.6, h: 0.9, fontFace: FONT, margin: 0, valign: "middle" });
+  ], { x: 0.85, y: 6.03, w: 11.6, h: 0.75, fontFace: FONT, margin: 0, valign: "middle" });
   footer(s, "llm_vqc/mini5/space.py - the same grammar check is applied to classical samplers and LLM replies alike");
   s.addNotes("Everything is on this slide on purpose. Three or five qubits, seven gate types, exactly five gates, one angle per gate, no optimizer, no classical parameters. A reader can verify any proposed circuit against these seven rows.");
 }
@@ -164,6 +180,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S5
 {
   const s = slide("Design", "Five arms, one shared budget of unique candidates");
+  badge(s, "Applies to all three conditions", "arms are identical throughout");
   s.addTable([
     [hdr("Arm"), hdr("How it proposes"), hdr("API calls")],
     ["Random", "draws 5 gates, wires and angles uniformly", "none"],
@@ -189,6 +206,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S6
 {
   const s = slide("Result", "Random search wins on three of four tasks");
+  badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "all four tasks, T1-T4");
   s.addImage({ path: F("fig_main.png"), x: 0.35, y: 1.5, w: 12.6, h: 3.95 });
   s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.72, w: 12.15, h: 1.0,
     rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
@@ -205,6 +223,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S7
 {
   const s = slide("Metric check", "On T4 the metric, not the method, picks the winner");
+  badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "T4 only (peak count, 5 qubits)");
   s.addImage({ path: F("fig_t4_check.png"), x: 0.8, y: 1.55, w: 7.3, h: 3.3 });
   bullets(s, [
     "By RMSE, Random leads. By AUROC, LLM open-loop leads. Same predictions, opposite ranking.",
@@ -226,6 +245,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S8
 {
   const s = slide("Attribution", "Last week's advantage was a size decision, not a design one");
+  badge(s, "ALL THREE CONDITIONS side by side", "T1 only (Gaussian peak, 3 qubits)");
   s.addImage({ path: F("fig_size_confound.png"), x: 0.3, y: 1.5, w: 12.75, h: 3.8 });
   s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.55, w: 12.15, h: 1.2,
     rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
@@ -236,13 +256,14 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
     { text: `only Random degrades as length is freed and the budget shrinks (T1 median ${med(fixed, "gauss_peak", "random")} → ${med(pilot, "gauss_peak", "random")}), while the LLM barely moves (${med(fixed, "gauss_peak", "llm_open")} → ${med(pilot, "gauss_peak", "llm_open")}). At the pilot's setting they meet.`,
       options: { fontSize: 15.5, color: INK } },
   ], { x: 0.85, y: 5.65, w: 11.6, h: 1.0, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "Three conditions, same code, same model, same tasks, 10 seeds each · data/condition_comparison.json");
+  footer(s, "All three conditions ran all four tasks with 10 seeds; T1 is shown here because it is the family the pilot used · data/condition_comparison.json");
   s.addNotes("This is the slide I would defend hardest. The pilot rewarded a single decision - ask for the maximum number of gates - and the LLM makes that decision almost every time while a uniform sampler does not. Pin the length and the advantage goes; restore the length and shrink the budget to the pilot's and the two meet again.");
 }
 
 // ---------------------------------------------------------------- S9
 {
   const s = slide("Search dynamics", "More feedback did not translate into better circuits");
+  badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "all four tasks, T1-T4");
   s.addImage({ path: F("fig_anytime.png"), x: 0.35, y: 1.5, w: 12.6, h: 3.5 });
   bullets(s, [
     "Closed-loop received eight rounds of validation-only feedback on its own candidates and still did not beat open-loop on any task.",
