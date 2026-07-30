@@ -175,6 +175,7 @@ def run_cell(family, n_qubits, arm_name, seed, budget, provider_factory) -> dict
         if issues:
             arm.telemetry.invalid += 1
             arm.telemetry.issues.extend(issues[:1])
+            arm.note_rejected(proposal.operations, "invalid")
             continue
 
         raw = {"n_qubits": n_qubits, "operations": proposal.operations}
@@ -190,9 +191,11 @@ def run_cell(family, n_qubits, arm_name, seed, budget, provider_factory) -> dict
         if not result.valid:
             arm.telemetry.invalid += 1
             arm.telemetry.issues.extend(i.code for i in result.validation_issues[:1])
+            arm.note_rejected(proposal.operations, "invalid")
             continue
         if result.candidate_hash in seen:
             arm.telemetry.duplicates += 1
+            arm.note_rejected(proposal.operations, "duplicate")
             continue
 
         seen.add(result.candidate_hash)

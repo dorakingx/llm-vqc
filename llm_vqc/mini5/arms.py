@@ -69,6 +69,10 @@ class BaseArm:
     def observe(self, operations: list[dict], val_rmse: float) -> None:
         """Called only for candidates that were actually evaluated."""
 
+    def note_rejected(self, operations: list[dict], reason: str) -> None:
+        """Called when a proposal was discarded as a duplicate or as
+        invalid, so an arm that can learn from it gets the chance."""
+
 
 class RandomArm(BaseArm):
     name = "random"
@@ -137,11 +141,17 @@ class LLMArm(BaseArm):
         self.closed = closed
         self.name = "llm_closed" if closed else "llm_open"
         self.archive: list[dict] = []
+        #: every circuit proposed, evaluated or not, so the prompt can
+        #: name exactly what must not be repeated
+        self.tried: list[list[dict]] = []
+        self.last_was_duplicate = False
         self._system = system_prompt(n_qubits)
 
     def propose(self, index: int) -> Proposal | None:
         user = (
-            closed_user_prompt(index, self.budget, self.archive)
+            closed_user_prompt(index, self.budget, self.archive,
+                               tried=self.tried,
+                               last_was_duplicate=self.last_was_duplicate)
             if self.closed
             else open_user_prompt(index, self.budget)
         )
@@ -155,11 +165,17 @@ class LLMArm(BaseArm):
         except (json.JSONDecodeError, KeyError, TypeError):
             self.telemetry.parse_failures += 1
             return None
+        if self.closed and isinstance(operations, list):
+            self.tried.append(operations)
         return Proposal(operations, "llm")
 
     def observe(self, operations, val_rmse) -> None:
+        self.last_was_duplicate = False
         if self.closed:
             self.archive.append({"operations": operations, "val_rmse": val_rmse})
+
+    def note_rejected(self, operations, reason) -> None:
+        self.last_was_duplicate = reason == "duplicate"
 
 
 def build_arm(name: str, rng, n_qubits: int, budget: int, provider=None) -> BaseArm:

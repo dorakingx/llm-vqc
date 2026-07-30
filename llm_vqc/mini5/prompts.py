@@ -20,7 +20,7 @@ from llm_vqc.mini5.space import (
     SINGLE_QUBIT_GATES,
 )
 
-MINI_PROMPT_VERSION = "mini_5gate_prompt_v1"
+MINI_PROMPT_VERSION = "mini_5gate_prompt_v2"
 
 _SYSTEM = """You design one COMPLETE variational quantum circuit: the gate
 sequence AND every numeric rotation angle. There is NO training step and
@@ -58,13 +58,26 @@ _CLOSED_USER_FIRST = """Propose circuit {index} of {budget}.
 No circuit has been evaluated yet."""
 
 _CLOSED_USER = """Propose circuit {index} of {budget}.
-
-Validation results for the circuits you have proposed so far, best
-first. These are validation-only numbers; no test data is involved.
+{duplicate_warning}
+Validation results for what you have already tried, best first. These are
+validation-only numbers; no test data is involved.
 
 {archive}
 
-Use them to decide what to change next."""
+ALREADY TRIED - do NOT propose any of these again. Re-proposing one is a
+duplicate: it consumes a call, earns no evaluation, and leaves you with
+fewer circuits than the other methods.
+
+{tried}
+
+Your next circuit MUST differ from every circuit listed above in at least
+one gate, one wire, or one angle. Change something deliberately: keep what
+the results suggest is working and vary the rest."""
+
+_DUPLICATE_WARNING = """
+WARNING: your previous reply repeated a circuit you had already proposed.
+It was discarded and earned nothing. Do not repeat it again.
+"""
 
 
 def system_prompt(n_qubits: int) -> str:
@@ -88,16 +101,37 @@ def _format_op(op: dict) -> str:
     return f"{op['gate']}(q{wires},{float(op['theta']):+.3f})"
 
 
-def closed_user_prompt(index: int, budget: int, archive: list[dict]) -> str:
-    """`archive` entries are validation-side only: the operations and the
-    validation RMSE they achieved."""
-    if not archive:
+def closed_user_prompt(
+    index: int,
+    budget: int,
+    archive: list[dict],
+    tried: list[list[dict]] | None = None,
+    last_was_duplicate: bool = False,
+) -> str:
+    """`archive` is validation-side only: operations plus the validation
+    RMSE they achieved. `tried` is EVERY circuit already proposed,
+    including ones rejected as duplicates, listed so the model can see
+    exactly what not to repeat -- the v1 prompt showed only the scored
+    top-8 and drew a 74% duplicate rate as the model kept re-proposing
+    its own best entry."""
+    if not archive and not tried:
         return _CLOSED_USER_FIRST.format(index=index, budget=budget)
-    lines = []
-    for rank, entry in enumerate(sorted(archive, key=lambda e: e["val_rmse"])[:8], start=1):
-        ops = " ".join(_format_op(op) for op in entry["operations"])
-        lines.append(f"{rank}. val_rmse={entry['val_rmse']:.4f}  {ops}")
-    return _CLOSED_USER.format(index=index, budget=budget, archive="\n".join(lines))
+    ranked = [
+        f"{rank}. val_rmse={entry['val_rmse']:.4f}  "
+        + " ".join(_format_op(op) for op in entry["operations"])
+        for rank, entry in enumerate(sorted(archive, key=lambda e: e["val_rmse"]), start=1)
+    ]
+    seen = tried if tried is not None else [e["operations"] for e in archive]
+    tried_lines = [
+        f"- {' '.join(_format_op(op) for op in ops)}" for ops in seen
+    ]
+    return _CLOSED_USER.format(
+        index=index,
+        budget=budget,
+        duplicate_warning=_DUPLICATE_WARNING if last_was_duplicate else "",
+        archive="\n".join(ranked) if ranked else "(nothing scored yet)",
+        tried="\n".join(tried_lines),
+    )
 
 
 #: Strict JSON schema. OpenAI structured outputs require every declared
