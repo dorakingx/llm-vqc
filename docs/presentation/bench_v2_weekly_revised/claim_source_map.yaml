@@ -1,0 +1,144 @@
+# Every numerical or scientific claim in the main deck, mapped to its
+# source. `kind` distinguishes inferential claims (a statistical test was
+# run) from descriptive ones (a summary of measurements) and provenance
+# statements. Checked by scripts/verify_bench_v2_presentation.py.
+deck: docs/presentation/bench_v2_weekly_revised/20260731_GSoC_revised.pptx
+source_commit: da6ef34258052e350d58b78ab0182293c8d313db
+validation_command: python scripts/verify_bench_v2_presentation.py
+
+claims:
+  - slide: 1
+    claim: "Classical baselines complete; real-LLM evaluation pending budget approval."
+    source: docs/presentation/bench_v2_weekly_revised/data/fig_matrix.csv
+    column: complete, expected, state
+    derivation: "Sum of complete/expected over classical rows (460/460) and llm rows (0/220)."
+    kind: provenance
+    validation: python scripts/verify_bench_v2_presentation.py
+
+  - slide: 2
+    claim: "Prior agentic-VQC work demonstrates feasibility but does not isolate the proposal strategy against budget-matched classical search with paired replicates and a protected final test."
+    source: docs/research/LITERATURE_REVIEW_QAS.md
+    column: "§1.2, §1.3, §2 cross-cutting synthesis; claim C8"
+    derivation: "Per-paper review of Knipfer 2026 and Sakka 2026; deliberately narrowed from the previous deck's broader assertion about seed replication."
+    kind: provenance
+    validation: grep -n "budget-matched" docs/research/LITERATURE_REVIEW_QAS.md
+
+  - slide: 3
+    claim: "Input is length 2^n; L2 normalisation happens once inside AmplitudeEmbedding; readout is a fixed Pauli-Z on qubit 0; zero classical parameters."
+    source: llm_vqc/free_amplitude/model.py
+    column: "FixedReadoutQuantumModel, classical_parameter_count"
+    derivation: "Read from the implementation; normalize=True is set in llm_vqc/ir/compiler_pennylane.py."
+    kind: provenance
+    validation: pytest tests/test_free_amplitude_model.py -q
+
+  - slide: 4
+    claim: "Splits are 256 train / 256 validation / 2048 protected test; T1 and T2 also run at n = 3, 4, 6, 8."
+    source: configs/bench_v2/sizing_freeze.json
+    column: split_sizes
+    derivation: "Frozen at the Phase 6 sizing gate; n range from protocol_v2.yaml experiments.E3.n_qubits."
+    kind: provenance
+    validation: cat configs/bench_v2/sizing_freeze.json
+
+  - slide: 5
+    claim: "One shared AdamW loop trains theta for every Track A arm: 40 epochs, batch 32."
+    source: configs/bench_v2/sizing_freeze.json
+    column: epochs, batch_size
+    derivation: "Frozen values; applied by llm_vqc/bench_v2/track_a_evaluator.py for all arms."
+    kind: provenance
+    validation: pytest tests/test_bench_v2_evaluators.py -q
+
+  - slide: 6
+    claim: "460 / 460 classical cells complete, 0 failures; 0 / 220 real-LLM cells."
+    source: docs/presentation/bench_v2_weekly_revised/data/fig_matrix.csv
+    column: complete, expected, failed
+    derivation: "Regenerated from runs/bench_v2/*/cells/*.json by build_figures.py::fig_matrix."
+    kind: provenance
+    validation: python scripts/verify_bench_v2_presentation.py
+
+  - slide: 6
+    claim: "Completion checker: 9 of 17 criteria pass."
+    source: scripts/check_goal_completion.py
+    column: "stdout header"
+    derivation: "python scripts/check_goal_completion.py --skip-commands; failures are the missing LLM cells, E4 and the final report."
+    kind: provenance
+    validation: python scripts/check_goal_completion.py --skip-commands | head -1
+
+  - slide: 7
+    claim: "No Holm-adjusted difference was detected among random, evolutionary and greedy on any task; the smallest adjusted p is 0.071."
+    source: docs/presentation/bench_v2_weekly_revised/data/fig_e2_forest.csv
+    column: p_holm where contrast_kind == "search vs search"
+    derivation: "min(p_holm) over search-vs-search contrasts; original values in outputs/bench_v2/E2/stats_paired_tests.csv (Holm within each task family)."
+    kind: inferential
+    validation: python scripts/verify_bench_v2_presentation.py
+
+  - slide: 7
+    claim: "Against StrongEnt d2, on T2 random and evolutionary win with p = 0.046 and Cliff's delta = -0.8; on T1 only random is detected at p = 0.032."
+    source: docs/presentation/bench_v2_weekly_revised/data/fig_e2_forest.csv
+    column: p_holm, cliffs_delta
+    derivation: "Rows with arm_b == ref_strongent_d2; StrongEnt d2 is the strongest reference on these tasks."
+    kind: inferential
+    validation: python scripts/verify_bench_v2_presentation.py
+
+  - slide: 8
+    claim: "At n=8 on T2 all 5 paired replicates favour search (delta = -1.0), median 0.058 vs 0.295."
+    source: outputs/bench_v2/E3/stats_arm_summaries.csv
+    column: median, cliffs_delta_paired (in stats_effect_sizes.csv)
+    derivation: "random_structure median 0.0579 and evolutionary 0.0501 vs ref_strongent_d2 0.2947 at n=8; delta = -1.0 means every pair favours search."
+    kind: descriptive
+    validation: grep "sin_freq,8" outputs/bench_v2/E3/stats_arm_summaries.csv
+
+  - slide: 8
+    claim: "With 5 replicates the smallest attainable p is 0.0625, so after Holm correction across 3 contrasts no result can reach 0.05."
+    source: scripts/bench_v2/analyze_experiment.py
+    column: "_permutation_p, stats.wilcoxon"
+    derivation: "Exact two-sided sign-flip minimum = 2/2^5 = 0.0625, confirmed by re-running the shipped test functions; Holm multiplies the smallest of 3 comparisons by 3."
+    kind: inferential
+    validation: "see SOURCE_AUDIT.md §5 table"
+
+  - slide: 8
+    claim: "All results are noiseless statevector simulation — no shots, no noise model, no quantum hardware."
+    source: llm_vqc/ir/compiler_pennylane.py
+    column: "qml.device('default.qubit', wires=...), diff_method='backprop'"
+    derivation: "No shots argument is passed on the evaluation path; shot and noise code paths belong to E4, which has not run."
+    kind: provenance
+    validation: grep -n "default.qubit" llm_vqc/ir/compiler_pennylane.py
+
+  - slide: 9
+    claim: "Median compiled 2-qubit gates: 58-85 for searched circuits vs 4-29 for the references."
+    source: outputs/bench_v2/E2/resource_metrics.csv
+    column: transpiled_2q_line
+    derivation: "Median per arm over all E2 cells: greedy 58.5, evolutionary 82.5, random 85.0; references 4.0, 8.0, 12.0, 29.0."
+    kind: descriptive
+    validation: python scripts/verify_bench_v2_presentation.py
+
+  - slide: 9
+    claim: "The 2-qubit count is a hardware-relevant proxy that excludes amplitude state preparation."
+    source: llm_vqc/bench_v2/resources.py
+    column: "_body_only_circuit"
+    derivation: "Transpilation is applied to the searched body only; state preparation is identical across arms at a given n."
+    kind: provenance
+    validation: grep -n "no state prep" llm_vqc/bench_v2/resources.py
+
+  - slide: 9
+    claim: "28 diagnostic circuits = best-validation replicate per (task, arm)."
+    source: docs/presentation/bench_v2_weekly_revised/data/fig_diagnostics.csv
+    column: task, arm
+    derivation: "4 tasks x 7 arms; selection uses the validation metric only, never the test metric."
+    kind: provenance
+    validation: "wc -l on the csv gives 29 lines including the header"
+
+  - slide: 10
+    claim: "220 cells, about 1,480 expected calls; reserved at $0.05/call gives $74; the 40-call/cell guard bounds the worst case at $440."
+    source: llm_vqc/bench_v2/llm_arms.py
+    column: "BATCH_SIZE=3; PER_CELL_CALL_CAP=40 in llm_providers.py; COST_ESTIMATE_PER_CALL_USD=0.05 in free_amplitude/openai_provider.py"
+    derivation: "60x6 + 80x8 + 80x6 = 1,480 calls; 1,480 x 0.05 = 74; 220 x 40 x 0.05 = 440. Full table in SOURCE_AUDIT.md §10."
+    kind: descriptive
+    validation: grep -n "PER_CELL_CALL_CAP\|BATCH_SIZE" llm_vqc/bench_v2/llm_*.py
+
+  - slide: 10
+    claim: "No positive LLM_API_BUDGET_USD, no calls."
+    source: llm_vqc/llm/budget.py
+    column: LLMApiBudget.from_env
+    derivation: "Returns None when the variable is absent, empty, unparseable or <= 0; preflight_real_run then refuses before any client is built."
+    kind: provenance
+    validation: pytest tests/test_bench_v2_llm_arms.py -q -k cap
