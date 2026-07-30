@@ -27,6 +27,10 @@ import numpy as np  # noqa: E402
 REPO = Path(__file__).resolve().parents[2]
 RESULTS = REPO / "outputs" / "mini5" / "results.json"
 FIG = REPO / "docs" / "presentation" / "mini5" / "figures"
+#: outputs/ is gitignored (durable stores stay out of the repo), so the
+#: numbers behind every figure are exported here, inside the deck package,
+#: where a reader can check them without the store.
+DATA = REPO / "docs" / "presentation" / "mini5" / "data"
 
 # Okabe-Ito derived, colourblind safe. One colour per method, everywhere.
 COLOR = {
@@ -218,6 +222,36 @@ def summary(doc: dict) -> None:
         print(row)
 
 
+def export_data(doc: dict) -> None:
+    """One row per cell: what the figures are drawn from."""
+    import csv
+
+    DATA.mkdir(parents=True, exist_ok=True)
+    fields = ["family", "n_qubits", "arm", "seed", "status", "n_evaluated",
+              "selected_val_rmse", "test_rmse", "test_auroc", "stop_reason",
+              "selected_gate_count", "api_calls", "proposals", "duplicates",
+              "invalid"]
+    with (DATA / "per_cell.csv").open("w", newline="") as fh:
+        writer = csv.DictWriter(fh, fieldnames=fields)
+        writer.writeheader()
+        for cell in doc["cells"]:
+            tel = cell.get("telemetry", {})
+            writer.writerow({
+                **{k: cell.get(k) for k in fields if k in cell},
+                "api_calls": tel.get("api_calls"),
+                "proposals": tel.get("proposals"),
+                "duplicates": tel.get("duplicates"),
+                "invalid": tel.get("invalid"),
+            })
+    meta = {k: doc[k] for k in
+            ("space_version", "exact_gates", "budget_unique", "seeds", "tasks",
+             "arms", "wall_clock_seconds") if k in doc}
+    meta["spend"] = doc.get("spend")
+    (DATA / "run_metadata.json").write_text(json.dumps(meta, indent=2) + "\n")
+    print(f"  wrote data/per_cell.csv ({len(doc['cells'])} rows) and "
+          "data/run_metadata.json")
+
+
 def main() -> int:
     doc = load()
     print(f"mini5: {len(doc['cells'])} cells, "
@@ -225,6 +259,7 @@ def main() -> int:
     fig_main(doc)
     fig_t4_check(doc)
     fig_anytime(doc)
+    export_data(doc)
     summary(doc)
     return 0
 
