@@ -8,10 +8,11 @@ the cumulative cap is refused before it is issued.
 
 from __future__ import annotations
 
-from llm_vqc.mini5.prompts import RESPONSE_SCHEMA
+from llm_vqc.mini5.prompts import response_schema
 
 
-def build_mini5_provider(spend_ledger, cell_id: str | None = None):
+def build_mini5_provider(spend_ledger, cell_id: str | None = None,
+                         min_gates: int = 5, max_gates: int = 5):
     """One provider per cell, all sharing the one cumulative ledger."""
     from llm_vqc.bench_v2.pinned_provider import (
         PinnedStructuredProvider,
@@ -22,7 +23,7 @@ def build_mini5_provider(spend_ledger, cell_id: str | None = None):
     config = preflight_pinned_run()
     provider = PinnedStructuredProvider(
         api_key=config.api_key,
-        response_schema=RESPONSE_SCHEMA,
+        response_schema=response_schema(min_gates, max_gates),
         response_schema_name="mini5_circuit",
         model=config.model,
     )

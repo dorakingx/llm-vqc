@@ -57,11 +57,21 @@ class BaseArm:
     name = "base"
     uses_api = False
 
-    def __init__(self, rng: np.random.Generator, n_qubits: int, budget: int) -> None:
+    def __init__(self, rng: np.random.Generator, n_qubits: int, budget: int,
+                 min_gates: int = EXACT_GATES, max_gates: int = EXACT_GATES) -> None:
         self.rng = rng
         self.n_qubits = n_qubits
         self.budget = budget
+        self.min_gates = min_gates
+        self.max_gates = max_gates
         self.telemetry = ArmTelemetry()
+
+    def _sample(self) -> list[dict]:
+        return sample_circuit(self.rng, self.n_qubits, self.min_gates, self.max_gates)
+
+    def _mutate(self, ops: list[dict]) -> list[dict]:
+        return mutate_circuit(self.rng, ops, self.n_qubits,
+                              self.min_gates, self.max_gates)
 
     def propose(self, index: int) -> Proposal | None:
         raise NotImplementedError
@@ -78,7 +88,7 @@ class RandomArm(BaseArm):
     name = "random"
 
     def propose(self, index: int) -> Proposal:
-        return Proposal(sample_circuit(self.rng, self.n_qubits), "random")
+        return Proposal(self._sample(), "random")
 
 
 class EvolutionaryArm(BaseArm):
@@ -88,16 +98,17 @@ class EvolutionaryArm(BaseArm):
     name = "evolutionary"
     MU = 4
 
-    def __init__(self, rng, n_qubits, budget) -> None:
-        super().__init__(rng, n_qubits, budget)
+    def __init__(self, rng, n_qubits, budget, min_gates=EXACT_GATES,
+                 max_gates=EXACT_GATES) -> None:
+        super().__init__(rng, n_qubits, budget, min_gates, max_gates)
         self.population: list[tuple[float, list[dict]]] = []
 
     def propose(self, index: int) -> Proposal:
         if len(self.population) < self.MU:
-            return Proposal(sample_circuit(self.rng, self.n_qubits), "seed")
+            return Proposal(self._sample(), "seed")
         parents = sorted(self.population, key=lambda p: p[0])[: self.MU]
         _, parent = parents[int(self.rng.integers(len(parents)))]
-        return Proposal(mutate_circuit(self.rng, parent, self.n_qubits), "mutation")
+        return Proposal(self._mutate(parent), "mutation")
 
     def observe(self, operations, val_rmse) -> None:
         self.population.append((val_rmse, operations))
@@ -111,17 +122,18 @@ class GreedyArm(BaseArm):
 
     name = "greedy"
 
-    def __init__(self, rng, n_qubits, budget) -> None:
-        super().__init__(rng, n_qubits, budget)
+    def __init__(self, rng, n_qubits, budget, min_gates=EXACT_GATES,
+                 max_gates=EXACT_GATES) -> None:
+        super().__init__(rng, n_qubits, budget, min_gates, max_gates)
         self.incumbent: list[dict] | None = None
         self.incumbent_rmse = float("inf")
         self._last: list[dict] | None = None
 
     def propose(self, index: int) -> Proposal:
         if self.incumbent is None:
-            self._last = sample_circuit(self.rng, self.n_qubits)
+            self._last = self._sample()
             return Proposal(self._last, "start")
-        self._last = mutate_circuit(self.rng, self.incumbent, self.n_qubits)
+        self._last = self._mutate(self.incumbent)
         return Proposal(self._last, "climb")
 
     def observe(self, operations, val_rmse) -> None:
@@ -135,8 +147,9 @@ class LLMArm(BaseArm):
 
     uses_api = True
 
-    def __init__(self, rng, n_qubits, budget, provider, closed: bool) -> None:
-        super().__init__(rng, n_qubits, budget)
+    def __init__(self, rng, n_qubits, budget, provider, closed: bool,
+                 min_gates=EXACT_GATES, max_gates=EXACT_GATES) -> None:
+        super().__init__(rng, n_qubits, budget, min_gates, max_gates)
         self.provider = provider
         self.closed = closed
         self.name = "llm_closed" if closed else "llm_open"
@@ -145,7 +158,7 @@ class LLMArm(BaseArm):
         #: name exactly what must not be repeated
         self.tried: list[list[dict]] = []
         self.last_was_duplicate = False
-        self._system = system_prompt(n_qubits)
+        self._system = system_prompt(n_qubits, min_gates, max_gates)
 
     def propose(self, index: int) -> Proposal | None:
         user = (
@@ -178,17 +191,19 @@ class LLMArm(BaseArm):
         self.last_was_duplicate = reason == "duplicate"
 
 
-def build_arm(name: str, rng, n_qubits: int, budget: int, provider=None) -> BaseArm:
+def build_arm(name: str, rng, n_qubits: int, budget: int, provider=None,
+              min_gates: int = EXACT_GATES, max_gates: int = EXACT_GATES) -> BaseArm:
+    g = (min_gates, max_gates)
     if name == "random":
-        return RandomArm(rng, n_qubits, budget)
+        return RandomArm(rng, n_qubits, budget, *g)
     if name == "evolutionary":
-        return EvolutionaryArm(rng, n_qubits, budget)
+        return EvolutionaryArm(rng, n_qubits, budget, *g)
     if name == "greedy":
-        return GreedyArm(rng, n_qubits, budget)
+        return GreedyArm(rng, n_qubits, budget, *g)
     if name == "llm_open":
-        return LLMArm(rng, n_qubits, budget, provider, closed=False)
+        return LLMArm(rng, n_qubits, budget, provider, False, *g)
     if name == "llm_closed":
-        return LLMArm(rng, n_qubits, budget, provider, closed=True)
+        return LLMArm(rng, n_qubits, budget, provider, True, *g)
     raise ValueError(f"unknown arm {name!r}")
 
 

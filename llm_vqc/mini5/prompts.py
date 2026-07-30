@@ -14,6 +14,8 @@ the same plus validation-only feedback on its own past candidates.
 
 from __future__ import annotations
 
+import json
+
 from llm_vqc.mini5.space import (
     CONTROLLED_GATES,
     EXACT_GATES,
@@ -33,10 +35,10 @@ prediction is mu_hat = (1 - <Z0>)/2 in [0,1]. Lower validation RMSE is
 better.
 
 Output exactly one JSON object, no prose and no markdown fences:
-{{"operations": [OP, OP, OP, OP, OP]}}
+{{"operations": [{shape}]}}
 
-HARD CONSTRAINT: the list contains EXACTLY {k} operations. Not fewer, not
-more. A list of any other length is rejected and wastes your budget.
+HARD CONSTRAINT: {length_rule} A list of any other length is rejected and
+wastes your budget.
 
 Each OP is {{"gate": G, "wires": [...], "theta": angle-or-null}}:
   G in {singles} -> wires [q], one wire;
@@ -80,11 +82,22 @@ It was discarded and earned nothing. Do not repeat it again.
 """
 
 
-def system_prompt(n_qubits: int) -> str:
+def system_prompt(n_qubits: int, min_gates: int = EXACT_GATES,
+                  max_gates: int = EXACT_GATES) -> str:
+    if min_gates == max_gates:
+        rule = (f"the list contains EXACTLY {min_gates} operations, "
+                "not fewer and not more.")
+        shape = ", ".join(["OP"] * min_gates)
+    else:
+        rule = (f"the list contains between {min_gates} and {max_gates} "
+                "operations inclusive. Choosing the length is part of your "
+                "design decision.")
+        shape = f"OP, ... ({min_gates} to {max_gates} of them)"
     return _SYSTEM.format(
         n=n_qubits,
         n_max=n_qubits - 1,
-        k=EXACT_GATES,
+        length_rule=rule,
+        shape=shape,
         singles=list(SINGLE_QUBIT_GATES),
         controlled=list(CONTROLLED_GATES),
     )
@@ -139,7 +152,17 @@ def closed_user_prompt(
 #: than an optional key - a lesson learned from the bench_v2 `center`
 #: field, where an optional-looking property was silently forced into
 #: every object and then rejected by the validator.
-RESPONSE_SCHEMA = {
+def response_schema(min_gates: int = EXACT_GATES,
+                    max_gates: int = EXACT_GATES) -> dict:
+    """Schema factory so the allowed length is enforced by the API itself,
+    not only by our validator."""
+    schema = json.loads(json.dumps(_SCHEMA_TEMPLATE))
+    schema["properties"]["operations"]["minItems"] = min_gates
+    schema["properties"]["operations"]["maxItems"] = max_gates
+    return schema
+
+
+_SCHEMA_TEMPLATE = {
     "type": "object",
     "properties": {
         "operations": {

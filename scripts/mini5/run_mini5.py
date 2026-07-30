@@ -124,7 +124,7 @@ def log(message: str) -> None:
 def _worker(args) -> dict:
     """Top-level so it pickles. Each process builds its own provider once
     and reuses it, sharing the one on-disk cumulative ledger."""
-    family, n_qubits, arm_name, seed, budget, mock, cap_usd = args
+    family, n_qubits, arm_name, seed, budget, mock, cap_usd, min_g, max_g = args
 
     def provider_factory():
         if arm_name not in LLM_ARMS:
@@ -137,13 +137,16 @@ def _worker(args) -> dict:
                 from llm_vqc.mini5.provider import build_mini5_provider
                 ledger = GlobalSpendLedger(LEDGER_PATH, cap_usd=cap_usd,
                                            run_label="mini5")
-                _WORKER["provider"] = build_mini5_provider(ledger)
+                _WORKER["provider"] = build_mini5_provider(
+                    ledger, min_gates=min_g, max_gates=max_g)
         return _WORKER["provider"]
 
-    return run_cell(family, n_qubits, arm_name, seed, budget, provider_factory)
+    return run_cell(family, n_qubits, arm_name, seed, budget, provider_factory,
+                    min_g, max_g)
 
 
-def run_cell(family, n_qubits, arm_name, seed, budget, provider_factory) -> dict:
+def run_cell(family, n_qubits, arm_name, seed, budget, provider_factory,
+             min_gates=EXACT_GATES, max_gates=EXACT_GATES) -> dict:
     """One (task, arm, seed) cell, start to finish."""
     started = time.perf_counter()
     data_seed, search_seed = 1000 + seed, 2000 + seed
@@ -152,7 +155,8 @@ def run_cell(family, n_qubits, arm_name, seed, budget, provider_factory) -> dict
     rng = np.random.default_rng(search_seed)
 
     provider = provider_factory() if arm_name in LLM_ARMS else None
-    arm = build_arm(arm_name, rng, n_qubits, budget, provider)
+    arm = build_arm(arm_name, rng, n_qubits, budget, provider,
+                    min_gates=min_gates, max_gates=max_gates)
     ledger = BudgetLedger()
 
     evaluated: list[dict] = []
@@ -171,7 +175,8 @@ def run_cell(family, n_qubits, arm_name, seed, budget, provider_factory) -> dict
             arm.telemetry.invalid += 1
             continue
 
-        issues = grammar_issues(proposal.operations, n_qubits)
+        issues = grammar_issues(proposal.operations, n_qubits,
+                                min_gates, max_gates)
         if issues:
             arm.telemetry.invalid += 1
             arm.telemetry.issues.extend(issues[:1])
@@ -263,6 +268,11 @@ def main() -> int:
     ap.add_argument("--seeds", type=int, default=10)
     ap.add_argument("--workers", type=int, default=8)
     ap.add_argument("--arms", nargs="*", default=list(ARM_NAMES))
+    ap.add_argument("--min-gates", type=int, default=EXACT_GATES)
+    ap.add_argument("--max-gates", type=int, default=EXACT_GATES,
+                    help="set --min-gates 1 --max-gates 5 to let circuit "
+                         "length vary, which is what the 2026-07-24 pilot did")
+    ap.add_argument("--tag", default="", help="suffix for the results file")
     ap.add_argument("--mock", action="store_true",
                     help="offline plumbing check; never scientific evidence")
     args = ap.parse_args()
@@ -287,14 +297,17 @@ def main() -> int:
     ]
     log(f"[mini5] {MINI_SPACE_VERSION}: {len(cells)} cells "
         f"({len(TASKS)} tasks x {len(args.arms)} arms x {args.seeds} seeds), "
-        f"B={args.budget}, exactly {EXACT_GATES} gates, {args.workers} workers")
+        f"B={args.budget}, gates={args.min_gates}"
+        + ("" if args.min_gates == args.max_gates else f"..{args.max_gates}")
+        + f", {args.workers} workers")
 
     started = time.perf_counter()
     rows, failures = [], 0
     cap = spend_ledger.cap_usd if spend_ledger is not None else 0.0
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         futures = {
-            pool.submit(_worker, (f, n, a, s, args.budget, args.mock, cap)): (f, n, a, s)
+            pool.submit(_worker, (f, n, a, s, args.budget, args.mock, cap,
+                                  args.min_gates, args.max_gates)): (f, n, a, s)
             for (f, n, a, s) in cells
         }
         for done, future in enumerate(as_completed(futures), start=1):
@@ -318,7 +331,9 @@ def main() -> int:
     elapsed = time.perf_counter() - started
     payload = {
         "space_version": MINI_SPACE_VERSION,
-        "exact_gates": EXACT_GATES,
+        "min_gates": args.min_gates,
+        "max_gates": args.max_gates,
+        "exact_gates": args.min_gates if args.min_gates == args.max_gates else None,
         "budget_unique": args.budget,
         "seeds": args.seeds,
         "tasks": [{"family": f, "n_qubits": n, "label": lab} for f, n, lab in TASKS],
@@ -329,7 +344,8 @@ def main() -> int:
     }
     if spend_ledger is not None:
         payload["spend"] = spend_ledger.summary()
-    out = OUT_DIR / ("results_mock.json" if args.mock else "results.json")
+    stem = "results_mock" if args.mock else "results"
+    out = OUT_DIR / f"{stem}{args.tag}.json"
     out.write_text(json.dumps(payload, indent=2) + "\n")
 
     log(f"[mini5] {len(rows)} cells in {elapsed:.1f}s ({elapsed / 60:.1f} min), "

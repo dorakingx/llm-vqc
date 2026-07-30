@@ -45,20 +45,45 @@ def sample_operation(rng: np.random.Generator, n_qubits: int) -> dict:
     return {"gate": gate, "wires": wires, "theta": theta}
 
 
-def sample_circuit(rng: np.random.Generator, n_qubits: int) -> list[dict]:
-    return [sample_operation(rng, n_qubits) for _ in range(EXACT_GATES)]
+def sample_circuit(rng: np.random.Generator, n_qubits: int,
+                   min_gates: int = EXACT_GATES,
+                   max_gates: int = EXACT_GATES) -> list[dict]:
+    """Uniform over the allowed lengths, then uniform over gates.
+
+    With min == max this is the fixed-length space. With min < max the
+    length itself becomes a search dimension - which is exactly the
+    confound the fixed-length space was built to remove, so the variable
+    setting exists to measure that confound, not to hide it.
+    """
+    k = int(rng.integers(min_gates, max_gates + 1))
+    return [sample_operation(rng, n_qubits) for _ in range(k)]
 
 
-def mutate_circuit(rng: np.random.Generator, ops: list[dict], n_qubits: int) -> list[dict]:
-    """One local change that preserves the exact gate count.
+def mutate_circuit(rng: np.random.Generator, ops: list[dict], n_qubits: int,
+                   min_gates: int = EXACT_GATES,
+                   max_gates: int = EXACT_GATES) -> list[dict]:
+    """One local change.
 
-    Three kinds, chosen uniformly: perturb one angle, replace one gate
-    wholesale, or rewire one gate. `add`/`remove` mutations are absent by
-    construction — the length is fixed at five.
+    Three length-preserving kinds are always available: perturb one angle,
+    replace one gate wholesale, or rewire one gate. `add` and `remove` are
+    offered only when the length is allowed to vary, so at fixed length the
+    mutation operator cannot smuggle in a size change.
     """
     out = [dict(op) for op in ops]
+    kinds = ["theta_perturb", "gate_replace", "rewire"]
+    if max_gates > min_gates:
+        if len(out) < max_gates:
+            kinds.append("add")
+        if len(out) > min_gates:
+            kinds.append("remove")
+    kind = str(rng.choice(kinds))
+    if kind == "add":
+        out.insert(int(rng.integers(len(out) + 1)), sample_operation(rng, n_qubits))
+        return out
+    if kind == "remove":
+        del out[int(rng.integers(len(out)))]
+        return out
     i = int(rng.integers(len(out)))
-    kind = str(rng.choice(("theta_perturb", "gate_replace", "rewire")))
 
     if kind == "theta_perturb" and out[i]["theta"] is not None:
         shifted = out[i]["theta"] + float(rng.normal(0.0, 0.3))
@@ -76,7 +101,9 @@ def mutate_circuit(rng: np.random.Generator, ops: list[dict], n_qubits: int) -> 
     return out
 
 
-def grammar_issues(ops: object, n_qubits: int) -> list[str]:
+def grammar_issues(ops: object, n_qubits: int,
+                   min_gates: int = EXACT_GATES,
+                   max_gates: int = EXACT_GATES) -> list[str]:
     """Return human-readable reasons `ops` is not a legal candidate.
 
     Applied identically to classical and LLM proposals, so an LLM cannot
@@ -86,8 +113,10 @@ def grammar_issues(ops: object, n_qubits: int) -> list[str]:
     issues: list[str] = []
     if not isinstance(ops, list):
         return ["operations must be a list"]
-    if len(ops) != EXACT_GATES:
-        issues.append(f"must contain exactly {EXACT_GATES} gates, got {len(ops)}")
+    if not (min_gates <= len(ops) <= max_gates):
+        want = (f"exactly {min_gates}" if min_gates == max_gates
+                else f"{min_gates}..{max_gates}")
+        issues.append(f"must contain {want} gates, got {len(ops)}")
     for k, op in enumerate(ops):
         if not isinstance(op, dict):
             issues.append(f"op {k}: not an object")
