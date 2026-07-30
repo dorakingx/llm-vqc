@@ -1,65 +1,88 @@
-# BLOCKED — real-LLM cells await an explicit spending cap
+# BLOCKED — the API credential has no quota
 
-Status at 2026-07-29 (UTC). Everything runnable without a paid API call
-is running or complete; this file documents the ONE genuine external
-blocker (goal §2, blocker class 1) and the exact resume path.
+Status: 2026-07-31, branch `experiment/bench-v2-real-llm-cost-minimal`.
 
-## What is blocked, exactly
+Every preflight fix required before spending was completed, and the
+authorisation itself was in place: the model was pinned, the price
+manifest committed, the cumulative ledger implemented and tested, the
+search-space parity proved, and `LLM_API_BUDGET_USD` was set. The run
+still cannot proceed, for a reason no cap or code change can fix.
 
-The scientific real-provider LLM cells (mocks count only for tests):
+## The blocker
 
-| Experiment | Cells | Arms |
-|---|---|---|
-| E1 | 60 | `llm_open_joint`, `llm_closed_joint` (3 task-n pairs × 10 replicates) |
-| E2 | 80 | `llm_open_structure`, `llm_archive_closed_structure` (4 tasks × 10) |
-| E3 | 80 | same two structure arms (8 task-n combos × 5) |
-| E5 | dependent | needs E1 LLM cells' selected architectures |
-| E4 (LLM rows) | dependent | needs E2/E3 LLM cells' selected circuits |
+The first real request returned:
 
-## Evidence of the blocker
-
-- `.env` (worktree + main repo root) defines `OPENAI_API_KEY` and
-  `OPENAI_MODEL` only (variable names inspected; values never read).
-- `LLM_API_BUDGET_USD` is absent from the environment and from `.env`.
-- Controlling policy (frozen; `llm_vqc/llm/budget.py`, goal §3.7): paid
-  API calls are prohibited unless BOTH a credential AND a positive
-  explicit cap are present — a key alone is not authorization, and the
-  session does not self-authorize spending. `preflight_real_run` refuses
-  before any client is constructed (covered by
-  `tests/test_bench_v2_llm_arms.py::test_real_provider_requires_explicit_cap`).
-
-## What is NOT blocked (running / complete)
-
-- E0 provenance replication: COMPLETE, exact match, zero API calls.
-- E1 classical joint cells (60/60): COMPLETE.
-- E2/E3 classical + reference cells: running via the detached driver
-  (`runs/bench_v2/logs/driver_classical.log`).
-- All infrastructure, tests, break-tests, analyses of completed cells.
-
-## Cost expectation for the cap
-
-Every call reserves a conservative $0.05 against the cap
-(`COST_ESTIMATE_PER_CALL_USD`; true mini-model cost is far lower), and
-each cell has a hard 40-call cap. The full LLM matrix is ~220 cells and
-an estimated ~1,500–2,200 calls:
-
-- **`LLM_API_BUDGET_USD=120`** lets the whole matrix run uninterrupted
-  under the conservative reservation; **actual** spend with a mini-class
-  model (e.g. the committed E0 run's gpt-5.4-mini) is expected around
-  $5–20.
-- A smaller cap (e.g. 30) also works: the run stops cleanly when the cap
-  binds and RESUMES from its stores when re-invoked with a fresh cap —
-  no work is lost, but the matrix completes in several installments.
-
-## Exact resume command
-
-```bash
-cd /Users/hatanakatomoya/Developer/Sim/llm-vqc/.claude/worktrees/github-author-config-faee6e \
-  && export LLM_API_BUDGET_USD=120 \
-  && nohup bash scripts/bench_v2/run_llm_matrix.sh > runs/bench_v2/logs/driver_llm.log 2>&1 &
+```
+openai.RateLimitError: Error code: 429 — {'error':
+  {'message': 'You exceeded your current quota, please check your plan
+   and billing details.',
+   'type': 'insufficient_quota', 'code': 'insufficient_quota'}}
 ```
 
-(The script sources `.env` itself for the key/model, enforces the cap
-before any request, retries transient failures, resumes cells from their
-durable stores, and finishes with E5, E4, and the per-experiment
-analyses.)
+`insufficient_quota` is an **account-level billing state**, not a rate
+limit and not a per-key throttle: the credential is valid and accepted,
+but the account has no remaining credit to draw on. Retrying, waiting, a
+smaller batch, a cheaper model or a larger cap all fail identically.
+
+This is blocker class 1 from the original goal — "a paid API credential
+or explicit API spending cap is absent/**exhausted**".
+
+## What was attempted, exactly
+
+| Item | Value |
+|---|---|
+| Endpoint | `chat.completions` with strict Structured Outputs |
+| Model | `gpt-5-nano-2025-08-07` (pinned; env verified before any client was built) |
+| Preflight cap | `LLM_API_BUDGET_USD=0.02`, separate ledger `runs/bench_v2/preflight_ledger.sqlite` |
+| Requests that reached the provider | 1 logical call → 3 outbound attempts (the retry wrapper's 2 retries) |
+| Requests that succeeded | 0 |
+| **Cumulative spend** | **$0.000000** |
+
+The ledger recorded three reservations totalling $0.00252 and
+**released all three** when the requests failed, leaving committed spend
+at exactly zero. That is the reservation/release path working under a
+real provider failure rather than in a test.
+
+## Consequence for the matrix
+
+| Experiment | State | Reason |
+|---|---|---|
+| E1 real-LLM (60 cells) | not started | no quota |
+| E2 real-LLM (80 cells) | not started | no quota |
+| E3 real-LLM (80 cells) | not started | no quota |
+| **E5 θ-isolation** | **blocked** | the protocol freezes *LLM-proposed* architectures; with no LLM cells there are none. Running it on classical joint architectures instead would silently redefine the experiment, so it was not done. |
+| E4 shot/noise robustness | **runnable and run** | it selects circuits from completed E2/E3 cells, which are classical and complete |
+
+The classical matrix (460/460 cells) is unaffected and remains complete.
+
+## To unblock
+
+Add credit to the OpenAI account that owns `OPENAI_API_KEY` (Billing →
+add a payment method or top up credits), then:
+
+```bash
+cd /Users/hatanakatomoya/Developer/Sim/llm-vqc/.claude/worktrees/github-author-config-faee6e
+set -a; source .env; set +a
+export OPENAI_MODEL=gpt-5-nano-2025-08-07
+export LLM_API_BUDGET_USD=0.02
+python scripts/bench_v2/preflight_real_provider.py      # must pass first
+```
+
+Then, and only then, the matrix under its own $2.00 cumulative cap:
+
+```bash
+export LLM_API_BUDGET_USD=2.00
+bash scripts/bench_v2/run_llm_matrix.sh
+```
+
+Both ledgers are durable: a resumed run continues the same cumulative
+total rather than restarting it, and cells already completed are skipped.
+
+## Cost expectation once quota exists
+
+From the committed manifest (`configs/bench_v2/model_prices.json`,
+gpt-5-nano at $0.05/1M input and $0.40/1M output) and the measured
+prompt sizes, one proposal call costs roughly $0.0004. The full matrix is
+~1,480 calls ≈ **$0.6**, so the $2.00 cap carries the whole run with
+headroom — a figure now derived from real prices and token counts rather
+than the previous invented flat rate.

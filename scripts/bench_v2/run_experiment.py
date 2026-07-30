@@ -42,6 +42,7 @@ from llm_vqc.bench_v2.llm_providers import (  # noqa: E402
 from llm_vqc.bench_v2.space import SpaceProfile  # noqa: E402
 from llm_vqc.evaluation.seeds import derive_child_seed  # noqa: E402
 from llm_vqc.free_amplitude.training import FreeAmplitudeTrainingConfig  # noqa: E402
+from llm_vqc.llm.global_ledger import GlobalSpendLedger, LedgerCapExceeded  # noqa: E402
 
 PROTOCOL_PATH = REPO / "configs" / "bench_v2" / "protocol_v2.yaml"
 RUNS_ROOT = REPO / "runs" / "bench_v2"
@@ -50,6 +51,8 @@ RUNS_ROOT = REPO / "runs" / "bench_v2"
 #: main matrix) according to the prewritten rule; absent -> provisional
 #: protocol values are used.
 SIZING_PATH = REPO / "configs" / "bench_v2" / "sizing_freeze.json"
+#: One cumulative ledger for the whole matrix, shared by every cell.
+LEDGER_PATH = RUNS_ROOT / "spend_ledger.sqlite"
 
 
 def load_protocol() -> dict:
@@ -147,7 +150,9 @@ def enumerate_cells(
     return specs
 
 
-def make_provider_factory(mock: bool):
+def make_provider_factory(mock: bool, ledger=None):
+    """Real providers all share ONE cumulative ledger, so the cap spans the
+    whole matrix rather than resetting per cell."""
     def factory(spec: CellSpec, track: str):
         if mock:
             seed = derive_child_seed(spec.data_seed, "mock_provider", spec.arm_name,
@@ -157,7 +162,7 @@ def make_provider_factory(mock: bool):
                     seed, SpaceProfile(spec.space_name, spec.n_qubits), BATCH_SIZE
                 )
             return MockJointBatchProvider(seed, spec.n_qubits, BATCH_SIZE)
-        provider, _config = build_real_provider(track)
+        provider, _config = build_real_provider(track, ledger=ledger, cell_id=spec.cell_id)
         return provider
 
     return factory
@@ -183,12 +188,25 @@ def main() -> int:
     if args.max_cells:
         specs = specs[: args.max_cells]
 
-    provider_factory = make_provider_factory(args.mock)
+    ledger = None
+    if not args.mock:
+        ledger = GlobalSpendLedger.from_env(LEDGER_PATH, run_label="bench_v2_matrix")
+        if ledger is None:
+            print("REFUSING: LLM_API_BUDGET_USD is not set to a positive value; "
+                  "real LLM cells need an explicit cumulative cap.")
+            return 2
+        print(f"[ledger] {LEDGER_PATH.name}: cap ${ledger.cap_usd:.2f}, "
+              f"already committed ${ledger.totals().committed_usd:.6f}")
+
+    provider_factory = make_provider_factory(args.mock, ledger)
     print(f"[{args.experiment}] {len(specs)} cells "
           f"(smoke={args.smoke} pilot={args.pilot} mock={args.mock})", flush=True)
 
     failures = []
+    cap_stop = None
     for i, spec in enumerate(specs):
+        if cap_stop:
+            break
         start = time.perf_counter()
         try:
             manifest = run_cell(spec, RUNS_ROOT, provider_factory=provider_factory)
@@ -198,16 +216,32 @@ def main() -> int:
                 f"in {elapsed:.1f}s (test gate at {manifest['test_gate']['timestamp']})",
                 flush=True,
             )
+        except LedgerCapExceeded as exc:
+            cap_stop = str(exc)
+            print(f"  [{i + 1}/{len(specs)}] {spec.cell_id}: STOPPED — global cap reached")
+            break
         except Exception as exc:
             elapsed = time.perf_counter() - start
             failures.append((spec.cell_id, f"{type(exc).__name__}: {exc}"))
             print(f"  [{i + 1}/{len(specs)}] {spec.cell_id}: FAILED after "
                   f"{elapsed:.1f}s — {type(exc).__name__}: {exc}", flush=True)
 
-    print(f"[{args.experiment}] done: {len(specs) - len(failures)} ok, "
+    completed = sum(1 for s in specs
+                    if (RUNS_ROOT / s.experiment / "cells" / f"{s.cell_id}.json").is_file())
+    print(f"[{args.experiment}] done: {completed} complete of {len(specs)} planned, "
           f"{len(failures)} failed", flush=True)
     for cell, err in failures:
         print(f"  FAILED {cell}: {err}", flush=True)
+    if ledger is not None:
+        s = ledger.summary()
+        print(f"[ledger] calls={s['calls_settled']} in={s['input_tokens']} "
+              f"out={s['output_tokens']} spent=${s['settled_usd']:.6f} "
+              f"remaining=${s['remaining_usd']:.6f} of ${s['cap_usd']:.2f}", flush=True)
+    if cap_stop:
+        print(f"[ledger] CLEAN STOP — {cap_stop}", flush=True)
+        print(f"[ledger] {len(specs) - completed} cells remain; re-run after the "
+              "operator raises the cap. The cap was NOT auto-raised.", flush=True)
+        return 3
     return 1 if failures else 0
 
 

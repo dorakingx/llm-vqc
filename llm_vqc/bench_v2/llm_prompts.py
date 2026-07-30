@@ -22,7 +22,7 @@ from llm_vqc.bench_v2.space import (
     SpaceProfile,
 )
 
-BENCH_V2_PROMPT_VERSION = "bench_v2_prompt_v1"
+BENCH_V2_PROMPT_VERSION = "bench_v2_prompt_v2"
 
 _STRUCTURE_SYSTEM = """You design variational quantum circuit ARCHITECTURES.
 
@@ -44,11 +44,15 @@ Each OP is one of:
    "center": q (star only), "pairs": [[a,b],...] (pairs only)}
       with P in %(patterns)s and E in %(ent_gates)s
 
-Rules: n_qubits = %(n)d; wire indices 0..%(n_max)d; no "repeat" blocks;
-every architecture must contain at least one parameterized rotation
-(RX/RY/RZ or CRX/CRY/CRZ) or it is invalid; diverse candidates are better
-than near-duplicates; duplicates of already evaluated architectures waste
-budget."""
+Rules: n_qubits = %(n)d; wire indices 0..%(n_max)d; no "repeat" blocks.
+A rotation operation carries EXACTLY ONE gate: write ["RZ"], never
+["RZ","RY"] — to stack rotations, emit consecutive rot operations,
+each costing one of your %(max_ops)d operations. An entangle operation
+must use wires "all". A "pairs" entangler needs 1..floor(n/2)
+disjoint, non-repeating pairs. Every architecture must contain at least
+one parameterized rotation (RX/RY/RZ or CRX/CRY/CRZ) or it is invalid.
+Diverse candidates are better than near-duplicates; duplicates of
+already evaluated architectures waste budget."""
 
 _JOINT_SYSTEM = """You design COMPLETE variational quantum circuits: gate
 sequence AND numeric rotation angles. There is NO training step - your

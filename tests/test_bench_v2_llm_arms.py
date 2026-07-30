@@ -31,7 +31,6 @@ from llm_vqc.bench_v2.runner import JointSearchRunner, StructureSearchRunner
 from llm_vqc.bench_v2.space import SpaceProfile
 from llm_vqc.bench_v2.track_a_evaluator import bench_v2_run_seed
 from llm_vqc.evaluation.store import ResultStore
-from llm_vqc.free_amplitude.openai_provider import RealRunPreflightError
 from llm_vqc.free_amplitude.training import FreeAmplitudeTrainingConfig
 from llm_vqc.llm.provider import LLMResponse
 from llm_vqc.tasks.signal_suite import SignalProfile, SignalSuiteTask
@@ -116,18 +115,37 @@ def test_llm_arms_module_never_imports_test_paths():
 # ---------------------------------------------------------------------------
 
 
-def test_real_provider_requires_explicit_cap():
-    with pytest.raises(RealRunPreflightError):
-        build_real_provider("structure", env={"OPENAI_API_KEY": "sk-x", "OPENAI_MODEL": "m"})
-    with pytest.raises(RealRunPreflightError):
-        build_real_provider(
-            "structure",
-            env={"OPENAI_API_KEY": "sk-x", "OPENAI_MODEL": "m", "LLM_API_BUDGET_USD": "0"},
-        )
-    with pytest.raises(RealRunPreflightError):
-        build_real_provider(
-            "joint", env={"OPENAI_MODEL": "m", "LLM_API_BUDGET_USD": "5"}
-        )
+def test_real_provider_requires_a_global_ledger():
+    """Real calls must be charged to the cumulative ledger. Passing no
+    ledger is refused outright rather than running uncapped."""
+    with pytest.raises(ValueError, match="GlobalSpendLedger is required"):
+        build_real_provider("structure", ledger=None)
+
+
+def test_real_provider_refuses_an_unpinned_model():
+    """A scientific cell may only run on the pinned snapshot."""
+    from llm_vqc.bench_v2.pinned_provider import PINNED_MODEL, PinnedModelError
+
+    sentinel = object()          # never reached: preflight raises first
+    with pytest.raises(PinnedModelError, match="pinned"):
+        build_real_provider("structure", ledger=sentinel,
+                            env={"OPENAI_API_KEY": "sk-x", "OPENAI_MODEL": "gpt-4o"})
+    with pytest.raises(PinnedModelError):
+        build_real_provider("structure", ledger=sentinel,
+                            env={"OPENAI_API_KEY": "sk-x"})          # no model
+    with pytest.raises(PinnedModelError):
+        build_real_provider("structure", ledger=sentinel,
+                            env={"OPENAI_MODEL": PINNED_MODEL})      # no key
+
+
+def test_missing_budget_env_yields_no_ledger(tmp_path):
+    """The cap itself is enforced by the ledger, which refuses to exist
+    without a positive LLM_API_BUDGET_USD."""
+    from llm_vqc.llm.global_ledger import GlobalSpendLedger
+
+    assert GlobalSpendLedger.from_env(tmp_path / "l.sqlite", env={}) is None
+    assert GlobalSpendLedger.from_env(tmp_path / "l.sqlite",
+                                      env={"LLM_API_BUDGET_USD": "0"}) is None
 
 
 # ---------------------------------------------------------------------------

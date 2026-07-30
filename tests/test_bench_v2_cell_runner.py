@@ -63,7 +63,7 @@ def test_llm_cell_manifest_reports_mock(tmp_path):
     )
     assert manifest["llm"]["mock"] is True
     assert manifest["llm"]["successful_calls"] >= 1
-    assert manifest["llm"]["prompt_version"] == "bench_v2_prompt_v1"
+    assert manifest["llm"]["prompt_version"] == "bench_v2_prompt_v2"
     assert manifest["llm"]["model_snapshot"] == "mock-layered-batch-v1"
 
 

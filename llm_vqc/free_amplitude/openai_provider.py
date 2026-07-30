@@ -290,13 +290,14 @@ class RetryingProvider:
 
     def complete(self, system_prompt: str, user_prompt: str, temperature: float) -> LLMResponse:
         from llm_vqc.llm.budget import LLMBudgetExceededError
+        from llm_vqc.llm.global_ledger import LedgerCapExceeded
         from llm_vqc.llm.openai_provider import CallBudgetExceededError
 
         last_exc: Exception | None = None
         for attempt in range(self.max_manual_retries + 1):
             try:
                 return self._inner.complete(system_prompt, user_prompt, temperature)
-            except (CallBudgetExceededError, LLMBudgetExceededError):
+            except (CallBudgetExceededError, LLMBudgetExceededError, LedgerCapExceeded):
                 raise  # caps are limits, not transients -- never retried
             except Exception as exc:
                 last_exc = exc

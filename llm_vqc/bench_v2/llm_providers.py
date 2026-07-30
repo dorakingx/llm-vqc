@@ -23,6 +23,8 @@ from llm_vqc.bench_v2.space import SpaceProfile
 from llm_vqc.llm.provider import LLMResponse
 
 MOCK_MODEL_PREFIX = "mock-"
+#: Runaway-loop guard for ONE cell. This is NOT the global spend cap --
+#: that is the cumulative GlobalSpendLedger.
 PER_CELL_CALL_CAP = 40
 
 
@@ -183,19 +185,22 @@ def _joint_batch_schema() -> dict:
     }
 
 
-def build_real_provider(track: str, env: dict | None = None):
-    """Preflight + construct the budget/retry-hardened real OpenAI
-    provider stack with the track's strict batch response schema. Raises
-    RealRunPreflightError before any client exists if the environment
-    lacks the key, the explicit model id, or a positive USD cap."""
-    import os
+def build_real_provider(track: str, ledger=None, cell_id: str | None = None,
+                        env: dict | None = None):
+    """Preflight + build the pinned, ledger-charged real provider stack.
 
-    from llm_vqc.free_amplitude.openai_provider import (
-        BudgetEnforcedProvider,
-        CompleteCandidateOpenAIProvider,
-        RetryingProvider,
-        preflight_real_run,
-    )
+    Wrapper order is deliberate:
+        Retrying( CallCountLimited( LedgerEnforced( PinnedStructured ) ) )
+    so every retry is itself priced and charged against the cumulative
+    cap, while a cap refusal propagates instead of being retried.
+
+    `ledger` is the process-wide `GlobalSpendLedger`; it is required for
+    real calls. Passing None raises rather than silently running uncapped.
+    """
+    from llm_vqc.bench_v2.pinned_provider import PinnedStructuredProvider, preflight_pinned_run
+    from llm_vqc.free_amplitude.openai_provider import RetryingProvider
+    from llm_vqc.llm.ledger_provider import LedgerEnforcedProvider
+    from llm_vqc.llm.openai_provider import CallCountLimitedProvider
 
     if track == "structure":
         schema, schema_name = STRUCTURE_BATCH_STRICT_SCHEMA, "structure_batch"
@@ -204,17 +209,17 @@ def build_real_provider(track: str, env: dict | None = None):
     else:
         raise ValueError(f"unknown track {track!r}")
 
-    from llm_vqc.llm.openai_provider import CallCountLimitedProvider
+    if ledger is None:
+        raise ValueError(
+            "a GlobalSpendLedger is required: real calls must be charged to the "
+            "cumulative cap, never run uncapped"
+        )
 
-    config = preflight_real_run(env if env is not None else dict(os.environ))
-    inner = CompleteCandidateOpenAIProvider(
-        api_key=config.api_key, model=config.model,
-        response_schema=schema, response_schema_name=schema_name,
+    config = preflight_pinned_run(env)
+    inner = PinnedStructuredProvider(
+        api_key=config.api_key, response_schema=schema,
+        response_schema_name=schema_name, model=config.model,
     )
-    budgeted = BudgetEnforcedProvider(inner, config.budget)
-    # Hard per-cell call cap: a 24-unique-budget cell at 3 candidates per
-    # batch needs ~8-12 calls; 40 is generous headroom while making a
-    # pathological loop impossible. Retries sit OUTSIDE both caps so every
-    # retry is individually budget-checked and counted.
-    capped = CallCountLimitedProvider(budgeted, max_calls=PER_CELL_CALL_CAP)
+    priced = LedgerEnforcedProvider(inner, ledger, cell_id=cell_id)
+    capped = CallCountLimitedProvider(priced, max_calls=PER_CELL_CALL_CAP)
     return RetryingProvider(capped), config

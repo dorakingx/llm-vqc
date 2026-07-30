@@ -83,10 +83,80 @@ def layered_ir_dict(n_qubits: int, operations: list[dict]) -> dict:
     }
 
 
+def _strict_grammar_issues(
+    raw_operations: list, profile: SpaceProfile
+) -> list[ValidationIssue]:
+    """Rules the frozen classical sampler already obeys, enforced so that
+    an LLM proposer cannot buy more circuit per unit of the `max_ops`
+    budget than a classical arm can.
+
+    Verified against every completed classical candidate before the
+    real-LLM run by `scripts/bench_v2/scan_search_space_parity.py`
+    (25,973 operations, zero violations), so switching this on cannot
+    alter the already-completed comparison.
+    """
+    issues: list[ValidationIssue] = []
+    for i, op in enumerate(raw_operations):
+        if not isinstance(op, dict):
+            continue
+        if op.get("type") == "rot":
+            gates = op.get("gates")
+            if isinstance(gates, list) and len(gates) != 1:
+                issues.append(ValidationIssue(
+                    code="bench_v2.rot_must_carry_one_gate",
+                    path=f"operations[{i}].gates",
+                    message=(
+                        "a rotation operation must carry exactly one gate; "
+                        f"got {len(gates)}. Emit consecutive single-gate "
+                        "rotation operations instead — packing layers into "
+                        "one operation would understate the op budget."
+                    ),
+                ))
+        elif op.get("type") == "entangle":
+            if op.get("wires") != "all":
+                issues.append(ValidationIssue(
+                    code="bench_v2.entangle_wires_must_be_all",
+                    path=f"operations[{i}].wires",
+                    message=(
+                        "an entangling operation must use wires='all'; that "
+                        "is the only policy the classical sampler emits."
+                    ),
+                ))
+            if op.get("pattern") == "pairs":
+                pairs = op.get("pairs") or []
+                flat = [w for p in pairs if isinstance(p, list) for w in p]
+                limit = profile.n_qubits // 2
+                ok = (
+                    1 <= len(pairs) <= limit
+                    and all(isinstance(p, list) and len(p) == 2 for p in pairs)
+                    and len(set(flat)) == len(flat)
+                )
+                if not ok:
+                    issues.append(ValidationIssue(
+                        code="bench_v2.pairs_must_be_disjoint",
+                        path=f"operations[{i}].pairs",
+                        message=(
+                            f"'pairs' needs 1..{limit} disjoint, non-duplicate "
+                            f"two-element pairs for n_qubits={profile.n_qubits}"
+                        ),
+                    ))
+    return issues
+
+
 def validate_layered_structure(
-    raw_operations: object, profile: SpaceProfile
+    raw_operations: object,
+    profile: SpaceProfile,
+    strict_search_grammar: bool = True,
 ) -> tuple[CircuitIR | None, list[ValidationIssue]]:
-    """Profile checks + shared IR validation; collects ALL issues."""
+    """Profile checks + shared IR validation; collects ALL issues.
+
+    `strict_search_grammar` is True on every search path so all arms —
+    classical and LLM — face the identical action space. The fixed
+    reference templates are built with it False: they are anchors that
+    deliberately sit outside the search grammar (a StronglyEntangling
+    block packs RZ-RY-RZ into one layer, which a searcher must spend
+    three operations to express).
+    """
     issues: list[ValidationIssue] = []
     if not isinstance(raw_operations, list) or not raw_operations:
         issues.append(
@@ -132,6 +202,11 @@ def validate_layered_structure(
     # H/CNOT/CZ) has a constant input-output map that the shared trainer
     # structurally cannot fit — the compact profile has the same rule via
     # require_at_least_one_parameterized. See DECISIONS.md (bench_v2).
+    if strict_search_grammar:
+        strict = _strict_grammar_issues(raw_operations, profile)
+        if strict:
+            return None, strict
+
     from llm_vqc.ir.expand import count_parameters
 
     if count_parameters(result.ir) == 0:
@@ -177,7 +252,8 @@ def reference_operations(ref_name: str) -> list[dict]:
 
 
 def reference_ir(ref_name: str, profile: SpaceProfile) -> CircuitIR:
-    ir, issues = validate_layered_structure(reference_operations(ref_name), profile)
+    ir, issues = validate_layered_structure(
+        reference_operations(ref_name), profile, strict_search_grammar=False)
     if ir is None:  # references are within-grammar by construction
         raise ValueError(f"reference {ref_name!r} failed validation: {issues}")
     return ir

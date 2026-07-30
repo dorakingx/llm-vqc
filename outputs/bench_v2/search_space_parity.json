@@ -1,0 +1,59 @@
+{
+  "counts": {
+    "other:candidates": 960,
+    "other:cells": 60,
+    "other:operations": 2983,
+    "reference:candidates": 200,
+    "reference:cells": 200,
+    "reference:operations": 640,
+    "search:candidates": 4160,
+    "search:cells": 200,
+    "search:operations": 25973
+  },
+  "violations": {
+    "reference:R1_rot_multi_gate": 200
+  },
+  "examples": {
+    "reference:R1_rot_multi_gate": [
+      {
+        "arm": "ref_strongent_d1",
+        "n_qubits": 5,
+        "op": {
+          "type": "rot",
+          "gates": [
+            "RZ",
+            "RY",
+            "RZ"
+          ],
+          "wires": "all"
+        }
+      },
+      {
+        "arm": "ref_strongent_d1",
+        "n_qubits": 5,
+        "op": {
+          "type": "rot",
+          "gates": [
+            "RZ",
+            "RY",
+            "RZ"
+          ],
+          "wires": "all"
+        }
+      },
+      {
+        "arm": "ref_strongent_d1",
+        "n_qubits": 5,
+        "op": {
+          "type": "rot",
+          "gates": [
+            "RZ",
+            "RY",
+            "RZ"
+          ],
+          "wires": "all"
+        }
+      }
+    ]
+  }
+}
