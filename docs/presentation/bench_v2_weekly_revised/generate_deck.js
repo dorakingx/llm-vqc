@@ -22,8 +22,11 @@ const W = 13.333, H = 7.5;
 const FONT = "Arial";
 
 const DATE = "July 31, 2026";
-const SHA = "da6ef34";
-const BRANCH = "presentation/rebuild-gsoc-benchmark-v2";
+// Read from git so the title slide can never quote a stale commit.
+const SHA = require("child_process")
+  .execSync("git rev-parse --short HEAD", { cwd: __dirname }).toString().trim();
+const BRANCH = require("child_process")
+  .execSync("git rev-parse --abbrev-ref HEAD", { cwd: __dirname }).toString().trim();
 
 function slide(kicker, title) {
   const s = pres.addSlide();
@@ -34,8 +37,10 @@ function slide(kicker, title) {
       color: ACCENT, fontFace: FONT, charSpacing: 1.5, margin: 0,
     });
   }
+  const longTitle = title.length > 60;
   s.addText(title, {
-    x: 0.55, y: kicker ? 0.60 : 0.40, w: W - 1.1, h: 0.72, fontSize: 30,
+    x: 0.55, y: kicker ? 0.60 : 0.40, w: W - 1.1, h: longTitle ? 0.88 : 0.72,
+    fontSize: longTitle ? 23 : 30,
     bold: true, color: NAVY, fontFace: FONT, margin: 0,
   });
   return s;
@@ -77,7 +82,7 @@ function bullets(s, items, opts) {
   });
   s.addText([
     { text: "Interim update — ", options: { color: "FFFFFF", bold: true, fontSize: 20 } },
-    { text: "classical baselines complete; real-LLM evaluation pending budget approval",
+    { text: "classical baselines complete; the real-LLM matrix is blocked on API quota, not on budget approval",
       options: { color: "FFFFFF", fontSize: 20 } },
   ], { x: 1.15, y: 3.62, w: 11.0, h: 0.7, fontFace: FONT, margin: 0, valign: "middle" });
   s.addText([
@@ -137,8 +142,8 @@ function bullets(s, items, opts) {
   bullets(s, [
     "A length-2ⁿ signal fills the amplitudes of n qubits exactly — no padding, no truncation.",
     "Zero classical parameters: no trainable dense layer anywhere, so a weak circuit cannot be rescued by a classical head.",
-    "The protected test set is touched once, after selection on validation data.",
-  ], { x: 0.7, y: 4.72, w: 12.0, h: 2.1, size: 19, gap: 11 });
+    "Protected-test metric: the same metric formula, re-evaluated once per selected circuit on a final held-out split, after selection is frozen on validation. That formula is RMSE for T1–T3; T4 is classification, so the pipeline-level term is \"protected-test metric\", never \"protected-test RMSE\".",
+  ], { x: 0.7, y: 4.60, w: 12.0, h: 2.25, size: 17, gap: 10 });
   footer(s, "Implementation: llm_vqc/free_amplitude/model.py · llm_vqc/ir/compiler_pennylane.py");
   s.addNotes(
     "Walk left to right. A 32-point signal is L2-normalised once, inside PennyLane's AmplitudeEmbedding, " +
@@ -152,7 +157,17 @@ function bullets(s, items, opts) {
 // ------------------------------------------------------------------ S4
 {
   const s = slide("Tasks", "Four controlled signal tasks, sized for amplitude encoding");
-  s.addImage({ path: F("fig_tasks.png"), x: 0.9, y: 1.55, w: 8.1, h: 3.55 });
+  s.addImage({ path: F("fig_tasks.png"), x: 0.9, y: 1.50, w: 7.3, h: 3.20 });
+  const hdr = (txt) => ({ text: txt, options: { bold: true, fill: { color: NAVY }, color: "FFFFFF" } });
+  s.addTable([
+    [hdr("Search-space constraint"), hdr("Value")],
+    ["Qubits n", "5 for T1–T4; T1 and T2 also at n = 3, 4, 6, 8"],
+    ["Allowed gates", "rotations RX / RY / RZ / H · entanglers CNOT / CZ / CRX / CRY / CRZ over line, ring, star, pairs or all-to-all"],
+    ["Max layer operations", "max_ops = min(2n, 16) — 10 at n=5, 16 at n=8"],
+    ["Operation \u2260 physical gate", "one operation expands to many physical gates: a rotation layer becomes n single-qubit gates, an entangling layer up to n two-qubit gates"],
+  ], { x: 0.9, y: 4.92, w: 7.4, colW: [1.95, 5.45], fontSize: 11.5, fontFace: FONT,
+    border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.32, valign: "middle",
+    margin: 0.05 });
   const cards = [
     ["2ⁿ points exactly", "32 values at n=5; the signal is the amplitude vector."],
     ["Nuisances randomised", "Amplitude, phase, baseline, width and noise vary, so no fixed convention leaks the label."],
@@ -166,7 +181,7 @@ function bullets(s, items, opts) {
       { text: b, options: { fontSize: 17, color: MUTED } },
     ], { x: 9.25, y, w: 3.55, h: 1.2, fontFace: FONT, margin: 0, valign: "top" });
   });
-  footer(s, "Generator: llm_vqc/tasks/signal_suite (frozen signal_suite_v1) · data seed 1000");
+  footer(s, "Line colour distinguishes the three example signals in a panel only — it encodes no method, arm or class · Generator: llm_vqc/tasks/signal_suite (signal_suite_v1) · data seed 1000");
   s.addNotes(
     "Four tasks, all synthetic so I control difficulty and leakage. T1 regress the Gaussian peak position, " +
     "T2 the sinusoid frequency below the Nyquist limit, T3 a change-point location, T4 one peak versus two peaks. " +
@@ -221,7 +236,7 @@ function bullets(s, items, opts) {
 
 // ------------------------------------------------------------------ S6
 {
-  const s = slide("Progress", "Classical half finished; the LLM half has not started");
+  const s = slide("Progress", "Classical matrix complete; real-LLM matrix not started");
   s.addImage({ path: F("fig_matrix.png"), x: 0.65, y: 1.5, w: 11.9, h: 4.05 });
   s.addShape(pres.ShapeType.roundRect, {
     x: 0.65, y: 5.75, w: 11.9, h: 0.85, rectRadius: 0.08,
@@ -229,28 +244,28 @@ function bullets(s, items, opts) {
   });
   s.addText([
     { text: "460 / 460 classical cells complete, 0 failures", options: { bold: true, fontSize: 20, color: OK } },
-    { text: "   ·   0 / 220 real-LLM cells   ·   E4 and E5 depend on them   ·   ", options: { fontSize: 19, color: INK } },
-    { text: "the benchmark as a whole is not complete", options: { bold: true, fontSize: 19, color: ACCENT } },
+    { text: "   ·   0 / 220 real-LLM cells — the API account returned insufficient_quota, so $0.00 was spent   ·   ", options: { fontSize: 17, color: INK } },
+    { text: "the benchmark as a whole is not complete", options: { bold: true, fontSize: 18, color: ACCENT } },
   ], { x: 0.9, y: 5.85, w: 11.4, h: 0.65, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "Counts regenerated from runs/bench_v2/*/cells/*.json · completion checker: 9 of 17 criteria pass");
+  footer(s, "Counts regenerated from runs/bench_v2/*/cells/*.json · completion checker: 10 of 17 criteria pass, unweakened");
   s.addNotes(
     "E0 replays the February pilot offline and reproduces it exactly with zero API calls. " +
     "E1 is the joint track, E2 the main n=5 architecture search, E3 the qubit-scaling study. " +
     "All 460 classical cells finished with no failures. The 220 LLM cells are blocked by spending policy, " +
     "and E4 and E5 depend on them, so they are pending too. " +
-    "The completion checker still reports 9 of 17 criteria — it fails correctly and I did not weaken it."
+    "The completion checker reports 10 of 17 criteria — it fails correctly and I did not weaken it."
   );
 }
 
 // ------------------------------------------------------------------ S7
 {
-  const s = slide("Result — 5 qubits", "Searching helps; which search you use does not");
-  s.addImage({ path: F("fig_e2_main.png"), x: 0.5, y: 1.5, w: 7.5, h: 4.2 });
-  s.addImage({ path: F("fig_e2_forest.png"), x: 8.15, y: 1.5, w: 4.75, h: 2.98 });
+  const s = slide("Result — 5 qubits", "Search beats the fixed reference on T1/T2; no search-method difference was detected");
+  s.addImage({ path: F("fig_e2_main.png"), x: 0.45, y: 1.58, w: 7.9, h: 4.42 });
+  s.addImage({ path: F("fig_e2_forest.png"), x: 8.30, y: 1.58, w: 4.48, h: 3.03 });
   bullets(s, [
     "No Holm-adjusted difference was detected among random, evolutionary and greedy on any task (smallest p = 0.071). This is not an equivalence claim.",
     "Against the strongest reference the picture is task-dependent: on T2 random and evolutionary win (p = 0.046, δ = −0.8); on T1 only random is detected (p = 0.032) and the shift is small.",
-  ], { x: 8.15, y: 4.7, w: 4.8, h: 1.9, size: 16, gap: 8 });
+  ], { x: 8.30, y: 4.80, w: 4.48, h: 1.95, size: 15, gap: 8 });
   footer(s, "10 paired replicates · Hodges–Lehmann shift and paired Cliff's δ · outputs/bench_v2/E2/stats_*.csv");
   s.addNotes(
     "Left: each line joins one replicate's searched circuit to the fixed reference on the same data and search seed. " +
@@ -263,7 +278,7 @@ function bullets(s, items, opts) {
 
 // ------------------------------------------------------------------ S8
 {
-  const s = slide("Result — qubit scaling", "The advantage over a fixed ansatz grows with qubit count");
+  const s = slide("Result — qubit scaling", "A descriptive crossover: search pulls ahead at larger qubit counts");
   s.addImage({ path: F("fig_e3_scaling.png"), x: 0.6, y: 1.5, w: 11.9, h: 4.34 });
   s.addShape(pres.ShapeType.roundRect, {
     x: 0.6, y: 6.02, w: 11.9, h: 0.92, rectRadius: 0.08,
@@ -310,7 +325,7 @@ function bullets(s, items, opts) {
 {
   const s = pres.addSlide();
   s.background = { color: NAVY };
-  s.addText("Interim answer, and the decision I need", {
+  s.addText("Interim answer, and what is blocking the rest", {
     x: 0.7, y: 0.45, w: 12.0, h: 0.7, fontSize: 30, bold: true,
     color: "FFFFFF", fontFace: FONT, margin: 0,
   });
@@ -328,16 +343,16 @@ function bullets(s, items, opts) {
     x: 0.7, y: 3.0, w: 5.85, h: 3.05, rectRadius: 0.1,
     fill: { color: "FFFFFF", transparency: 90 }, line: { color: "8FA6C4", width: 1 },
   });
-  s.addText("Decision requested — approve a hard global API cap", {
-    x: 0.95, y: 3.12, w: 5.4, h: 0.55, bold: true, fontSize: 19, color: "FFFFFF",
+  s.addText("Spending control: implemented, not promised", {
+    x: 0.95, y: 3.12, w: 5.5, h: 0.42, bold: true, fontSize: 18, color: "FFFFFF",
     fontFace: FONT, margin: 0,
   });
   bullets(s, [
-    "220 cells, ≈1,480 calls at 3 candidates per call",
-    "Reserved at $0.05/call ⇒ $74; the 40-call/cell guard bounds the worst case at $440",
-    "Model not yet pinned — per-model estimates in the appendix",
-    "Enforced in code: no positive LLM_API_BUDGET_USD, no calls",
-  ], { x: 1.05, y: 3.72, w: 5.25, h: 2.2, size: 16, gap: 8, color: "E8EEF7" });
+    "Durable SQLite ledger shared by every cell, retry and restart — cumulative, not per cell",
+    "Cost settled from returned token counts against a dated price manifest",
+    "Model pinned to gpt-5-nano-2025-08-07; cumulative cap $2.00",
+    "Measured spend $0.00 — account returned insufficient_quota, reservations released",
+  ], { x: 1.05, y: 3.62, w: 5.25, h: 2.3, size: 14, gap: 7, color: "E8EEF7" });
 
   s.addShape(pres.ShapeType.roundRect, {
     x: 6.85, y: 3.0, w: 5.85, h: 3.05, rectRadius: 0.1,
@@ -348,24 +363,26 @@ function bullets(s, items, opts) {
     fontFace: FONT, margin: 0,
   });
   bullets(s, [
-    "Run the 220 real-LLM cells (both tracks)",
+    "Restore API quota, then run the 220 real-LLM cells (both tracks)",
     "E5 θ-isolation: is it the architecture or the angles?",
     "E4 shot-noise and noisy-simulator robustness",
     "Regenerate the statistical report; completion checker must pass unweakened",
   ], { x: 7.2, y: 3.6, w: 5.3, h: 2.3, size: 16, gap: 8, color: "E8EEF7" });
 
-  s.addText("Can I proceed with a hard global cap of $120?", {
-    x: 0.7, y: 6.35, w: 12.0, h: 0.55, fontSize: 24, bold: true, color: "FFD9A0",
+  s.addText("Blocked on API quota, not on approval: cap $2.00 cumulative, measured spend $0.00", {
+    x: 0.7, y: 6.30, w: 12.0, h: 0.60, fontSize: 20, bold: true, color: "FFD9A0",
     fontFace: FONT, margin: 0, align: "center",
   });
   s.addNotes(
     "Lead with the honest answer: the headline question is not answered yet. " +
     "What I can defend is the classical baseline and the machinery around it. " +
-    "The ask is approval of a hard cap, because the cap is what the code actually enforces. " +
-    "1,480 expected calls at the conservative five-cent reservation is $74; the per-cell 40-call guard " +
-    "bounds the absolute worst case at $440, so a $120 cap covers the expected run with headroom and still " +
-    "stops a runaway. The model is not pinned yet, so I show per-model estimates in the appendix rather than " +
-    "quoting one number. If the cap binds mid-run, cells resume from their stores — no work is lost."
+    "The spending question is now settled in code rather than by a promise. A durable SQLite ledger reserves " +
+    "the estimated cost before each request and settles it from the returned token counts, so the cap is one " +
+    "cumulative total shared by every cell, every retry and every process restart. The model is pinned and " +
+    "priced from a dated manifest. The cumulative cap is $2.00 and the measured spend is exactly zero, because " +
+    "the API account returned insufficient_quota on the very first preflight request and the ledger released " +
+    "all three reservations. So the block is billing, not authorisation. If the cap ever binds mid-run the run " +
+    "stops cleanly and cells resume from their stores — no work is lost and the cap is never auto-raised."
   );
 }
 
@@ -423,8 +440,9 @@ function appendix(title, subtitle) {
     "Effect sizes: Hodges–Lehmann shift (median of Walsh averages, RMSE units) and paired Cliff's δ.",
     "Verified p-value floor: 5 replicates ⇒ smallest two-sided p = 0.0625 ⇒ smallest Holm-adjusted value ≈ 0.19 across 3 contrasts. 10 replicates ⇒ 0.00195.",
     "Seeds: data seed 1000+r, search seed 2000+r, shared by every arm in a comparison; θ-seed derived from (task, data seed, search seed, structural hash).",
-    "Protected test: evaluated once per cell, after selection is frozen; search modules cannot import the test gate (enforced by AST tests).",
-  ], { x: 0.7, y: 1.7, w: 12.0, h: 5.0, size: 17, gap: 12 });
+    "Protected-test metric: the same metric formula used for validation, re-evaluated once per selected circuit on a final held-out split of 2,048 examples, after selection has been frozen. RMSE = sqrt(mean((ŷ − y)²)) for the regression tasks T1–T3; AUROC for the T4 classification task, which is why the pipeline-level term is \"protected-test metric\".",
+    "Search modules cannot import the test gate, and the restriction is enforced by an AST test rather than by convention.",
+  ], { x: 0.7, y: 1.7, w: 12.0, h: 5.0, size: 16, gap: 11 });
   footer(s, "scripts/bench_v2/analyze_experiment.py · llm_vqc/bench_v2/test_gate.py");
 }
 { // A7/A10
@@ -435,6 +453,7 @@ function appendix(title, subtitle) {
     "Track A identity = structural hash of the canonical IR; Track B identity additionally includes θ, so re-proposing the same shape with new angles is a new candidate.",
     "Diagnostic circuits: for each of the 4 tasks × 7 arms in E2, the replicate whose selected candidate had the best validation metric — 28 circuits, selected on validation only.",
     "Expressibility: KL between the sampled fidelity distribution and the Haar distribution, 200 sampled states and 2,000 fidelity pairs, θ ~ U[−π, π], seeded by architecture hash.",
+    "Enforced parity for the LLM arms: one gate per rotation operation, entangler wires \"all\", and 1..floor(n/2) disjoint non-duplicate pairs — so no arm can pack several gate layers into one operation. A scan of all 25,973 operations produced by the completed classical search arms found zero violations, so the comparison already run is unaffected.",
   ], { x: 0.7, y: 1.7, w: 12.0, h: 5.0, size: 17, gap: 12 });
   footer(s, "llm_vqc/bench_v2/space.py · llm_vqc/free_amplitude/expressibility.py");
 }
@@ -445,36 +464,38 @@ function appendix(title, subtitle) {
     "Routing SWAPs are decomposed into cx, so the reported two-qubit count already includes routing overhead.",
     "Amplitude state preparation is excluded: its decomposition is identical for every arm at a given n and would dominate the body signal. The number is therefore a relative proxy, not a total device cost.",
     "Logical counts (1-qubit, 2-qubit, controlled-rotation, parameters, depth) come from the shared IR and are recorded for every evaluated candidate.",
-    "Shot-noise (1,024 / 4,096) and the frozen depol_ro_v1 noisy profile are implemented but belong to E4, which has not run.",
+    "Shot-noise (1,024 / 4,096) and the frozen depol_ro_v1 noisy profile belong to E4, which re-evaluates the best-validation selected circuit of every completed E2/E3 cell — it needs no LLM cells, so it runs on the classical matrix.",
   ], { x: 0.7, y: 1.7, w: 12.0, h: 5.0, size: 17, gap: 12 });
   footer(s, "llm_vqc/bench_v2/resources.py");
 }
 { // A11
-  const s = appendix("A11  API budget derivation", "Model not yet pinned — the cap, not the estimate, is what the code enforces");
+  const s = appendix("A11  API cost model and the cumulative cap", "Priced from a dated manifest and settled from returned tokens — no flat per-call charge");
   const rows = [
     [{ text: "Quantity", options: { bold: true, fill: { color: NAVY }, color: "FFFFFF" } },
      { text: "Value", options: { bold: true, fill: { color: NAVY }, color: "FFFFFF" } },
      { text: "Source", options: { bold: true, fill: { color: NAVY }, color: "FFFFFF" } }],
+    ["Pinned model", "gpt-5-nano-2025-08-07", "OPENAI_MODEL, verified before any client is built"],
+    ["Price (dated manifest)", "$0.05 / 1M input, $0.40 / 1M output", "configs/bench_v2/model_prices.json"],
     ["Cells to run", "220 (E1 60, E2 80, E3 80)", "protocol_v2.yaml"],
     ["Candidates per call", "3", "llm_arms.py BATCH_SIZE"],
-    ["Expected calls per cell", "6 (B=16) / 8 (B=24)", "ceil(B/3) + duplicate allowance"],
-    ["Expected total calls", "≈1,480", "derived"],
-    ["Reserved per call", "$0.05", "openai_provider.py"],
-    ["Expected reservation", "$74", "1,480 × $0.05"],
-    ["Per-cell call guard", "40 calls (failure guard, not normal use)", "llm_providers.py"],
-    ["Absolute worst case", "$440 if every cell hit the guard", "8,800 × $0.05"],
-    ["Requested hard cap", "$120", "covers expected run with headroom"],
+    ["Expected total calls", "≈1,480", "ceil(B/3) + duplicate allowance, over 220 cells"],
+    ["Expected cost per call", "≈$0.0004", "measured prompt size × manifest price"],
+    ["Expected total cost", "≈$0.6", "1,480 × $0.0004"],
+    ["Per-cell call guard", "40 calls (runaway guard — NOT the global cap)", "llm_providers.py"],
+    ["Cumulative global cap", "$2.00, durable across cells, retries and restarts", "GlobalSpendLedger (SQLite, BEGIN IMMEDIATE)"],
+    ["Actual measured spend", "$0.00 — 0 settled calls; account returned insufficient_quota", "runs/bench_v2/preflight_ledger.sqlite"],
   ];
-  s.addTable(rows, { x: 0.7, y: 1.85, w: 11.9, colW: [3.3, 4.4, 4.2], fontSize: 15,
-    fontFace: FONT, border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.4,
+  s.addTable(rows, { x: 0.7, y: 1.80, w: 11.9, colW: [2.9, 4.6, 4.4], fontSize: 13,
+    fontFace: FONT, border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.42,
     valign: "middle", margin: 0.06 });
-  footer(s, "Enforcement: LLMApiBudget.from_env refuses to run without a positive cap; every retry is itself budget-checked");
+  footer(s, "Cost is reserved before each request and settled from returned token counts; a claim that would exceed the cumulative cap is refused before the request is issued");
 }
 { // A12/A13
   const s = appendix("A12, A13  Integrity checks and references");
   bullets(s, [
     "Break-tests: three safeguards were deliberately broken to confirm the tests catch them. Two exposed real blind spots — a plain `import torch.optim` evaded the AST check, and a self-consistent budget break evaded the ledger test — both are now closed.",
-    "Completion contract: 17 machine-checked criteria; currently 9 pass. The failures are correct (missing LLM cells, E4, final report) and the checker was not modified.",
+    "Completion contract: 17 machine-checked criteria; currently 10 pass. The failures are correct (missing LLM cells, E4/E5 markers, final report) and the checker was not modified.",
+    "The self-consistent budget break that once evaded the ledger test is now closed twice over: the cumulative SQLite ledger is proved to survive a restart in a separate OS process, and a cap breach is refused before the request is issued rather than detected after it.",
     "Protocol content is hash-pinned in outputs/bench_v2/protocol_hashes.json. There was no external preregistration; the deck therefore says protocol-frozen throughout.",
     "Key references: Sim et al. 2019 (expressibility, entangling capability); Knipfer et al. 2026 and Sakka et al. 2026 (LLM-driven VQC design); DQAS; QuantumNAS; EVQE and MoG-VQE; TD-QAS; PWMCTS; BenchRL-QAS.",
   ], { x: 0.7, y: 1.7, w: 12.0, h: 5.0, size: 17, gap: 13 });

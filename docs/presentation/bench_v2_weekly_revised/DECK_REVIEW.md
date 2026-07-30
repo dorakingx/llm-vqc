@@ -69,3 +69,36 @@ random **#0072B2** blue · evolutionary **#E69F00** orange · greedy
 measured) · fixed references grey **#7F7F7F / #BDBDBD**. Accent red
 **#B3261E** for warnings and the interim answer; navy **#1E3A5F** for
 titles.
+
+## Second review round — 2026-07-31
+
+Trigger: the deck was regenerated after the spend ledger, model pinning
+and search-space parity work landed. Every slide was re-exported and
+inspected again at 110 dpi. Nine changes were requested; the defects each
+one introduced are listed with the fix.
+
+| # | Slide | Defect after the change | Fix | Verified |
+|---|---|---|---|---|
+| 9 | 3 | The new protected-test-metric definition ran past the bottom edge into the footer | Bullets moved up (y 4.72→4.60), size 18→17 pt, definition shortened | Fixed |
+| 10 | 4 | The new constraints table's last row touched the footer, and the colour note was stated twice (once inside the figure, once on the slide) | Table lifted (y 5.12→4.92), figure narrowed to 7.3 in, the slide-level duplicate folded into the footer | Fixed |
+| 11 | 7, 8 | The two new titles are 66 and 84 characters and were clipped at 30 pt | `slide()` now drops to 23 pt with a taller box for titles over 60 characters, so they wrap instead of clipping | Fixed |
+| 12 | 7 | The forest plot's new "p = Holm-adjusted, δ = Cliff's delta" key collided with its two-line x-axis label | Key moved into the axis title as a second line | Fixed |
+| 13 | 7 | In the main dot plot the reference median bar crossed the new legend text | Legend given a 93%-opaque white background | Fixed |
+| 14 | 7 | Enlarging the left figure pushed the forest plot past the right margin | Forest repositioned to x 8.30, w 4.48 in (right edge 12.78 in) | Fixed |
+| 15 | 10 | "Spending control is implemented and enforced" wrapped to two lines into the first bullet, and the fourth bullet overflowed the card | Header shortened to "Spending control: implemented, not promised"; bullets shortened, 14.5→14 pt | Fixed |
+
+## Content changes in this round
+
+| Change | Where |
+|---|---|
+| Slide 6 title now reads "Classical matrix complete; real-LLM matrix not started" — the verified final state | S6 |
+| Slide 7 title now names the finding and the non-finding separately | S7 |
+| Slide 8 title now says "descriptive" in the title, not only in the caveat band | S8 |
+| Every line, dot, marker, connector and band is explained inside its own figure rather than in slide text or speaker notes | fig_e2_main, fig_e2_forest, fig_e3_scaling, fig_pareto, fig_diagnostics, fig_tasks |
+| Shared method legend on every multi-panel figure | fig_e3_scaling, fig_ap_e2_grid, fig_ap_anytime, fig_ap_e1 |
+| Line colour on slide 4 is stated to distinguish example signals only | fig_tasks caption + S4 footer |
+| Constraints table: qubits, allowed gates, max layer operations, and that one operation expands to many physical gates | S4 |
+| Protected-test metric defined as the same metric formula on a final held-out split, evaluated once per selected circuit after validation-based selection | S3 + fig_pipeline |
+| "protected-test metric" replaces "protected-test RMSE" wherever the statement spans the pipeline, because T4 is classification | S3, fig_pipeline, fig_ap_e2_grid panel titles |
+| The $120 global-cap claim is gone. The deck now states the implemented $2.00 cumulative ledger cap and the actual measured cost of $0.00 | S6, S10, A11, speaker notes, claim_source_map.yaml |
+| The matrix figure no longer says "blocked — no API budget"; it distinguishes "not started — API quota exhausted" (LLM rows), "blocked — needs LLM-proposed circuits" (E5) and E4's live state | fig_matrix |

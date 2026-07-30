@@ -43,6 +43,7 @@ C_LLM = "#CC79A7"         # magenta (not yet measured)
 C_REF = "#7F7F7F"         # grey family for fixed references
 C_REF_LIGHT = "#BDBDBD"
 INK = "#1A1A2E"
+MUTED_TXT = "#4A4A5E"
 ACCENT = "#B3261E"
 
 ARM_COLOR = {
@@ -143,8 +144,9 @@ def fig_pipeline() -> None:
     ax.text(0, 0.52, "Trained by the shared AdamW loop: only the rotation angles $\\theta$ "
                      "of the searched body (40 epochs, batch 32, identical for every arm)",
             fontsize=13, color=INK)
-    ax.text(0, 0.16, "Scored by: validation RMSE during search  →  protected-test RMSE once, "
-                     "after the candidate is selected",
+    ax.text(0, 0.16, "Scored by: validation metric during search  →  protected-test metric once, "
+                     "after the candidate is selected  (the metric is RMSE for T1–T3; T4 is "
+                     "classification)",
             fontsize=13, color=ACCENT)
     ax.set_xlim(-0.1, n * (w + gap) - gap + 0.1)
     ax.set_ylim(0, 2.35)
@@ -181,6 +183,10 @@ def fig_tasks() -> None:
         ax.set_xlabel("normalised position", fontsize=14)
     for ax in axes[:, 0]:
         ax.set_ylabel("signal value", fontsize=14)
+    fig.text(0.5, -0.02,
+             "Each panel shows three example signals. Line colour distinguishes "
+             "the examples only — it carries no method or class meaning.",
+             ha="center", fontsize=13, color=MUTED_TXT)
     fig.tight_layout()
     save(fig, "fig_tasks", rows)
 
@@ -202,6 +208,10 @@ def fig_matrix() -> None:
     for i, (eid, kind, label) in enumerate(order):
         rec = next(r for r in status if r["experiment"] == eid and r["cells"] == kind)
         exp, done = int(rec["expected"]), int(rec["complete"])
+        if eid == "E4":
+            # read live: E4 needs only completed classical cells, so it is
+            # the one dependent experiment the quota block does not stop.
+            done = 1 if (REPO / "outputs/bench_v2/E4/COMPLETE.json").is_file() else 0
         y = len(order) - i - 1
         frac = done / exp if exp else 0
         blocked = kind in ("llm", "dependent") and done == 0
@@ -210,7 +220,16 @@ def fig_matrix() -> None:
         if frac > 0:
             ax.barh(y, frac, color=colour, height=0.62, zorder=2)
         ax.text(-0.02, y, label, ha="right", va="center", fontsize=15, color=INK)
-        state = "complete" if frac == 1 else ("blocked — no API budget" if blocked else "pending")
+        if frac == 1:
+            state = "complete"
+        elif kind == "llm":
+            state = "not started — API quota exhausted"
+        elif eid == "E5":
+            state = "blocked — needs LLM-proposed circuits"
+        elif eid == "E4":
+            state = "running on the completed classical cells"
+        else:
+            state = "pending"
         ax.text(1.03, y, f"{done} / {exp}   {state}", ha="left", va="center",
                 fontsize=14, color=colour if frac != 1 else C_GREEDY,
                 weight="bold" if blocked else "normal")
@@ -261,9 +280,14 @@ def fig_e2_main() -> None:
     ax.set_ylabel("protected-test RMSE  (lower is better)", fontsize=15)
     ax.set_title("T1 Gaussian peak, n=5 qubits — 10 paired replicates per arm",
                  fontsize=16, loc="left")
-    ax.scatter([], [], s=52, color=C_RANDOM, label="searched circuit")
-    ax.scatter([], [], s=52, color=C_REF, marker="s", label="fixed reference")
-    ax.legend(frameon=False, fontsize=14, loc="upper left")
+    ax.scatter([], [], s=52, color=C_RANDOM, label="searched circuit, one replicate")
+    ax.scatter([], [], s=52, color=C_REF, marker="s",
+               label="fixed reference, same replicate")
+    ax.plot([], [], color="#C6CBD6", linewidth=1.4,
+            label="line joins one data seed + search seed")
+    ax.plot([], [], color="black", linewidth=3, label="thick bar = median of 10")
+    ax.legend(loc="upper left", handlelength=1.4, fontsize=12.5,
+              frameon=True, facecolor="white", framealpha=0.93, edgecolor="none")
     ax.set_ylim(bottom=0)
     save(fig, "fig_e2_main", rows)
 
@@ -310,11 +334,14 @@ def fig_e2_forest() -> None:
     ax.set_yticklabels([e["label"] for e in reversed(entries)], fontsize=13)
     ax.set_xlabel("Hodges–Lehmann shift in protected-test RMSE\n"
                   "(negative = first arm better)", fontsize=14)
-    ax.set_title("Paired contrasts, 10 replicates, Holm-adjusted within task",
+    ax.set_title("Paired contrasts, 10 replicates, Holm-adjusted within task\n"
+                 "right-hand column: p = Holm-adjusted p-value, \u03b4 = paired Cliff's delta",
                  fontsize=15, loc="left")
     ax.scatter([], [], s=95, color=ACCENT, label="search vs fixed reference")
     ax.scatter([], [], s=95, color=C_RANDOM, label="search vs search")
-    ax.legend(frameon=False, fontsize=13, loc="lower left")
+    ax.plot([], [], color="#5A5A6E", linewidth=1.3,
+            label="vertical rule at zero = no difference")
+    ax.legend(frameon=False, fontsize=12, loc="lower left", handlelength=1.4)
     ax.set_xlim(-0.26, 0.06)
     save(fig, "fig_e2_forest", rows_out)
 
@@ -349,7 +376,14 @@ def fig_e3_scaling() -> None:
         ax.set_xlabel("qubits  (signal length $2^n$)", fontsize=15)
         ax.tick_params(labelsize=14)
     axes[0].set_ylabel("protected-test RMSE\n(lower is better)", fontsize=15)
-    axes[1].legend(frameon=False, fontsize=13.5, loc="upper left")
+    handles, labels = axes[1].get_legend_handles_labels()
+    handles.append(plt.Line2D([], [], marker="o", linestyle="none",
+                              color=C_REF, alpha=0.5, markersize=6))
+    labels.append("faint dot = one replicate")
+    handles.append(plt.Line2D([], [], marker="o", color=INK, markersize=8))
+    labels.append("line + marker = median of 5")
+    fig.legend(handles, labels, frameon=False, fontsize=13, ncol=5,
+               loc="lower center", bbox_to_anchor=(0.5, -0.10))
     axes[1].annotate("reference is better at n=3", xy=(3, 0.070), xytext=(3.35, 0.155),
                      fontsize=13, color=INK,
                      arrowprops={"arrowstyle": "-|>", "color": "#5A5A6E", "lw": 1.4})
@@ -388,8 +422,10 @@ def fig_pareto() -> None:
         fontsize=14)
     ax.set_ylabel("protected-test RMSE\n(lower is better)", fontsize=14)
     ax.set_title("T1, n=5: error vs compiled circuit size", fontsize=16, loc="left")
-    ax.legend(frameon=False, fontsize=12, ncol=2, loc="upper right",
-              handletextpad=0.4, columnspacing=1.0)
+    ax.legend(frameon=False, fontsize=11.5, ncol=2, loc="upper right",
+              handletextpad=0.4, columnspacing=1.0,
+              title="● searched circuit   ■ fixed reference\none dot = one replicate",
+              title_fontsize=11.5)
     ax.set_xlim(-8, 265)
     ax.set_ylim(0, 0.255)
     save(fig, "fig_pareto", rows)
@@ -412,7 +448,9 @@ def fig_diagnostics() -> None:
     ax.set_xscale("log")
     ax.set_xlabel("expressibility KL vs Haar (log)\nlower = more expressible", fontsize=13)
     ax.set_ylabel("Meyer–Wallach $Q$", fontsize=13)
-    ax.set_title("28 selected circuits — descriptive only", fontsize=14, loc="left")
+    ax.set_title("28 selected circuits — descriptive only\n"
+                 "one dot = one selected circuit; dot colour = arm, same key as the left panel",
+                 fontsize=12, loc="left")
     ax.tick_params(labelsize=12)
     save(fig, "fig_diagnostics", rows)
 
@@ -433,11 +471,17 @@ def fig_ap_e2_grid() -> None:
             ax.hlines(np.median(vals), i - 0.3, i + 0.3, color=INK, linewidth=2)
             rows += [{"task": task, "arm": arm, "value": v} for v in vals]
         higher = task == "peak_count"
-        direction = "test AUROC (higher better)" if higher else "test RMSE (lower better)"
+        direction = ("protected-test AUROC (higher better)" if higher
+                     else "protected-test RMSE (lower better)")
         ax.set_title(f"{task}\n{direction}", fontsize=14, loc="left")
         ax.set_xticks(range(len(arms)))
         ax.set_xticklabels([ARM_LABEL[a] for a in arms], rotation=45, ha="right",
                            fontsize=11)
+    handles = [plt.Line2D([], [], marker="o", linestyle="none", color=ARM_COLOR[a],
+                          markersize=8, label=ARM_LABEL[a]) for a in arms]
+    handles.append(plt.Line2D([], [], color=INK, linewidth=2, label="median of 10"))
+    fig.legend(handles=handles, frameon=False, fontsize=12, ncol=8,
+               loc="lower center", bbox_to_anchor=(0.5, -0.13))
     fig.tight_layout()
     save(fig, "fig_ap_e2_grid", rows)
 
@@ -461,7 +505,12 @@ def fig_ap_anytime() -> None:
         ax.set_xlabel("unique candidate evaluations", fontsize=13)
         ax.tick_params(labelsize=12)
     axes[0].set_ylabel("best-so-far\nvalidation metric", fontsize=13)
-    axes[0].legend(frameon=False, fontsize=12)
+    handles = [plt.Line2D([], [], color=ARM_COLOR[a], linewidth=2.2, label=ARM_LABEL[a])
+               for a in SEARCH_ARMS]
+    handles.append(plt.Line2D([], [], color=C_REF, linewidth=8, alpha=0.25,
+                              label="band = interquartile range over 10 replicates"))
+    fig.legend(handles=handles, frameon=False, fontsize=12, ncol=4,
+               loc="lower center", bbox_to_anchor=(0.5, -0.14))
     fig.tight_layout()
     save(fig, "fig_ap_anytime", rows)
 
@@ -494,6 +543,17 @@ def fig_ap_e1() -> None:
         ax.set_xlim(-0.5, 1.5)
         ax.set_title(f"{task}, n={n}", fontsize=14, loc="left")
     axes[0].set_ylabel("protected-test RMSE\n(lower is better)", fontsize=13)
+    handles = [
+        plt.Line2D([], [], marker="o", linestyle="none", color=C_RANDOM,
+                   markersize=8, label="Random (joint)"),
+        plt.Line2D([], [], marker="o", linestyle="none", color=C_EVO,
+                   markersize=8, label="Evolutionary (joint)"),
+        plt.Line2D([], [], color="#C6CBD6", linewidth=1.4,
+                   label="grey line joins the same replicate"),
+        plt.Line2D([], [], color=INK, linewidth=2.4, label="median of 10"),
+    ]
+    fig.legend(handles=handles, frameon=False, fontsize=12, ncol=4,
+               loc="lower center", bbox_to_anchor=(0.5, -0.12))
     fig.tight_layout()
     save(fig, "fig_ap_e1", rows)
 

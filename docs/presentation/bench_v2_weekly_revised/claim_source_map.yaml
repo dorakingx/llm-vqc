@@ -128,12 +128,12 @@ claims:
     validation: "wc -l on the csv gives 29 lines including the header"
 
   - slide: 10
-    claim: "220 cells, about 1,480 expected calls; reserved at $0.05/call gives $74; the 40-call/cell guard bounds the worst case at $440."
-    source: llm_vqc/bench_v2/llm_arms.py
-    column: "BATCH_SIZE=3; PER_CELL_CALL_CAP=40 in llm_providers.py; COST_ESTIMATE_PER_CALL_USD=0.05 in free_amplitude/openai_provider.py"
-    derivation: "60x6 + 80x8 + 80x6 = 1,480 calls; 1,480 x 0.05 = 74; 220 x 40 x 0.05 = 440. Full table in SOURCE_AUDIT.md §10."
+    claim: "220 cells, about 1,480 expected calls at roughly $0.0004 each, so about $0.6 against a $2.00 cumulative cap; actual measured spend $0.00."
+    source: configs/bench_v2/model_prices.json
+    column: "gpt-5-nano-2025-08-07: input_per_1m=0.05, output_per_1m=0.40; BATCH_SIZE=3 in llm_arms.py; PER_CELL_CALL_CAP=40 in llm_providers.py is a per-cell runaway guard, not the cap"
+    derivation: "60x6 + 80x8 + 80x6 = 1,480 calls. Cost per call = (input_tokens x 0.05 + output_tokens x 0.40)/1e6 settled from the returned usage counts, not a flat charge. Measured spend is read from runs/bench_v2/preflight_ledger.sqlite, where 0 calls settled and 3 reservations were released after HTTP 429 insufficient_quota."
     kind: descriptive
-    validation: grep -n "PER_CELL_CALL_CAP\|BATCH_SIZE" llm_vqc/bench_v2/llm_*.py
+    validation: python -c "import sqlite3;print(sqlite3.connect('runs/bench_v2/preflight_ledger.sqlite').execute('select state,count(*),sum(actual_usd) from entries group by state').fetchall())"
 
   - slide: 10
     claim: "No positive LLM_API_BUDGET_USD, no calls."

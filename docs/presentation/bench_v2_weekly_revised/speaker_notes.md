@@ -128,13 +128,21 @@ descriptors; I am not claiming they predict accuracy.
 Lead with the honest answer: the headline question is not answered yet.
 What I can defend is the classical baseline and the machinery around it.
 
-The ask is approval of a hard cap, because the cap is what the code
-actually enforces. About 1,480 expected calls at the conservative
-five-cent reservation is $74; the per-cell 40-call guard bounds the
-absolute worst case at $440. A $120 cap covers the expected run with
-headroom and still stops a runaway. The model is not pinned yet, so the
-appendix carries per-model estimates rather than one fabricated number.
-If the cap binds mid-run, cells resume from their stores — no work lost.
+The spending question is now settled in code rather than by a promise.
+A durable SQLite ledger reserves the estimated cost before each request
+and settles it from the returned token counts, so the cap is one
+cumulative total shared by every cell, every retry and every process
+restart — the earlier per-cell object reset to zero and was never a
+global cap. The model is pinned to gpt-5-nano-2025-08-07 and priced from
+a dated manifest ($0.05 / 1M input, $0.40 / 1M output), which puts the
+whole 220-cell matrix at roughly $0.6 against a $2.00 cumulative cap.
+
+The measured spend is exactly $0.00. The API account returned
+insufficient_quota on the very first preflight request, and the ledger
+released all three reservations, so committed spend stayed at zero. The
+block is billing, not authorisation. If the cap ever binds mid-run the
+run stops cleanly, reports cumulative tokens, calls and remaining cells,
+and is never auto-raised; cells resume from their stores, no work lost.
 
 ---
 
