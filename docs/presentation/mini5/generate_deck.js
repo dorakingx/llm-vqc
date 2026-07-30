@@ -80,32 +80,37 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 {
   const s = slide("What changed", "Last week's search let the LLM choose the circuit size");
   const box = (x, colour, bg, title, lines) => {
-    s.addShape(pres.ShapeType.roundRect, { x, y: 1.65, w: 6.0, h: 2.5,
+    s.addShape(pres.ShapeType.roundRect, { x, y: 1.6, w: 6.0, h: 3.05,
       rectRadius: 0.1, fill: { color: bg }, line: { color: colour, width: 1.4 } });
-    s.addText(title, { x: x + 0.25, y: 1.78, w: 5.5, h: 0.4, bold: true,
-      fontSize: 19, color: colour, fontFace: FONT, margin: 0 });
-    bullets(s, lines, { x: x + 0.32, y: 2.32, w: 5.4, h: 1.7, size: 15.5, gap: 7 });
+    s.addText(title, { x: x + 0.25, y: 1.72, w: 5.5, h: 0.4, bold: true,
+      fontSize: 17, color: colour, fontFace: FONT, margin: 0 });
+    bullets(s, lines, { x: x + 0.32, y: 2.25, w: 5.4, h: 2.35, size: 13, gap: 5 });
   };
   box(0.6, MUTED, BG, "Last week (2026-07-24 pilot)", [
     "Circuit body: 1 to 5 gates - length was itself a choice",
     "Budget B = 4 candidates, 2 seeds",
-    "Reported: LLM open-loop 0.155 vs Random 0.189",
-    "Its own config file said: \"integration/smoke demonstration only; not a statistically powered result\"",
+    "Reported: LLM open-loop 0.155 vs Random 0.189 (test RMSE; with 2 seeds mean = median)",
+    "Task generator amplitude_n3_smoke_v1 - not the one used this week",
+    "Its config: \"integration/smoke demonstration only; not a statistically powered result\"",
   ]);
-  box(6.75, NAVY, "EAF0FB", "This week", [
-    "Circuit body: EXACTLY 5 gates - length is fixed for every method",
-    "Budget B = 8 candidates, 10 seeds",
-    "Five arms instead of three",
-    "Three conditions run so the difference can be attributed, not guessed",
+  box(6.75, NAVY, "EAF0FB", "This week - three conditions, 10 seeds each", [
+    "PRIMARY: exactly 5 gates, B = 8. Length is fixed for every method, so it cannot be a source of advantage. Slides 6, 7 and 9 report this.",
+    "CONTROL A: 1 to 5 gates, B = 8 - length freed again, budget unchanged",
+    "CONTROL B: 1 to 5 gates, B = 4 - the pilot's own setting, rebuilt",
+    "Five arms in all three, up from three arms",
   ]);
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 4.45, w: 12.15, h: 1.5,
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 4.9, w: 12.15, h: 1.62,
     rectRadius: 0.1, fill: { color: WARN }, line: { color: "B8860B", width: 1.2 } });
   s.addText([
-    { text: "Why this matters:  ", options: { bold: true, fontSize: 18, color: INK } },
-    { text: "if circuit length is a free variable and longer circuits are usually better, then any proposer that simply always asks for the maximum length wins - without designing anything.",
-      options: { fontSize: 18, color: INK } },
-  ], { x: 0.9, y: 4.6, w: 11.6, h: 1.2, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "Pilot config: outputs/free_amplitude_fixed_readout_v1/EXPERIMENT_CONFIG.json (max_gates 5, budget_per_arm 4, seeds 2)");
+    { text: "Why this matters:  ", options: { bold: true, fontSize: 17, color: INK } },
+    { text: "if circuit length is a free variable and longer circuits are usually better, then any proposer that simply always asks for the maximum length wins - without designing anything.\n",
+      options: { fontSize: 17, color: INK } },
+    { text: "The two data generators differ, so the pilot's numbers and this week's are NOT directly comparable. ",
+      options: { bold: true, fontSize: 15.5, color: ACCENT } },
+    { text: "Slide 8 compares the three conditions above against each other - one codebase, one task, one model - so it does not depend on the pilot's numbers at all.",
+      options: { fontSize: 15.5, color: INK } },
+  ], { x: 0.9, y: 5.03, w: 11.6, h: 1.35, fontFace: FONT, margin: 0, valign: "middle" });
+  footer(s, "Verified against outputs/free_amplitude_fixed_readout_v1/EXPERIMENT_CONFIG.json: max_gates 5 (candidates ranged 1-5), budget_per_arm 4, seeds 2, 3 arms");
   s.addNotes("The pilot allowed one to five gates. That sounds harmless, but it hands the proposer a free decision that correlates with performance. This week I pinned the length so that decision cannot be made at all.");
 }
 
@@ -258,7 +263,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
       rectRadius: 0.1, fill: { color: "FFFFFF", transparency: 90 },
       line: { color: "8FA6C4", width: 1 } });
     s.addText(title, { x: x + 0.25, y: 1.42, w: 5.4, h: 0.4, bold: true,
-      fontSize: 19, color: colour, fontFace: FONT, margin: 0 });
+      fontSize: 17, color: colour, fontFace: FONT, margin: 0 });
     bullets(s, lines, { x: x + 0.32, y: 1.95, w: 5.3, h: 3.1, size: 14.5,
       gap: 9, color: "E8EEF7" });
   };
