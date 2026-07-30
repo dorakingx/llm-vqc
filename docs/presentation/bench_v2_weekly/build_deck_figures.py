@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import csv
 import json
+import os
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
@@ -52,6 +53,20 @@ plt.rcParams.update({
     "axes.spines.top": False, "axes.spines.right": False,
 })
 
+#: Width each figure occupies on its slide, in inches (must match
+#: generate_deck.js). Resolution is allocated per figure from this, so a
+#: panel shown 4.2" wide is not rendered at the same pixel density as one
+#: shown 12.2" wide — same bytes, sharper where it is actually seen.
+DISPLAY_WIDTH_IN = {
+    "fig_tasks": 12.2, "fig_e1_per_seed": 8.35, "fig_e2_per_seed": 7.85,
+    "fig_e2_anytime": 7.85, "fig_e3_scaling": 4.3, "fig_e2_resources": 8.1,
+    "fig_e2_diagnostics": 4.15,
+}
+#: Rendered pixels per displayed inch. 120 ≈ crisp for a 1600 px-wide
+#: rendering of the 13.33" slide. Lowered via BENCH_V2_PPI when the deck
+#: has to be small enough to upload to Google Drive in one payload.
+TARGET_PPI = float(os.environ.get("BENCH_V2_PPI", "120"))
+
 RNG = np.random.default_rng(7)
 
 
@@ -76,7 +91,12 @@ def _optimize_png(path: Path) -> None:
 
 
 def _save(fig, stem: str, rows: list[dict]) -> None:
-    fig.savefig(FIG_DIR / f"{stem}.png", bbox_inches="tight")
+    display_w = DISPLAY_WIDTH_IN.get(stem)
+    dpi = (
+        TARGET_PPI * display_w / fig.get_size_inches()[0]
+        if display_w else plt.rcParams["figure.dpi"]
+    )
+    fig.savefig(FIG_DIR / f"{stem}.png", bbox_inches="tight", dpi=dpi)
     fig.savefig(FIG_DIR / f"{stem}.svg", bbox_inches="tight")
     plt.close(fig)
     _optimize_png(FIG_DIR / f"{stem}.png")
