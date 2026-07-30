@@ -168,7 +168,7 @@ function titleBar(slide, title, kicker) {
   const cards = [
     ["2^n features", "Every task generates exactly 2^n-point signals — the amplitude vector of n qubits. No padding, no truncation."],
     ["Nuisance randomization", "Amplitude, phase, baseline, widths, noise randomized so no fixed convention leaks the label."],
-    ["Scaling profiles", "T1/T2 frozen for n ∈ {3,4,6,8} (E3, running); T3/T4 at n=5. Frequency cap N/4 keeps T2 below Nyquist."],
+    ["Scaling profiles", "T1/T2 frozen for n ∈ {3,4,6,8} (E3, complete); T3/T4 at n=5. Frequency cap N/4 keeps T2 below Nyquist."],
     ["Splits", "256 train / 256 val / 2048 protected test per replicate; deterministic hashes; disjointness enforced."],
   ];
   cards.forEach(([head, body], i) => {

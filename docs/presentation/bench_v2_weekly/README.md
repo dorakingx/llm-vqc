@@ -31,32 +31,29 @@ soffice --headless --convert-to pdf LLM_VQC_weekly_benchmark_v2.pptx
 
 ## Google Drive / Google Slides
 
-The deck is published to the `GSoC2026` folder
-(https://drive.google.com/drive/folders/1YV3KxZe4OA4ysh9YSqPGJbZxpkpN_fqf),
-copied there through the Google Drive Desktop mount so the transfer is
-byte-exact and full-resolution:
+Published to the `GSoC2026` folder
+(https://drive.google.com/drive/folders/1YV3KxZe4OA4ysh9YSqPGJbZxpkpN_fqf)
+as a **native Google Slides file**:
 
-- `LLM_VQC_weekly_benchmark_v2.pptx` — 277,201 bytes, file id
-  `1lK8lsWA4jod1XXRo7o4z9sV_mu5vHot1`
-- Opens directly in Google Slides:
-  https://docs.google.com/presentation/d/1lK8lsWA4jod1XXRo7o4z9sV_mu5vHot1/edit
+- https://docs.google.com/presentation/d/1CNn77bcWZpd4mgYC-sMT3jHQvYf4_Tuu60dShHtGXdY/edit
+  (`application/vnd.google-apps.presentation`, 10 slides)
 
-**Converting it to a native Google Slides file needs one manual step**
-(`File → Save as Google Slides` in the link above). It could not be
-automated from this session, and doing so would also have *lowered*
-quality:
+How it was produced, since the route matters for repeating it:
 
-- the Drive connector converts only on upload, and only accepts file
-  content inline as base64 — 370 k characters for this deck, beyond what
-  one message can carry intact, so a corrupt zip was the likely outcome;
-- shrinking the deck enough to fit (≈130 KB, figures at 62 dpi) would
-  have produced a *softer* Slides file than the full-quality PPTX that
-  is already in the folder — strictly worse for the reader;
-- the Chrome extension (which could drive the Drive UI) is not
-  connected, and the `gcloud` token has no Drive scope.
+1. `LLM_VQC_weekly_benchmark_v2.pptx` is copied into the folder through
+   the Google Drive Desktop mount — byte-exact and full-resolution, with
+   no size limit.
+2. The PPTX is opened in Google Slides and converted with
+   `File → Save as Google Slides`, driven through the connected Chrome
+   extension.
 
-With the Chrome extension connected, the upload-and-convert step can be
-fully automated in a later session.
+The Drive connector alone cannot do this: it converts only on upload and
+takes file content inline as base64 (~270 k characters for this deck),
+which cannot be transmitted intact in one message, and shrinking the deck
+to fit would degrade the figures.
+
+The `.pptx` left in the folder is only the conversion source — it can be
+deleted once the Slides file exists.
 
 ## Provenance and claim discipline
 
