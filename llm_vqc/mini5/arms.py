@@ -1,0 +1,187 @@
+"""The five comparison arms of `mini_5gate_v1`.
+
+Every arm implements the same contract: given a budget of B *unique*
+candidates, propose circuits one at a time until B of them have been
+evaluated. Duplicates and grammar violations are recorded but do not
+consume budget, so no arm can buy extra evaluations by proposing badly.
+
+Classical arms (random, evolutionary, greedy) cost no API calls at all.
+Only the two LLM arms talk to a provider, and they issue exactly one
+request per proposal.
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, field
+
+import numpy as np
+
+from llm_vqc.mini5.prompts import (
+    closed_user_prompt,
+    open_user_prompt,
+    system_prompt,
+)
+from llm_vqc.mini5.space import (
+    EXACT_GATES,
+    grammar_issues,
+    mutate_circuit,
+    sample_circuit,
+)
+
+#: Guard against a pathological proposer looping forever on duplicates or
+#: malformed replies. Reaching this means the cell stops early and says so
+#: rather than silently reporting a short search as a complete one.
+MAX_PROPOSALS_PER_CELL = 40
+
+
+@dataclass
+class Proposal:
+    operations: list[dict]
+    source: str
+
+
+@dataclass
+class ArmTelemetry:
+    proposals: int = 0
+    invalid: int = 0
+    duplicates: int = 0
+    api_calls: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
+    parse_failures: int = 0
+    issues: list[str] = field(default_factory=list)
+
+
+class BaseArm:
+    name = "base"
+    uses_api = False
+
+    def __init__(self, rng: np.random.Generator, n_qubits: int, budget: int) -> None:
+        self.rng = rng
+        self.n_qubits = n_qubits
+        self.budget = budget
+        self.telemetry = ArmTelemetry()
+
+    def propose(self, index: int) -> Proposal | None:
+        raise NotImplementedError
+
+    def observe(self, operations: list[dict], val_rmse: float) -> None:
+        """Called only for candidates that were actually evaluated."""
+
+
+class RandomArm(BaseArm):
+    name = "random"
+
+    def propose(self, index: int) -> Proposal:
+        return Proposal(sample_circuit(self.rng, self.n_qubits), "random")
+
+
+class EvolutionaryArm(BaseArm):
+    """(mu + lambda) with mu=4: seed the population by sampling, then
+    mutate a surviving parent. Mutation preserves the five-gate length."""
+
+    name = "evolutionary"
+    MU = 4
+
+    def __init__(self, rng, n_qubits, budget) -> None:
+        super().__init__(rng, n_qubits, budget)
+        self.population: list[tuple[float, list[dict]]] = []
+
+    def propose(self, index: int) -> Proposal:
+        if len(self.population) < self.MU:
+            return Proposal(sample_circuit(self.rng, self.n_qubits), "seed")
+        parents = sorted(self.population, key=lambda p: p[0])[: self.MU]
+        _, parent = parents[int(self.rng.integers(len(parents)))]
+        return Proposal(mutate_circuit(self.rng, parent, self.n_qubits), "mutation")
+
+    def observe(self, operations, val_rmse) -> None:
+        self.population.append((val_rmse, operations))
+
+
+class GreedyArm(BaseArm):
+    """Hill climbing at fixed length: mutate the incumbent, keep the
+    mutant only if validation improves, otherwise fall back and try
+    again. This is the fixed-size analogue of greedy growth, which cannot
+    apply here because the circuit length is pinned at five."""
+
+    name = "greedy"
+
+    def __init__(self, rng, n_qubits, budget) -> None:
+        super().__init__(rng, n_qubits, budget)
+        self.incumbent: list[dict] | None = None
+        self.incumbent_rmse = float("inf")
+        self._last: list[dict] | None = None
+
+    def propose(self, index: int) -> Proposal:
+        if self.incumbent is None:
+            self._last = sample_circuit(self.rng, self.n_qubits)
+            return Proposal(self._last, "start")
+        self._last = mutate_circuit(self.rng, self.incumbent, self.n_qubits)
+        return Proposal(self._last, "climb")
+
+    def observe(self, operations, val_rmse) -> None:
+        if val_rmse < self.incumbent_rmse:
+            self.incumbent, self.incumbent_rmse = operations, val_rmse
+
+
+class LLMArm(BaseArm):
+    """One request per proposal. `closed` decides whether validation-side
+    feedback on the arm's own evaluated candidates is included."""
+
+    uses_api = True
+
+    def __init__(self, rng, n_qubits, budget, provider, closed: bool) -> None:
+        super().__init__(rng, n_qubits, budget)
+        self.provider = provider
+        self.closed = closed
+        self.name = "llm_closed" if closed else "llm_open"
+        self.archive: list[dict] = []
+        self._system = system_prompt(n_qubits)
+
+    def propose(self, index: int) -> Proposal | None:
+        user = (
+            closed_user_prompt(index, self.budget, self.archive)
+            if self.closed
+            else open_user_prompt(index, self.budget)
+        )
+        response = self.provider.complete(self._system, user, 1.0)
+        self.telemetry.api_calls += 1
+        self.telemetry.input_tokens += response.input_tokens
+        self.telemetry.output_tokens += response.output_tokens
+        try:
+            payload = json.loads(response.raw_text)
+            operations = payload["operations"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            self.telemetry.parse_failures += 1
+            return None
+        return Proposal(operations, "llm")
+
+    def observe(self, operations, val_rmse) -> None:
+        if self.closed:
+            self.archive.append({"operations": operations, "val_rmse": val_rmse})
+
+
+def build_arm(name: str, rng, n_qubits: int, budget: int, provider=None) -> BaseArm:
+    if name == "random":
+        return RandomArm(rng, n_qubits, budget)
+    if name == "evolutionary":
+        return EvolutionaryArm(rng, n_qubits, budget)
+    if name == "greedy":
+        return GreedyArm(rng, n_qubits, budget)
+    if name == "llm_open":
+        return LLMArm(rng, n_qubits, budget, provider, closed=False)
+    if name == "llm_closed":
+        return LLMArm(rng, n_qubits, budget, provider, closed=True)
+    raise ValueError(f"unknown arm {name!r}")
+
+
+ARM_NAMES = ("random", "evolutionary", "greedy", "llm_open", "llm_closed")
+CLASSICAL_ARMS = ("random", "evolutionary", "greedy")
+LLM_ARMS = ("llm_open", "llm_closed")
+
+__all__ = [
+    "ARM_NAMES", "CLASSICAL_ARMS", "LLM_ARMS", "EXACT_GATES",
+    "MAX_PROPOSALS_PER_CELL", "ArmTelemetry", "BaseArm", "Proposal",
+    "build_arm", "grammar_issues",
+]
