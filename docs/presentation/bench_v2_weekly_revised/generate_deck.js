@@ -92,7 +92,7 @@ function bullets(s, items, opts) {
   ], { x: 0.9, y: 5.05, w: 11.6, h: 1.5, color: "C9D6E8", fontFace: FONT, margin: 0 });
   s.addNotes(
     "Short framing: this is an interim update. The classical half of the benchmark is finished, " +
-    "the LLM half has not run yet because it needs API spending approval. " +
+    "the LLM half has not run: the API account returned insufficient_quota, so nothing was spent. " +
     "VQC = variational quantum circuit; QAS = quantum architecture search. " +
     "Everything shown is generated from durable stores at commit " + SHA + "."
   );
@@ -251,7 +251,8 @@ function bullets(s, items, opts) {
   s.addNotes(
     "E0 replays the February pilot offline and reproduces it exactly with zero API calls. " +
     "E1 is the joint track, E2 the main n=5 architecture search, E3 the qubit-scaling study. " +
-    "All 460 classical cells finished with no failures. The 220 LLM cells are blocked by spending policy, " +
+    "All 460 classical cells finished with no failures. The 220 LLM cells never started because the " +
+    "API account has no quota — not because the cap refused them; measured spend is zero. " +
     "and E4 and E5 depend on them, so they are pending too. " +
     "The completion checker reports 10 of 17 criteria — it fails correctly and I did not weaken it."
   );

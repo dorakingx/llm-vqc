@@ -2,8 +2,8 @@
   "package": "docs/presentation/bench_v2_weekly_revised",
   "deck_stem": "20260731_GSoC_revised",
   "presentation_date": "July 31, 2026",
-  "source_commit": "589b7e334bda3735d8ef3bcad4084800e97d8a4e",
-  "base_commit": "589b7e334bda3735d8ef3bcad4084800e97d8a4e",
+  "source_commit": "f159d3597daaaf3584296c857f360d0a6fa5b7d4",
+  "base_commit": "f159d3597daaaf3584296c857f360d0a6fa5b7d4",
   "branch": "experiment/bench-v2-real-llm-cost-minimal",
   "generation": [
     "python docs/presentation/bench_v2_weekly_revised/build_figures.py",
@@ -17,13 +17,13 @@
   "files": [
     {
       "path": "20260731_GSoC_revised.pdf",
-      "sha256": "960f3349839e3867d05a10c6c9ab28070f243f5042d4c8e43c0d890b89e7232d",
-      "bytes": 1086966
+      "sha256": "27623be576b3dd716b5aa8dcf530a758172ecb44745d28d522993da84650f4e6",
+      "bytes": 1086973
     },
     {
       "path": "20260731_GSoC_revised.pptx",
-      "sha256": "71fee3fb3cca7c3416540ee2de0e31d4c0baa0d366f10dd56d4a59711268793a",
-      "bytes": 552977
+      "sha256": "3e54808000ebb871b8e78c0b12d03f302edc2e25d9b6513537b49d59b2724444",
+      "bytes": 553035
     },
     {
       "path": "DECK_REVIEW.md",
@@ -37,7 +37,7 @@
     },
     {
       "path": "SOURCE_AUDIT.md",
-      "sha256": "67d08991b06cf717377042a7b414f063b9525aef877bc1ec548b02cb23dc17d9",
+      "sha256": "ccb8659cd5799a395c1da8ec62727a94ca9a83d920fa35f23bb201f01541af83",
       "bytes": 11865
     },
     {
@@ -47,7 +47,7 @@
     },
     {
       "path": "claim_source_map.yaml",
-      "sha256": "10930c19afd102e0c8cbc6be3e8e07996a2e74ba5b56cad11df300605ba520c7",
+      "sha256": "487250971b4285f85989bf3623190ee12ff466e14f15c90549747b9ba4b850a2",
       "bytes": 8455
     },
     {
@@ -217,8 +217,8 @@
     },
     {
       "path": "generate_deck.js",
-      "sha256": "97bce413e53a3a7e499806907e6602f801cc79342241433142bd1c04ef34d3bc",
-      "bytes": 32263
+      "sha256": "7985b7714e79e969bd5748706a4548cdd5b62021e1be7f78d9331b3a0047cbd3",
+      "bytes": 32377
     },
     {
       "path": "recompress_pptx.py",
@@ -227,8 +227,8 @@
     },
     {
       "path": "renders/slide-01.png",
-      "sha256": "1d9640ef9471c2a85c09ba43b9d0fd898fd1b23205d57989622944eff1c21be0",
-      "bytes": 105936
+      "sha256": "dff3b83005474b84c12e246381d42f424dd81b54b90be5fa7eda31d4a8a8be99",
+      "bytes": 105762
     },
     {
       "path": "renders/slide-02.png",
@@ -317,8 +317,8 @@
     },
     {
       "path": "speaker_notes.md",
-      "sha256": "e8dfb0f7437dc758bfd0ba22a82914feb4f1230ef52ac650bceece2737ce702b",
-      "bytes": 9661
+      "sha256": "a7f5278a4ebc3e51d84092432b005721d839476bcff3295b91580af7e22bde73",
+      "bytes": 9851
     },
     {
       "path": "write_manifest.py",

@@ -3,7 +3,7 @@
 # run) from descriptive ones (a summary of measurements) and provenance
 # statements. Checked by scripts/verify_bench_v2_presentation.py.
 deck: docs/presentation/bench_v2_weekly_revised/20260731_GSoC_revised.pptx
-source_commit: da6ef34258052e350d58b78ab0182293c8d313db
+source_commit: f159d3597daaaf3584296c857f360d0a6fa5b7d4
 validation_command: python scripts/verify_bench_v2_presentation.py
 
 claims:

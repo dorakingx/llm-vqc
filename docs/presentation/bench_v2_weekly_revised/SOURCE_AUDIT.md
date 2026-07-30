@@ -11,7 +11,7 @@ something this audit could not confirm, the correction is recorded in
 | Item | Value |
 |---|---|
 | Audit date | 2026-07-31 |
-| Base commit (branch point) | `da6ef34258052e350d58b78ab0182293c8d313db` |
+| Base commit (branch point) | `f159d3597daaaf3584296c857f360d0a6fa5b7d4` |
 | Base branch | `research/rigorous-qas-benchmark-v2` |
 | Working branch | `presentation/rebuild-gsoc-benchmark-v2` |
 | Working tree at branch point | clean (no uncommitted or untracked work) |

@@ -13,9 +13,10 @@ Acronyms on first use: **VQC** variational quantum circuit ·
 ## Slide 1 — Title and status (~30 s)
 
 This is an interim update. The classical half of the benchmark is
-finished; the LLM half has not run because it needs API spending
-approval. Everything on these slides is generated from durable stores at
-commit `da6ef34` — no number was typed in by hand.
+finished; the LLM half has not run because the API account returned
+insufficient_quota, so nothing was spent. Everything on these slides is
+generated from durable stores at commit `589b7e3` — no number was typed
+in by hand.
 
 ## Slide 2 — Question (~55 s)
 
@@ -74,8 +75,10 @@ search budget at all.
 E0 replays the earlier pilot offline and reproduces it exactly with zero
 API calls. E1 is the joint track, E2 the main 5-qubit architecture
 search, E3 the qubit-scaling study. All 460 classical cells finished with
-no failures. The 220 LLM cells are blocked by spending policy, and E4 and
-E5 depend on them.
+no failures. The 220 LLM cells never started because the API account has
+no quota — the cap did not refuse them and measured spend is zero. E5
+depends on them, so it is blocked too; E4 does not, because it selects
+from completed classical cells.
 
 The completion checker still reports 9 of 17 criteria. It fails
 *correctly*, and I did not weaken it to make the picture look better.
