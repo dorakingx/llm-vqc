@@ -139,8 +139,53 @@ def fig_mechanism(cells):
     _ = bars
 
 
+
+
+def fig_t4(cells):
+    """T4 only, both scores side by side, from the 30-seed run.
+
+    The earlier version of this figure came from the 5-gate run and stayed
+    on the slide after the experiment changed under it. Rebuilt here from
+    the same cells every other v2 figure uses.
+    """
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.0))
+    rng = np.random.default_rng(13)
+    for ax, (field, title, chance) in zip(
+        axes,
+        [("test_rmse", "Test RMSE   (lower is better)", None),
+         ("test_auroc", "Test AUROC   (higher is better)", 0.5)],
+        strict=True,
+    ):
+        for i, arm in enumerate(ORDER):
+            v = [c[field] for k, c in cells.items()
+                 if k[0] == "peak_count" and k[1] == arm and c.get(field) is not None]
+            if not v:
+                continue
+            ax.scatter(np.full(len(v), i) + rng.uniform(-0.17, 0.17, len(v)), v,
+                       s=20, color=COLOR[arm], alpha=0.65, linewidths=0, zorder=3)
+            m = st.median(v)
+            ax.plot([i - 0.33, i + 0.33], [m, m], color=INK, lw=2.6, zorder=4)
+        ax.set_title(title, loc="left", fontsize=12.5)
+        ax.set_xticks(range(len(ORDER)))
+        ax.set_xticklabels([LABEL[a] for a in ORDER], rotation=45, ha="right", fontsize=9)
+        ax.grid(axis="y", color="#E6E8EE", lw=0.8, zorder=0)
+        ax.set_axisbelow(True)
+        if chance is not None:
+            ax.axhline(chance, color="#B3261E", ls="--", lw=1.3)
+            ax.text(0.02, chance + 0.004, "0.5 = coin flip", color="#B3261E",
+                    fontsize=10, transform=ax.get_yaxis_transform(), va="bottom")
+    fig.text(0.5, -0.10,
+             "RMSE against a 0/1 label is a proper score, but it also punishes a "
+             "circuit that ranks the classes correctly while outputting 0.45 and "
+             "0.55. AUROC only cares about the order, so both are shown.",
+             ha="center", fontsize=11, color=MUTED, wrap=True)
+    fig.tight_layout()
+    _save(fig, "fig_v2_t4")
+
+
 if __name__ == "__main__":
     c = load()
     print(f"loaded {len(c)} cells")
     fig_main(c)
     fig_mechanism(c)
+    fig_t4(c)

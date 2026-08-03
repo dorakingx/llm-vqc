@@ -110,7 +110,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S3
 {
   const s = slide("The four tasks", "Four questions about a 32-number signal");
-  badge(s, "5 qubits on every task", "one circuit design per task");
+  badge(s, "5 qubits on every task", "32 numbers in, one number out");
   s.addImage({ path: F("fig_tasks_v2.png"), x: 0.35, y: 1.55, w: 12.65, h: 2.78 });
   const cell = (x, w, title, body, colour) => {
     s.addShape(pres.ShapeType.roundRect, { x, y: 4.6, w, h: 1.75, rectRadius: 0.1,
@@ -152,7 +152,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 // ---------------------------------------------------------------- S5
 {
   const s = slide("Design", "Six methods, one shared budget");
-  badge(s, "Six arms", "identical budget, identical pipeline");
+  badge(s, "Six arms, identical pipeline", "16 gates, 5 qubits, B = 8 each");
   s.addImage({ path: F("fig_arms.png"), x: 0.45, y: 1.6, w: 12.45, h: 3.26 });
   s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.15, w: 12.15, h: 1.4,
     rectRadius: 0.1, fill: { color: BG }, line: { color: RULE, width: 1 } });
@@ -184,32 +184,33 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 
 // ---------------------------------------------------------------- S7
 {
-  const s = slide("Metric check", "On T4 the metric, not the method, picks the winner");
-  badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "T4 only (peak count, 5 qubits)");
-  s.addImage({ path: F("fig_t4_check.png"), x: 0.8, y: 1.55, w: 7.3, h: 3.3 });
+  const s = slide("Metric check", "On T4 the two scores tell different stories");
+  badge(s, `16 gates, 5 qubits, B = 8, ${V2.n_seeds} seeds`, "T4 only (one bump or two)");
+  s.addImage({ path: F("fig_v2_t4.png"), x: 0.9, y: 1.55, w: 8.3, h: 3.6 });
   s.addText([
     { text: "AUROC\n", options: { bold: true, fontSize: 17, color: NAVY } },
-    { text: "= how often the model ranks a two-peak signal above a one-peak one. 1.0 perfect, 0.5 coin flip.\n\n",
+    { text: "= how often the model ranks a two-bump signal above a one-bump one. 1.0 perfect, 0.5 a coin flip.\n\n",
       options: { fontSize: 15, color: INK } },
-    { text: "Why they disagree\n", options: { bold: true, fontSize: 17, color: NAVY } },
-    { text: "RMSE also punishes outputting 0.45 / 0.55 instead of 0 / 1. AUROC only cares about the order.",
+    { text: "Why report both\n", options: { bold: true, fontSize: 17, color: NAVY } },
+    { text: "RMSE also punishes outputting 0.45 / 0.55 instead of 0 / 1. AUROC only cares about the order, so one alone can assert the wrong winner.",
       options: { fontSize: 15, color: INK } },
-  ], { x: 8.4, y: 1.75, w: 4.4, h: 3.2, fontFace: FONT, margin: 0, valign: "top" });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.2, w: 12.15, h: 1.4,
+  ], { x: 9.45, y: 1.75, w: 3.4, h: 3.3, fontFace: FONT, margin: 0, valign: "top" });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.5, w: 12.15, h: 1.15,
     rectRadius: 0.1, fill: { color: WARN }, line: { color: "B8860B", width: 1.2 } });
   s.addText([
-    { text: "Neither reading is strong: ", options: { bold: true, fontSize: 17, color: INK } },
-    { text: "AUROC spans 0.59 to 0.62 against 0.5 for chance. Five gates without training barely solve T4 at all.",
+    { text: "Neither reading is strong. ", options: { bold: true, fontSize: 17, color: INK } },
+    { text: "Every method sits near 0.50 RMSE and barely above chance on AUROC. Sixteen gates without training do not solve T4, and no arm separates from the others.",
       options: { fontSize: 17, color: INK } },
-  ], { x: 0.85, y: 5.32, w: 11.6, h: 1.2, fontFace: FONT, margin: 0, valign: "middle" });
+  ], { x: 0.85, y: 5.62, w: 11.6, h: 0.9, fontFace: FONT, margin: 0, valign: "middle" });
   footer(s, "AUROC computed from the identical predictions used for the RMSE, on the same single test evaluation");
-  s.addNotes("This is why I kept AUROC even though the request was to use plain RMSE everywhere. On T4 the two metrics disagree about who wins, so reporting only one would have asserted something the data does not settle.");
+  s.addNotes("T4 is the one task where the metric can pick the winner, so both are on the slide. Here they agree that nothing works: RMSE near 0.5 and AUROC barely above a coin flip.");
 }
 
 // ---------------------------------------------------------------- S8
 {
-  const s = slide("Attribution", "Last week's advantage was a size decision, not a design one");
-  badge(s, "ALL THREE CONDITIONS side by side", "T1 only (Gaussian peak, 3 qubits)");
+  const s = slide("Attribution (earlier run)",
+                  "Last week's advantage was a size decision, not a design one");
+  badge(s, "A SEPARATE, EARLIER RUN", "5 gates, 3 qubits, 10 seeds - not the run on slides 6, 7, 9");
   s.addImage({ path: F("fig_size_confound.png"), x: 0.3, y: 1.5, w: 12.75, h: 3.8 });
   s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.55, w: 12.15, h: 1.2,
     rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
@@ -218,7 +219,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
     { text: `(${med(fixed, "gauss_peak", "random")} → ${med(pilot, "gauss_peak", "random")}); the LLM does not move (${med(fixed, "gauss_peak", "llm_open")} → ${med(pilot, "gauss_peak", "llm_open")}), because it was already asking for 5. At the pilot's setting they meet.`,
       options: { fontSize: 17, color: INK } },
   ], { x: 0.85, y: 5.65, w: 11.6, h: 1.0, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "All three conditions ran all four tasks with 10 seeds; T1 is shown here because it is the family the pilot used · data/condition_comparison.json");
+  footer(s, "This attribution needed the pilot's own 5-gate space, so it has its own runs: all four tasks, 10 seeds, T1 plotted because the pilot used that family · data/condition_comparison.json");
   s.addNotes("This is the slide I would defend hardest. The pilot rewarded a single decision - ask for the maximum number of gates - and the LLM makes that decision almost every time while a uniform sampler does not. Pin the length and the advantage goes; restore the length and shrink the budget to the pilot's and the two meet again.");
 }
 
