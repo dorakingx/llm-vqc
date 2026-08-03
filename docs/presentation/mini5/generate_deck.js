@@ -91,40 +91,17 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 
 // ---------------------------------------------------------------- S2
 {
-  const s = slide("What changed", "Last week's search let the LLM choose the circuit size");
-  const box = (x, colour, bg, title, lines) => {
-    s.addShape(pres.ShapeType.roundRect, { x, y: 1.6, w: 6.0, h: 3.05,
-      rectRadius: 0.1, fill: { color: bg }, line: { color: colour, width: 1.4 } });
-    s.addText(title, { x: x + 0.25, y: 1.72, w: 5.5, h: 0.4, bold: true,
-      fontSize: 17, color: colour, fontFace: FONT, margin: 0 });
-    bullets(s, lines, { x: x + 0.32, y: 2.25, w: 5.4, h: 2.35, size: 13, gap: 5 });
-  };
-  box(0.6, MUTED, BG, "Last week (2026-07-24 pilot)", [
-    "Circuit body: 1 to 5 gates - length was itself a choice",
-    "Budget B = 4 candidates, 2 seeds",
-    "Reported: LLM open-loop 0.155 vs Random 0.189 (test RMSE; with 2 seeds mean = median)",
-    "Task generator amplitude_n3_smoke_v1 - not the one used this week",
-    "Its config: \"integration/smoke demonstration only; not a statistically powered result\"",
-  ]);
-  box(6.75, NAVY, "EAF0FB", "This week - three conditions, 10 seeds each", [
-    "PRIMARY: exactly 5 gates, B = 8. Length is fixed for every method, so it cannot be a source of advantage. Slides 6, 7 and 9 report this.",
-    "CONTROL A: 1 to 5 gates, B = 8 - length freed again, budget unchanged",
-    "CONTROL B: 1 to 5 gates, B = 4 - the pilot's own setting, rebuilt",
-    "Five arms in all three, up from three arms",
-  ]);
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 4.9, w: 12.15, h: 1.62,
+  const s = slide("What changed", "Last week the LLM could choose how big the circuit was");
+  s.addImage({ path: F("fig_conditions.png"), x: 0.45, y: 1.65, w: 12.45, h: 3.55 });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.45, w: 12.15, h: 1.15,
     rectRadius: 0.1, fill: { color: WARN }, line: { color: "B8860B", width: 1.2 } });
   s.addText([
-    { text: "Why this matters:  ", options: { bold: true, fontSize: 17, color: INK } },
-    { text: "if circuit length is a free variable and longer circuits are usually better, then any proposer that simply always asks for the maximum length wins - without designing anything.\n",
-      options: { fontSize: 17, color: INK } },
-    { text: "The two data generators differ, so the pilot's numbers and this week's are NOT directly comparable. ",
-      options: { bold: true, fontSize: 15.5, color: ACCENT } },
-    { text: "Slide 8 compares the three conditions above against each other - one codebase, one task, one model - so it does not depend on the pilot's numbers at all.",
-      options: { fontSize: 15.5, color: INK } },
-  ], { x: 0.9, y: 5.03, w: 11.6, h: 1.35, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "Verified against outputs/free_amplitude_fixed_readout_v1/EXPERIMENT_CONFIG.json: max_gates 5 (candidates ranged 1-5), budget_per_arm 4, seeds 2, 3 arms");
-  s.addNotes("The pilot allowed one to five gates. That sounds harmless, but it hands the proposer a free decision that correlates with performance. This week I pinned the length so that decision cannot be made at all.");
+    { text: "Longer circuits usually score better. ", options: { bold: true, fontSize: 18, color: INK } },
+    { text: "So a proposer that always asks for the maximum length wins without designing anything. Fixing the length takes that move away.",
+      options: { fontSize: 18, color: INK } },
+  ], { x: 0.9, y: 5.58, w: 11.6, h: 0.9, fontFace: FONT, margin: 0, valign: "middle" });
+  footer(s, "seed = one paired data + search random seed; a condition is re-run once per seed. Pilot values verified in its EXPERIMENT_CONFIG.json");
+  s.addNotes("The pilot allowed one to five gates. That hands the proposer a free decision that correlates with performance. This week the length is pinned so the decision cannot be made, and two controls put it back so we can measure what it was worth.");
 }
 
 // ---------------------------------------------------------------- S3
@@ -133,74 +110,56 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
   badge(s, "Applies to all three conditions", "only gate count and B differ between them");
   s.addTable([
     [hdr("Constraint"), hdr("Value")],
-    ["Tasks", "T1 Gaussian peak position · T2 sinusoid frequency · T3 change-point location · T4 one peak vs two (binary)"],
-    ["Qubits", "3 for T1, T2 (2^3 = 8 amplitudes); 5 for T3, T4 (2^5 = 32) - T3 and T4 are only frozen at n=5"],
-    ["Gate count", "PRIMARY exactly 5 (not a max, not a range); Controls A and B relax it to 1-5. Every arm faces the same setting."],
-    ["Gate set (7 types)", "one wire: H, RX, RY, RZ      two wires: CRX, CRY, CRZ"],
-    ["Angles", "one continuous theta per gate in [-pi, pi]; H carries none"],
-    ["Budget", "PRIMARY and Control A: B = 8 unique candidates. Control B: B = 4, the pilot's setting. 10 seeds throughout."],
-    ["Training", "NONE. The proposed angles are evaluated verbatim - no optimizer exists on this path."],
-    ["Encoding / readout", "amplitude encoding; Pauli-Z on qubit 0; prediction = (1 - <Z0>)/2"],
-    ["Classical params", "zero - no dense layer can rescue a weak circuit"],
-  ], { x: 0.6, y: 1.5, w: 12.15, colW: [2.4, 9.75], fontSize: 12.5, fontFace: FONT,
-    border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.4,
-    valign: "middle", margin: 0.06 });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.95, w: 12.15, h: 0.9,
-    rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
-  s.addText([
-    { text: "One operation = one physical gate here.  ", options: { bold: true, fontSize: 16, color: INK } },
-    { text: "There are no layer macros: a 5-gate circuit compiles to 5 gates, so \"5\" means the same thing to every arm and to the reader.",
-      options: { fontSize: 16, color: INK } },
-  ], { x: 0.85, y: 6.03, w: 11.6, h: 0.75, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "llm_vqc/mini5/space.py - the same grammar check is applied to classical samplers and LLM replies alike");
+    ["Tasks", "T1 peak position · T2 sinusoid frequency · T3 change-point location · T4 one peak vs two (binary)"],
+    ["Qubits", "3 for T1, T2   ·   5 for T3, T4   (a circuit on n qubits holds 2^n numbers)"],
+    ["Gate count", "5 exactly (PRIMARY)   ·   1 to 5 (both controls)"],
+    ["Gate set", "H, RX, RY, RZ (one qubit)   ·   CRX, CRY, CRZ (two qubits)"],
+    ["Angles", "one number per gate, anywhere in [-pi, pi]   (H has none)"],
+    ["Budget B", "8 distinct circuits scored per method (4 in Control B)   ·   10 seeds"],
+    ["Training", "none - proposed angles are used exactly as written"],
+    ["Encoding / readout", "amplitude encoding; measure Z on qubit 0"],
+    ["Classical params", "zero - nothing outside the circuit can fix a bad circuit"],
+  ], { x: 0.6, y: 1.55, w: 12.15, colW: [2.6, 9.55], fontSize: 15, fontFace: FONT,
+    border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.5,
+    valign: "middle", margin: 0.08 });
+  footer(s, "One operation = one physical gate; a 5-gate circuit compiles to 5 gates. The same grammar check is applied to classical samplers and LLM replies alike");
   s.addNotes("Everything is on this slide on purpose. Three or five qubits, seven gate types, exactly five gates, one angle per gate, no optimizer, no classical parameters. A reader can verify any proposed circuit against these seven rows.");
 }
 
 // ---------------------------------------------------------------- S4
 {
-  const s = slide("What is measured", "One number, defined once: RMSE");
-  bullets(s, [
-    "Validation RMSE drives the search. Each arm evaluates its candidates and keeps the best one by validation RMSE.",
-    "Test RMSE is reported. The held-out split is touched once per cell, after the choice is frozen, so the reported number was never used to make that choice.",
-    "T1-T3 regress a continuous quantity, so RMSE is the natural metric.",
-    "T4 is binary classification. RMSE against a 0/1 label equals the square root of the Brier score - a proper scoring rule - so all four panels share one axis. AUROC is reported alongside it, and slide 7 shows why that matters.",
-  ], { x: 0.7, y: 1.65, w: 12.0, h: 3.0, size: 17, gap: 12 });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.7, y: 4.85, w: 11.9, h: 1.5,
-    rectRadius: 0.1, fill: { color: WARN }, line: { color: "B8860B", width: 1.2 } });
-  s.addText([
-    { text: "RMSE is comparable between arms within one task, never between tasks.  ",
-      options: { bold: true, fontSize: 17, color: INK } },
-    { text: "T1, T2, T3 and T4 predict different quantities on different scales, so the panels each carry their own y-axis and a T1 value must not be read against a T3 value.",
-      options: { fontSize: 17, color: INK } },
-  ], { x: 0.95, y: 5.0, w: 11.4, h: 1.2, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "256 train / 256 validation / 2048 test per replicate, regenerated per seed");
-  s.addNotes("I dropped the phrase protected-test RMSE from last week because it was confusing. The discipline behind it is unchanged: the test split is evaluated once, after selection. What changed is only the label.");
+  const s = slide("What is measured", "One number: RMSE, the typical size of the error");
+  badge(s, "Applies to all three conditions", "same pipeline throughout");
+  s.addImage({ path: F("fig_contract.png"), x: 0.45, y: 1.5, w: 12.45, h: 2.87 });
+  const cell = (x, title, body, colour) => {
+    s.addShape(pres.ShapeType.roundRect, { x, y: 4.6, w: 3.85, h: 1.75,
+      rectRadius: 0.1, fill: { color: BG }, line: { color: colour, width: 1.5 } });
+    s.addText(title, { x: x + 0.25, y: 4.72, w: 3.4, h: 0.35, bold: true,
+      fontSize: 15, color: colour, fontFace: FONT, margin: 0 });
+    s.addText(body, { x: x + 0.25, y: 5.12, w: 3.4, h: 1.1, fontSize: 13.5,
+      color: INK, fontFace: FONT, margin: 0, valign: "top" });
+  };
+  cell(0.6, "Validation RMSE", "drives the search - each method keeps its own best", NAVY);
+  cell(4.72, "Test RMSE", "reported once, after the choice is frozen. Never used to choose.", OK);
+  cell(8.85, "T4 is yes/no", "so RMSE there is the error on a 0/1 label. AUROC is shown too - slide 7.", ACCENT);
+  footer(s, "RMSE compares arms WITHIN one task only: the four tasks predict different quantities on different scales");
+  s.addNotes("RMSE is the typical size of the error, lower is better. The split matters: validation drives the search, and the test set is touched once after the winner is chosen, so the reported number never influenced the choice.");
 }
 
 // ---------------------------------------------------------------- S5
 {
-  const s = slide("Design", "Five arms, one shared budget of unique candidates");
+  const s = slide("Design", "Five methods, one shared budget");
   badge(s, "Applies to all three conditions", "arms are identical throughout");
-  s.addTable([
-    [hdr("Arm"), hdr("How it proposes"), hdr("API calls")],
-    ["Random", "draws 5 gates, wires and angles uniformly", "none"],
-    ["Evolutionary", "(mu+lambda), mu=4: seed 4 at random, then mutate a survivor", "none"],
-    ["Greedy", "hill climbing: mutate the incumbent, keep it only if validation improves", "none"],
-    ["LLM open-loop", "one request per candidate; sees only the model contract and n", "1 per candidate"],
-    ["LLM closed-loop", "same, plus validation-only results for what it already tried", "1 per candidate"],
-  ], { x: 0.6, y: 1.6, w: 12.15, colW: [2.5, 7.6, 2.05], fontSize: 14.5,
-    fontFace: FONT, border: { type: "solid", color: RULE, pt: 0.75 }, rowH: 0.46,
-    valign: "middle", margin: 0.07 });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 4.5, w: 12.15, h: 1.85,
+  s.addImage({ path: F("fig_arms.png"), x: 0.45, y: 1.6, w: 12.45, h: 3.26 });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.15, w: 12.15, h: 1.4,
     rectRadius: 0.1, fill: { color: BG }, line: { color: RULE, width: 1 } });
   s.addText([
-    { text: `B = ${DATA.budget_unique} unique evaluated candidates per arm, ${DATA.seeds} seeds.  `,
-      options: { bold: true, fontSize: 17, color: NAVY } },
-    { text: "A duplicate or an ungrammatical proposal is recorded but consumes no budget, so no method can buy extra evaluations by proposing badly - and no method gets fewer because it proposes well. One candidate per request, so the closed loop is genuinely sequential: propose, see the result, propose again, eight times.",
+    { text: "Open-loop vs closed-loop: ", options: { bold: true, fontSize: 17, color: NAVY } },
+    { text: "open-loop never sees how its own circuits scored; closed-loop does, eight times. That is the only difference between them.",
       options: { fontSize: 17, color: INK } },
-  ], { x: 0.85, y: 4.62, w: 11.6, h: 1.6, fontFace: FONT, margin: 0, valign: "middle" });
+  ], { x: 0.9, y: 5.28, w: 11.6, h: 1.15, fontFace: FONT, margin: 0, valign: "middle" });
   footer(s, "Greedy growth cannot apply at fixed length, so Greedy here is fixed-length hill climbing");
-  s.addNotes("The budget is unique evaluated candidates because that is the quantity every method spends and the one that dominates cost. Duplicates and invalid proposals are the proposer's own problem; they do not earn extra tries.");
+  s.addNotes("The budget is distinct scored circuits because that is what every method spends and what dominates cost. Duplicates and invalid proposals are the proposer's own problem; they do not earn extra tries.");
 }
 
 // ---------------------------------------------------------------- S6
@@ -225,18 +184,20 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
   const s = slide("Metric check", "On T4 the metric, not the method, picks the winner");
   badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "T4 only (peak count, 5 qubits)");
   s.addImage({ path: F("fig_t4_check.png"), x: 0.8, y: 1.55, w: 7.3, h: 3.3 });
-  bullets(s, [
-    "By RMSE, Random leads. By AUROC, LLM open-loop leads. Same predictions, opposite ranking.",
-    "RMSE punishes a circuit that ranks the two classes correctly but outputs 0.45 and 0.55 instead of 0 and 1. AUROC does not.",
-    "With five gates and no optimizer the outputs sit near 0.5, so this failure mode is live here, not hypothetical.",
-    "Both numbers are shown because either one alone asserts a different answer.",
-  ], { x: 8.4, y: 1.7, w: 4.4, h: 3.3, size: 14.5, gap: 10 });
+  s.addText([
+    { text: "AUROC\n", options: { bold: true, fontSize: 17, color: NAVY } },
+    { text: "= how often the model ranks a two-peak signal above a one-peak one. 1.0 perfect, 0.5 coin flip.\n\n",
+      options: { fontSize: 15, color: INK } },
+    { text: "Why they disagree\n", options: { bold: true, fontSize: 17, color: NAVY } },
+    { text: "RMSE also punishes outputting 0.45 / 0.55 instead of 0 / 1. AUROC only cares about the order.",
+      options: { fontSize: 15, color: INK } },
+  ], { x: 8.4, y: 1.75, w: 4.4, h: 3.2, fontFace: FONT, margin: 0, valign: "top" });
   s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.2, w: 12.15, h: 1.4,
     rectRadius: 0.1, fill: { color: WARN }, line: { color: "B8860B", width: 1.2 } });
   s.addText([
-    { text: "Neither reading is strong.  ", options: { bold: true, fontSize: 16.5, color: INK } },
-    { text: "AUROC spans roughly 0.59 to 0.62 against 0.5 for chance. The honest summary of T4 is that five gates without training barely solve it at all, and that no arm separates convincingly.",
-      options: { fontSize: 16.5, color: INK } },
+    { text: "Neither reading is strong: ", options: { bold: true, fontSize: 17, color: INK } },
+    { text: "AUROC spans 0.59 to 0.62 against 0.5 for chance. Five gates without training barely solve T4 at all.",
+      options: { fontSize: 17, color: INK } },
   ], { x: 0.85, y: 5.32, w: 11.6, h: 1.2, fontFace: FONT, margin: 0, valign: "middle" });
   footer(s, "AUROC computed from the identical predictions used for the RMSE, on the same single test evaluation");
   s.addNotes("This is why I kept AUROC even though the request was to use plain RMSE everywhere. On T4 the two metrics disagree about who wins, so reporting only one would have asserted something the data does not settle.");
@@ -250,11 +211,9 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
   s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.55, w: 12.15, h: 1.2,
     rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
   s.addText([
-    { text: "Right panel: ", options: { bold: true, fontSize: 15.5, color: INK } },
-    { text: "when length is free the LLM picks the maximum in about 7 of 10 cells while the classical arms spread over 1 to 5.   ", options: { fontSize: 15.5, color: INK } },
-    { text: "Left three: ", options: { bold: true, fontSize: 15.5, color: INK } },
-    { text: `only Random degrades as length is freed and the budget shrinks (T1 median ${med(fixed, "gauss_peak", "random")} → ${med(pilot, "gauss_peak", "random")}), while the LLM barely moves (${med(fixed, "gauss_peak", "llm_open")} → ${med(pilot, "gauss_peak", "llm_open")}). At the pilot's setting they meet.`,
-      options: { fontSize: 15.5, color: INK } },
+    { text: "Free the length and only Random gets worse ", options: { bold: true, fontSize: 17, color: INK } },
+    { text: `(${med(fixed, "gauss_peak", "random")} → ${med(pilot, "gauss_peak", "random")}); the LLM does not move (${med(fixed, "gauss_peak", "llm_open")} → ${med(pilot, "gauss_peak", "llm_open")}), because it was already asking for 5. At the pilot's setting they meet.`,
+      options: { fontSize: 17, color: INK } },
   ], { x: 0.85, y: 5.65, w: 11.6, h: 1.0, fontFace: FONT, margin: 0, valign: "middle" });
   footer(s, "All three conditions ran all four tasks with 10 seeds; T1 is shown here because it is the family the pilot used · data/condition_comparison.json");
   s.addNotes("This is the slide I would defend hardest. The pilot rewarded a single decision - ask for the maximum number of gates - and the LLM makes that decision almost every time while a uniform sampler does not. Pin the length and the advantage goes; restore the length and shrink the budget to the pilot's and the two meet again.");
@@ -265,10 +224,13 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
   const s = slide("Search dynamics", "More feedback did not translate into better circuits");
   badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "all four tasks, T1-T4");
   s.addImage({ path: F("fig_anytime.png"), x: 0.35, y: 1.5, w: 12.6, h: 3.5 });
-  bullets(s, [
-    "Closed-loop received eight rounds of validation-only feedback on its own candidates and still did not beat open-loop on any task.",
-    "A first attempt measured a 74% duplicate rate for closed-loop, with 11 of 40 cells starved of budget. The prompt now lists every circuit already tried; duplicates fell to 16% and every cell reached its full budget. The numbers here are from the corrected run.",
-  ], { x: 0.7, y: 5.15, w: 12.0, h: 1.5, size: 15.5, gap: 9 });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.15, w: 12.15, h: 1.4,
+    rectRadius: 0.1, fill: { color: BG }, line: { color: RULE, width: 1 } });
+  s.addText([
+    { text: "Eight rounds of feedback, no gain on any task. ", options: { bold: true, fontSize: 17, color: ACCENT } },
+    { text: "A first run had closed-loop repeating itself 74% of the time and starved of budget; the prompt now lists what it already tried, repeats fell to 16%, and these are the corrected numbers.",
+      options: { fontSize: 16, color: INK } },
+  ], { x: 0.9, y: 5.28, w: 11.6, h: 1.15, fontFace: FONT, margin: 0, valign: "middle" });
   footer(s, "Curves are the median best-so-far validation RMSE over 10 seeds; the x-axis is unique candidates, not API calls");
   s.addNotes("Worth being explicit: the first version of this experiment handicapped closed-loop through a prompt defect. I fixed it and re-ran rather than reporting the handicapped numbers. Even after the fix, feedback did not help.");
 }
@@ -288,24 +250,24 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
     bullets(s, lines, { x: x + 0.32, y: 1.95, w: 5.3, h: 3.1, size: 14.5,
       gap: 9, color: "E8EEF7" });
   };
-  card(0.7, "Supported by this run", [
-    "With circuit length fixed, gpt-5-nano does not beat random search on 3 of 4 tasks",
-    "It does beat every classical arm on T2, clearly and across all 10 seeds",
-    "When length is free it picks the maximum ~70% of the time; uniform sampling does not",
-    "That single decision explains most of last week's reported advantage",
+  card(0.7, "Supported", [
+    "Length fixed: no win over random on 3 of 4 tasks",
+    "Clear win on T2, across all 10 seeds",
+    "Length free: the LLM picks the maximum ~70% of the time",
+    "That one choice explains most of last week's advantage",
   ], "9FE3C0");
   card(6.85, "NOT supported", [
-    "\"LLMs cannot design quantum circuits\" - one small model, one budget, four tiny tasks",
-    "\"Closed-loop feedback does not work\" - it failed here at 8 rounds on 5-gate circuits",
-    "Any claim about hardware: this is noiseless statevector simulation throughout",
-    "Any cross-task comparison of RMSE values",
+    "\"LLMs cannot design circuits\" - one small model, one budget",
+    "\"Feedback does not work\" - it failed here, at this scale",
+    "Anything about hardware - this is exact simulation",
+    "Comparing RMSE across different tasks",
   ], "FFC4B8");
   s.addShape(pres.ShapeType.roundRect, { x: 0.7, y: 5.45, w: 12.0, h: 1.15,
     rectRadius: 0.1, fill: { color: "FFFFFF" }, line: { color: ACCENT, width: 1.6 } });
   s.addText([
-    { text: "Next: ", options: { bold: true, fontSize: 17, color: ACCENT } },
-    { text: "give the LLM a decision that is actually hard. Fixed length removed the easy win; the open question is whether a larger budget, a stronger model, or a task where structure matters more can produce an advantage that survives this kind of attribution check.",
-      options: { fontSize: 17, color: INK } },
+    { text: "Next: ", options: { bold: true, fontSize: 18, color: ACCENT } },
+    { text: "give the LLM a decision that is actually hard, and check any advantage the same way.",
+      options: { fontSize: 18, color: INK } },
   ], { x: 0.95, y: 5.57, w: 11.5, h: 0.95, fontFace: FONT, margin: 0, valign: "middle" });
   s.addText(`600 cells across 3 conditions · ${(DATA.wall_clock_seconds / 60).toFixed(1)} min for the main run · gpt-5-nano-2025-08-07 · $0.23 total`, {
     x: 0.7, y: 6.85, w: 12, h: 0.3, fontSize: 12, color: "9FB3CC",
