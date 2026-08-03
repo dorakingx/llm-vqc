@@ -9,6 +9,9 @@ const HERE = __dirname;
 const F = (n) => path.join(HERE, "figures", n);
 const DATA = JSON.parse(fs.readFileSync(path.join(HERE, "data", "run_metadata.json")));
 const COND = JSON.parse(fs.readFileSync(path.join(HERE, "data", "condition_comparison.json")));
+const V2 = JSON.parse(fs.readFileSync(path.join(HERE, "data", "ctx_analysis.json")));
+const M = V2.median_test_rmse;
+const r3 = (x) => (x == null ? "-" : x.toFixed(3));
 const SHA = cp.execSync("git rev-parse --short HEAD", { cwd: HERE }).toString().trim();
 const BRANCH = cp.execSync("git rev-parse --abbrev-ref HEAD", { cwd: HERE }).toString().trim();
 
@@ -65,10 +68,10 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 {
   const s = pres.addSlide();
   s.background = { color: NAVY };
-  s.addText("Does an LLM design better quantum circuits,\nor just bigger ones?", {
+  s.addText("Three ways an LLM looked better than it was", {
     x: 0.9, y: 1.5, w: 11.5, h: 1.7, fontSize: 40, bold: true,
     color: "FFFFFF", fontFace: FONT, margin: 0, lineSpacingMultiple: 1.05 });
-  s.addText("A five-gate, fixed-length comparison of LLM-guided and classical circuit search", {
+  s.addText("Removing one confound at a time from an LLM-guided quantum circuit search", {
     x: 0.9, y: 3.35, w: 11.5, h: 0.6, fontSize: 20, color: "CADCFC",
     fontFace: FONT, margin: 0 });
   s.addShape(pres.ShapeType.roundRect, { x: 0.9, y: 4.25, w: 11.5, h: 1.0,
@@ -76,7 +79,7 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
     line: { color: "8FA6C4", width: 1 } });
   s.addText([
     { text: "Headline: ", options: { bold: true, fontSize: 18, color: "FFD9A0" } },
-    { text: "last week's LLM advantage was mostly a circuit-size decision. Remove that one degree of freedom and it disappears on three of four tasks.",
+    { text: `each apparent advantage came from something other than design skill - circuit size, then a bad starting point. The LLM beats a textbook ansatz on all four tasks and never beats random search on any (${V2.n_seeds} seeds).`,
       options: { fontSize: 18, color: "FFFFFF" } },
   ], { x: 1.15, y: 4.35, w: 11.0, h: 0.8, fontFace: FONT, margin: 0, valign: "middle" });
   s.addText("Tomoya Hatanaka", { x: 0.9, y: 5.9, w: 8, h: 0.35, fontSize: 18,
@@ -164,19 +167,19 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 
 // ---------------------------------------------------------------- S6
 {
-  const s = slide("Result", "Random search wins on three of four tasks");
-  badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "all four tasks, T1-T4");
-  s.addImage({ path: F("fig_main.png"), x: 0.35, y: 1.5, w: 12.6, h: 3.95 });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.72, w: 12.15, h: 1.0,
+  const s = slide("Result", "The LLM beats the textbook ansatz, never beats random");
+  badge(s, `16 gates, 5 qubits, B = 8, ${V2.n_seeds} seeds`, "all four tasks");
+  s.addImage({ path: F("fig_v2_main.png"), x: 0.3, y: 1.5, w: 12.75, h: 3.65 });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.5, w: 12.15, h: 1.15,
     rectRadius: 0.08, fill: { color: BG }, line: { color: RULE, width: 1 } });
   s.addText([
-    { text: "The LLM wins on T2 alone, and there it wins clearly ", options: { bold: true, fontSize: 16, color: OK } },
-    { text: `(${med(fixed, "sin_freq", "llm_open")} vs ${med(fixed, "sin_freq", "random")}).   `, options: { fontSize: 16, color: INK } },
-    { text: "Closed-loop never beats open-loop on any task: eight rounds of feedback did not help this model at this budget.",
-      options: { bold: true, fontSize: 16, color: ACCENT } },
-  ], { x: 0.85, y: 5.84, w: 11.6, h: 0.8, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, `${DATA.seeds} seeds per arm, B = ${DATA.budget_unique}, exactly 5 gates · data/per_cell.csv`);
-  s.addNotes("Read the medians, not the individual dots. Random is best on T1, T3 and T4. The LLM arms win on T2 and only there. I am reporting this as measured; it is a negative result for the LLM hypothesis at this scale.");
+    { text: "vs the fixed ansatz: significant on all 4 tasks. ", options: { bold: true, fontSize: 16.5, color: OK } },
+    { text: "  vs random: no difference detected on any. ", options: { bold: true, fontSize: 16.5, color: ACCENT } },
+    { text: `Random holds the better median on T2, T3 and T4 (T3 ${r3(M.change_point.random)} vs ${r3(M.change_point.llm_open_ctx)}); the LLM leads only on T1 (${r3(M.gauss_peak.llm_open_ctx)} vs ${r3(M.gauss_peak.random)}), and not significantly.`,
+      options: { fontSize: 16.5, color: INK } },
+  ], { x: 0.85, y: 5.62, w: 11.6, h: 0.9, fontFace: FONT, margin: 0, valign: "middle" });
+  footer(s, `Wilcoxon signed-rank on ${V2.n_seeds} paired seeds; Holm over the 12 pre-declared primary contrasts · data/ctx_analysis.json`);
+  s.addNotes("Read the medians. Against the fixed hardware-efficient ansatz every search method wins, decisively. Against random search the LLM wins nothing, and random has the better median on three of four tasks.");
 }
 
 // ---------------------------------------------------------------- S7
@@ -221,18 +224,19 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
 
 // ---------------------------------------------------------------- S9
 {
-  const s = slide("Search dynamics", "More feedback did not translate into better circuits");
-  badge(s, "PRIMARY: exactly 5 gates, B = 8, 10 seeds", "all four tasks, T1-T4");
-  s.addImage({ path: F("fig_anytime.png"), x: 0.35, y: 1.5, w: 12.6, h: 3.5 });
-  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 5.15, w: 12.15, h: 1.4,
-    rectRadius: 0.1, fill: { color: BG }, line: { color: RULE, width: 1 } });
+  const s = slide("A hypothesis, tested and refuted",
+                  "The LLM's \"refinement skill\" was the room a bad start leaves");
+  badge(s, `16 gates, B = 8, ${V2.n_seeds} seeds`, "median over all four tasks");
+  s.addImage({ path: F("fig_v2_mechanism.png"), x: 0.75, y: 1.55, w: 11.8, h: 4.3 });
+  s.addShape(pres.ShapeType.roundRect, { x: 0.6, y: 6.0, w: 12.15, h: 0.92,
+    rectRadius: 0.08, fill: { color: WARN }, line: { color: "B8860B", width: 1.1 } });
   s.addText([
-    { text: "Eight rounds of feedback, no gain on any task. ", options: { bold: true, fontSize: 17, color: ACCENT } },
-    { text: "A first run had closed-loop repeating itself 74% of the time and starved of budget; the prompt now lists what it already tried, repeats fell to 16%, and these are the corrected numbers.",
+    { text: "I built the hybrid arm expecting it to win. ", options: { bold: true, fontSize: 16, color: INK } },
+    { text: "It reached the best final score of any arm and still could not beat random - because the ability it was built to exploit was not there.",
       options: { fontSize: 16, color: INK } },
-  ], { x: 0.9, y: 5.28, w: 11.6, h: 1.15, fontFace: FONT, margin: 0, valign: "middle" });
-  footer(s, "Curves are the median best-so-far validation RMSE over 10 seeds; the x-axis is unique candidates, not API calls");
-  s.addNotes("Worth being explicit: the first version of this experiment handicapped closed-loop through a prompt defect. I fixed it and re-ran rather than reporting the handicapped numbers. Even after the fix, feedback did not help.");
+  ], { x: 0.85, y: 6.1, w: 11.6, h: 0.75, fontFace: FONT, margin: 0, valign: "middle" });
+  footer(s, "Hybrid = random draws candidates 1-2, the LLM proposes 3-8 having seen their validation scores");
+  s.addNotes("This is the slide I would keep if I could keep only one. The diagnosis was that the LLM refines well but starts badly, so I gave it a good start. The start improved, the final score improved, and the refinement rate collapsed below random. The 17 percent was never skill.");
 }
 
 // ---------------------------------------------------------------- S10
@@ -251,14 +255,14 @@ const hdr = (t) => ({ text: t, options: { bold: true, fill: { color: NAVY }, col
       gap: 9, color: "E8EEF7" });
   };
   card(0.7, "Supported", [
-    "Length fixed: no win over random on 3 of 4 tasks",
-    "Clear win on T2, across all 10 seeds",
-    "Length free: the LLM picks the maximum ~70% of the time",
-    "That one choice explains most of last week's advantage",
+    "The LLM beats a textbook ansatz on all 4 tasks",
+    `It never beats random search - ${V2.n_seeds} seeds, 12 pre-declared contrasts`,
+    "Given free length it picks the maximum ~70% of the time",
+    "Its apparent refinement skill vanishes given a good start",
   ], "9FE3C0");
   card(6.85, "NOT supported", [
-    "\"LLMs cannot design circuits\" - one small model, one budget",
-    "\"Feedback does not work\" - it failed here, at this scale",
+    "\"LLMs cannot design circuits\" - one small model, B = 8",
+    "\"Task context does not help\" - never A/B tested at equal seeds",
     "Anything about hardware - this is exact simulation",
     "Comparing RMSE across different tasks",
   ], "FFC4B8");
