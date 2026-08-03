@@ -17,6 +17,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from llm_vqc.mini5.angles import ANGLE_RANGES, uniform_label
 from llm_vqc.mini5.prompts import (
     closed_user_prompt,
     open_user_prompt,
@@ -26,6 +27,7 @@ from llm_vqc.mini5.space import (
     EXACT_GATES,
     grammar_issues,
     mutate_circuit,
+    reference_circuit,
     sample_circuit,
 )
 
@@ -85,10 +87,35 @@ class BaseArm:
 
 
 class RandomArm(BaseArm):
+    """The null. In range mode it picks a bin uniformly, which is exactly
+    a uniform draw over [-pi, pi] - so it is the special case the LLM arms
+    can always fall back to."""
+
     name = "random"
 
     def propose(self, index: int) -> Proposal:
-        return Proposal(self._sample(), "random")
+        ops = self._sample()
+        for op in ops:
+            if op.get("theta") is not None:
+                op["theta_range"] = uniform_label(self.rng)
+        return Proposal(ops, "random")
+
+
+class ReferenceArm(BaseArm):
+    """Fixed hardware-efficient ansatz. Runs no search: it proposes the
+    same circuit once and stops, so it consumes one evaluation rather
+    than the budget B. Its angles are drawn the same way every other arm's
+    are, so the only thing that differs is the structure."""
+
+    name = "reference"
+
+    def propose(self, index: int) -> Proposal | None:
+        if index > 1:
+            return None
+        ops = reference_circuit(self.n_qubits)
+        for op in ops:
+            op["theta_range"] = uniform_label(self.rng)
+        return Proposal(ops, "fixed")
 
 
 class EvolutionaryArm(BaseArm):
@@ -148,8 +175,12 @@ class LLMArm(BaseArm):
     uses_api = True
 
     def __init__(self, rng, n_qubits, budget, provider, closed: bool,
-                 min_gates=EXACT_GATES, max_gates=EXACT_GATES) -> None:
+                 min_gates=EXACT_GATES, max_gates=EXACT_GATES,
+                 trained_angles: bool = False, family: str | None = None) -> None:
         super().__init__(rng, n_qubits, budget, min_gates, max_gates)
+        self.trained_angles = trained_angles
+        #: set = this arm is told what the task is; None = blind, as before
+        self.family = family
         self.provider = provider
         self.closed = closed
         self.name = "llm_closed" if closed else "llm_open"
@@ -158,15 +189,17 @@ class LLMArm(BaseArm):
         #: name exactly what must not be repeated
         self.tried: list[list[dict]] = []
         self.last_was_duplicate = False
-        self._system = system_prompt(n_qubits, min_gates, max_gates)
+        self._system = system_prompt(n_qubits, min_gates, trained_angles)
 
     def propose(self, index: int) -> Proposal | None:
         user = (
             closed_user_prompt(index, self.budget, self.archive,
                                tried=self.tried,
-                               last_was_duplicate=self.last_was_duplicate)
+                               last_was_duplicate=self.last_was_duplicate,
+                               trained_angles=self.trained_angles,
+                               family=self.family)
             if self.closed
-            else open_user_prompt(index, self.budget)
+            else open_user_prompt(index, self.budget, self.family)
         )
         response = self.provider.complete(self._system, user, 1.0)
         self.telemetry.api_calls += 1
@@ -191,8 +224,42 @@ class LLMArm(BaseArm):
         self.last_was_duplicate = reason == "duplicate"
 
 
+class HybridArm(LLMArm):
+    """Random supplies the opening candidates; the LLM only improves.
+
+    Measured motivation, not a hunch. Over 120 cells the LLM's first
+    candidate was worse than random's (median validation 0.3551 vs
+    0.3042) while its improvement from first to eighth was better (17% vs
+    9%). Its prior about what a good circuit looks like is wrong for this
+    readout, but its ability to refine is real. So take the opening from
+    the sampler and spend the LLM on the part it is good at.
+
+    Necessarily closed-loop: the LLM has to see what the random seeds
+    scored, or it cannot improve on them.
+    """
+
+    def __init__(self, rng, n_qubits, budget, provider, seeds: int = 2,
+                 min_gates=EXACT_GATES, max_gates=EXACT_GATES,
+                 trained_angles: bool = False, family: str | None = None) -> None:
+        super().__init__(rng, n_qubits, budget, provider, True,
+                         min_gates, max_gates, trained_angles, family)
+        self.name = "llm_hybrid_ctx"
+        self.n_seeds = seeds
+
+    def propose(self, index: int) -> Proposal | None:
+        if index <= self.n_seeds:
+            ops = self._sample()
+            for op in ops:
+                if op.get("theta") is not None:
+                    op["theta_range"] = uniform_label(self.rng)
+            self.tried.append(ops)
+            return Proposal(ops, "random_seed")
+        return super().propose(index)
+
+
 def build_arm(name: str, rng, n_qubits: int, budget: int, provider=None,
-              min_gates: int = EXACT_GATES, max_gates: int = EXACT_GATES) -> BaseArm:
+              min_gates: int = EXACT_GATES, max_gates: int = EXACT_GATES,
+              trained_angles: bool = False, family: str | None = None) -> BaseArm:
     g = (min_gates, max_gates)
     if name == "random":
         return RandomArm(rng, n_qubits, budget, *g)
@@ -200,19 +267,34 @@ def build_arm(name: str, rng, n_qubits: int, budget: int, provider=None,
         return EvolutionaryArm(rng, n_qubits, budget, *g)
     if name == "greedy":
         return GreedyArm(rng, n_qubits, budget, *g)
+    if name == "reference":
+        return ReferenceArm(rng, n_qubits, budget, *g)
     if name == "llm_open":
-        return LLMArm(rng, n_qubits, budget, provider, False, *g)
+        return LLMArm(rng, n_qubits, budget, provider, False, *g, trained_angles)
+    if name == "llm_open_ctx":
+        arm = LLMArm(rng, n_qubits, budget, provider, False, *g, trained_angles, family)
+        arm.name = "llm_open_ctx"
+        return arm
     if name == "llm_closed":
-        return LLMArm(rng, n_qubits, budget, provider, True, *g)
+        return LLMArm(rng, n_qubits, budget, provider, True, *g, trained_angles)
+    if name == "llm_hybrid_ctx":
+        return HybridArm(rng, n_qubits, budget, provider, 2, *g,
+                         trained_angles, family)
+    if name == "llm_closed_ctx":
+        arm = LLMArm(rng, n_qubits, budget, provider, True, *g, trained_angles, family)
+        arm.name = "llm_closed_ctx"
+        return arm
     raise ValueError(f"unknown arm {name!r}")
 
 
-ARM_NAMES = ("random", "evolutionary", "greedy", "llm_open", "llm_closed")
-CLASSICAL_ARMS = ("random", "evolutionary", "greedy")
-LLM_ARMS = ("llm_open", "llm_closed")
+ARM_NAMES = ("random", "evolutionary", "reference",
+             "llm_open_ctx", "llm_closed_ctx", "llm_hybrid_ctx")
+CLASSICAL_ARMS = ("random", "evolutionary", "greedy", "reference")
+LLM_ARMS = ("llm_open", "llm_open_ctx", "llm_closed", "llm_closed_ctx",
+            "llm_hybrid_ctx")
 
 __all__ = [
     "ARM_NAMES", "CLASSICAL_ARMS", "LLM_ARMS", "EXACT_GATES",
-    "MAX_PROPOSALS_PER_CELL", "ArmTelemetry", "BaseArm", "Proposal",
-    "build_arm", "grammar_issues",
+    "MAX_PROPOSALS_PER_CELL", "ANGLE_RANGES", "ArmTelemetry", "BaseArm",
+    "Proposal", "build_arm", "grammar_issues",
 ]

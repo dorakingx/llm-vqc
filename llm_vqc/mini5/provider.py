@@ -12,7 +12,7 @@ from llm_vqc.mini5.prompts import response_schema
 
 
 def build_mini5_provider(spend_ledger, cell_id: str | None = None,
-                         min_gates: int = 5, max_gates: int = 5):
+                         n_gates: int = 16, trained_angles: bool = False):
     """One provider per cell, all sharing the one cumulative ledger."""
     from llm_vqc.bench_v2.pinned_provider import (
         PinnedStructuredProvider,
@@ -23,7 +23,7 @@ def build_mini5_provider(spend_ledger, cell_id: str | None = None,
     config = preflight_pinned_run()
     provider = PinnedStructuredProvider(
         api_key=config.api_key,
-        response_schema=response_schema(min_gates, max_gates),
+        response_schema=response_schema(n_gates, trained_angles),
         response_schema_name="mini5_circuit",
         model=config.model,
     )
@@ -34,5 +34,5 @@ def build_mini5_provider(spend_ledger, cell_id: str | None = None,
     # over-reserve tenfold and could refuse a run that fits the cap.
     return LedgerEnforcedProvider(
         provider, spend_ledger, cell_id=cell_id,
-        expected_input_tokens=450, expected_output_tokens=200,
+        expected_input_tokens=800, expected_output_tokens=600,
     )

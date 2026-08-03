@@ -13,13 +13,22 @@ from __future__ import annotations
 
 import numpy as np
 
-#: Namespace tag written into every artifact this package produces.
-MINI_SPACE_VERSION = "mini_5gate_v1"
+from llm_vqc.mini5.angles import ANY_RANGE
 
-#: Exactly this many gates. Not a maximum, not a range — every candidate
+#: Namespace tag written into every artifact this package produces.
+MINI_SPACE_VERSION = "mini5_n5_16gate_v2"
+
+#: Exactly this many gates. Not a maximum, not a range - every candidate
 #: from every arm has this many, so circuit size is not a free variable
 #: and cannot confound the comparison.
-EXACT_GATES = 5
+#:
+#: 16, not 5. At n=5 a 5-gate body leaves a median of 2 gates inside the
+#: causal cone of the measured qubit and 18% of random circuits with none
+#: at all - the readout simply cannot see most of the circuit. Measured
+#: over 1000 random circuits, 16 gates restores the all-qubits-reached
+#: rate to 42%, matching what 5 gates gave at n=3 (44%), and drops the
+#: dead-circuit rate to 0%.
+EXACT_GATES = 16
 
 SINGLE_QUBIT_GATES = ("H", "RX", "RY", "RZ")
 CONTROLLED_GATES = ("CRX", "CRY", "CRZ")
@@ -145,3 +154,25 @@ def grammar_issues(ops: object, n_qubits: int,
             elif not (THETA_LOW - 1e-9 <= float(theta) <= THETA_HIGH + 1e-9):
                 issues.append(f"op {k}: angle outside [-pi, pi]")
     return issues
+
+
+#: The practitioner's default: a hardware-efficient ansatz, size-matched
+#: to the searched circuits so the comparison cannot be confounded by
+#: circuit size the way last week's was. Rotation layer, entangling ring,
+#: rotation layer, one extra link = 16 gates on 5 qubits.
+def reference_circuit(n_qubits: int = 5) -> list[dict]:
+    """Fixed. No search, no seed dependence, no budget consumed."""
+    ops: list[dict] = []
+    for q in range(n_qubits):
+        ops.append({"gate": "RY", "wires": [q], "theta": None,
+                    "theta_range": ANY_RANGE})
+    for q in range(n_qubits):
+        ops.append({"gate": "CRX", "wires": [q, (q + 1) % n_qubits],
+                    "theta": None, "theta_range": ANY_RANGE})
+    for q in range(n_qubits):
+        ops.append({"gate": "RY", "wires": [q], "theta": None,
+                    "theta_range": ANY_RANGE})
+    while len(ops) < EXACT_GATES:
+        ops.append({"gate": "CRX", "wires": [0, 1], "theta": None,
+                    "theta_range": ANY_RANGE})
+    return ops[:EXACT_GATES]
