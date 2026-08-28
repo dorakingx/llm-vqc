@@ -114,6 +114,21 @@ prompt, user prompt, raw response, tokens, latency, snapshot). Hard
 cumulative cost cap via `LLM_API_BUDGET_USD` checked before every call.
 The LLM proposes architecture only — never continuous angles.
 
+## Pre-inspection amendment 1 (2026-08-28, before any protected-test inspection)
+
+The first LLM-Open pool call returned 8 candidates of which 4 were rejected
+for a mechanical miscount (13 rotations + 3 CNOTs). The original harness
+only repaired JSON-parse failures, so the pool would have been half random
+fallbacks — measuring schema arithmetic, not architecture reasoning.
+**Amendment:** the bounded repair policy for LLM-Open is extended to
+capacity-invalid/duplicate entries: up to 2 additional calls may request
+replacement candidates, quoting the rejected entries and the exact
+capacity errors. Only after that does the flagged-random fallback fill any
+remaining deficit. Call count stays bounded (≤3 pool calls) and every call
+is stored. No protected-test value of any v3 candidate had been computed
+or inspected when this amendment was committed; the stale pool and the
+aborted partial run were deleted and the matrix restarted from scratch.
+
 ## Honesty commitments
 
 - No condition is tuned after protected-test inspection.
