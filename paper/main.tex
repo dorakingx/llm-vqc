@@ -1,0 +1,229 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,microtype}
+\usepackage{enumitem}
+\title{When Does Language-Model Reasoning Help Variational Quantum Circuit Search?\\
+From Capacity-Controlled Benchmarks to Semantic Quantum Autoencoders}
+\author{Anonymous authors}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Large language models (LLMs) are increasingly used as agents that propose variational quantum circuit (VQC) architectures, but it is unclear when language-model reasoning provides an advantage over ordinary search.
+We first summarize capacity-controlled VQC benchmarks in which Random, Evolutionary, and Greedy search became practically equivalent after circuit size, training, and evaluation budgets were matched.
+This negative result suggests that an LLM cannot exploit much of its domain knowledge when the search problem is reduced to a flat gate grammar.
+We therefore introduce a semantic quantum-autoencoder (QAE) benchmark in which the proposer receives an explicit Hamiltonian, a latent/trash-qubit assignment, and a fixed resource budget.
+The pilot task compresses four-qubit open-chain transverse-field Ising ground states to two latent qubits.
+Every candidate contains exactly twelve trainable single-qubit rotations and four CNOTs; only the architecture proposer differs.
+Across twelve frozen verification seeds with eight candidate evaluations per method, a GPT-5.6 Sol semantic proposal pool achieves mean protected-test trash fidelity $0.9676$, compared with $0.9181$ for unconstrained random search and $0.9474$ for an RY-only random topology control.
+Paired exact Wilcoxon tests give $p=0.00244$ against both controls.
+The result is exploratory rather than a general LLM-superiority claim: it is a small noiseless four-qubit simulation and the proposal pool must be replayed through version-pinned APIs.
+The main conclusion is conditional: language-model reasoning becomes useful when the task exposes semantic structure that can be converted into circuit priors, rather than merely asking the model to sample gate syntax.
+\end{abstract}
+
+\section{Introduction}
+Variational quantum algorithms depend on parameterized quantum circuits whose architecture determines expressivity, trainability, hardware cost, and the correlations that can be represented.
+Circuit design is therefore a joint discrete--continuous problem: a discrete architecture is chosen first, while continuous angles are optimized by a numerical training loop.
+Previous work has characterized circuit expressibility and entangling capability \cite{sim2019}, developed quantum architecture search (QAS) algorithms \cite{du2022}, and recently used language-model agents to propose and refine VQCs \cite{knipfer2026}.
+
+The motivation for an LLM searcher is different from the motivation for a generic black-box optimizer.
+A language model can read a natural-language task description, identify physical or structural priors, and translate them into architectural hypotheses.
+However, that advantage disappears if the experimental interface hides the task semantics and exposes only a small list of allowed gates.
+This distinction is central to the present work.
+
+Our study proceeds in two stages.
+First, we use the project's prior capacity-controlled benchmarks as a diagnostic.
+When candidate circuits were matched in trainable capacity and all searchers received the same validation feedback, Random, Evolutionary, and Greedy search were practically equivalent on the synthetic T1 task.
+The task still benefited from selecting the best of several candidates, but no sophisticated search strategy was required.
+Second, we design a QAE task whose structure is directly meaningful to an LLM.
+The proposer is told which qubits must become ``trash'', which qubits form the latent representation, the Hamiltonian interaction graph, and the fact that the target ground states can be represented with real amplitudes.
+
+Our research question is therefore not ``Does an LLM always beat random search?'' but:
+\begin{quote}
+\emph{When does task-aware language-model reasoning improve VQC architecture search under exact capacity control?}
+\end{quote}
+
+\section{Related Work}
+\paragraph{VQC architecture quality.}
+Sim et al. proposed operational measures of expressibility and entangling capability and emphasized that useful circuit design must also account for depth, two-qubit gates, connectivity, and parameter count \cite{sim2019}.
+Du et al. formulated quantum circuit architecture search as an automated VQA design problem \cite{du2022}.
+More recent embedding-aware QAS work argues that data embedding and circuit structure should not be optimized independently \cite{dai2026}.
+
+\paragraph{LLM agents for VQC design.}
+Knipfer et al. introduced an agentic loop in which an LLM proposes PennyLane VQCs, receives training and validation feedback, and iteratively changes the architecture \cite{knipfer2026}.
+Their experiments show that language models can discover interpretable motifs such as star entanglement and data/computation-qubit specialization, while also exhibiting invalid-code and exploration-collapse failure modes.
+These results motivate a controlled test that separates architecture reasoning from parameter optimization.
+
+\paragraph{Quantum autoencoders.}
+Romero, Olson, and Aspuru-Guzik introduced QAEs as trainable circuits that compress families of quantum states into a smaller latent subsystem while mapping discarded qubits to a reference state \cite{romero2017}.
+They demonstrated the idea on ground-state families from quantum simulation.
+Recent work has applied QAEs to anomaly detection \cite{frehner2025,elalami2025}, while Agha et al. explicitly use a genetic algorithm to search QAE architectures \cite{agha2025}.
+This makes QAE a natural benchmark for comparing a language-model proposer to standard architecture-search baselines.
+
+\section{Lessons from the Earlier Controlled Benchmarks}
+The earlier project stages were designed to remove confounders that can make an LLM look better or worse for the wrong reason.
+All candidate circuits were matched in parameter capacity, every search method used the same trainer and data split, the candidate budget was identical, and protected-test metrics were quarantined from the search loop.
+
+On capacity-controlled T1-v2, the protected-test RMSE medians were $0.01775$ (Random), $0.01715$ (Evolutionary), and $0.01689$ (Greedy).
+A pre-specified paired equivalence test concluded that all three pairs were practically equivalent within $\delta=0.002$.
+At the same time, selecting the best of $B=25$ validation candidates improved performance relative to a fixed circuit.
+Thus architecture selection mattered, but the specific search algorithm did not.
+
+Two broader lessons followed.
+First, a simple benchmark can be dominated by task-specific analytical estimators, so success on a learned model does not imply a useful quantum or search advantage.
+Second, the HIGGS follow-up showed that data scarcity, a mis-tuned inherited learning rate, and PCA information loss could push the VQC into a degenerate regime in which architectural effects were obscured.
+After correcting those factors, the signs of the trainable-vs-frozen and entangled-vs-product comparisons changed.
+We therefore treat \emph{task qualification} as a prerequisite for judging a search algorithm.
+
+These findings motivate a new benchmark in which the proposer receives a decision that is both controlled and semantically meaningful.
+
+\section{Semantic Quantum-Autoencoder Benchmark}
+\subsection{Task}
+We use the four-qubit open-chain transverse-field Ising Hamiltonian
+\begin{equation}
+H(h) = -\sum_{i=0}^{2} Z_i Z_{i+1} - h\sum_{i=0}^{3} X_i,\qquad h\in[0.2,2.0].
+\end{equation}
+For each value of $h$, the exact ground state $\lvert\psi(h)\rangle$ is obtained by diagonalizing the $16\times16$ Hamiltonian.
+
+The QAE encoder $U_\theta$ acts on all four qubits.
+Qubits $q_0,q_1$ are the latent subsystem and $q_2,q_3$ are the trash subsystem.
+The training objective is to make the trash qubits independent of the input and equal to the reference state $\lvert 00\rangle$.
+We therefore maximize
+\begin{equation}
+F_{\rm trash}(\theta)=\frac{1}{N}\sum_{j=1}^{N}\Pr_{\theta,\psi(h_j)}(q_2q_3=00),
+\end{equation}
+or equivalently minimize $1-F_{\rm trash}$.
+For a perfect encoder, the input family is compressed into the two latent qubits and the trash state is always $\lvert00\rangle$.
+This is the same basic compression principle as the original QAE \cite{romero2017}.
+
+\subsection{Exact capacity control}
+Every candidate has exactly:
+\begin{itemize}[nosep]
+\item four qubits;
+\item three single-qubit rotation layers, four rotations per layer;
+\item twelve trainable rotation angles total;
+\item four fixed CNOT gates;
+\item sixteen gates total.
+\end{itemize}
+Allowed rotation axes are $X,Y,Z$.
+Two CNOTs occur after the first rotation layer and two after the second.
+The numerical optimizer, number of epochs, parameter initialization distribution, data splits, and validation-selection rule are shared by all methods.
+The LLM never chooses continuous parameter values.
+
+Each candidate is optimized with Adam for 60 epochs at learning rate $0.05$.
+The checkpoint with the best validation trash loss is selected.
+For each of twelve verification seeds, 32 fresh $h$ values are sampled for training, 12 for validation, and a fixed unseen 64-point grid is used only for protected-test evaluation after selection.
+Each architecture-search method receives exactly $B=8$ candidate evaluations.
+
+\subsection{Search methods}
+\paragraph{Random.}
+Each of twelve rotation axes is sampled uniformly from $\{X,Y,Z\}$.
+Four directed CNOT pairs are sampled without replacement.
+
+\paragraph{RY-only random.}
+All twelve rotations are fixed to RY, while the four directed CNOT pairs remain random.
+This is a deliberately strong control for the obvious prior that the Ising Hamiltonian is real in the computational basis and its ground state can be chosen real.
+
+\paragraph{LLM semantic pool.}
+GPT-5.6 Sol generated a fixed pool of eight architectures once from the task description and resource constraints.
+The prompt explicitly stated that the ground-state amplitudes can be chosen real, nearest-neighbor correlations are important, and information should be routed from trash toward latent qubits.
+No protected-test metric was available when the pool was generated.
+The exact prompt is reproduced in Appendix~\ref{app:prompt} and the complete proposal pool is frozen in the experiment source and exported as JSON by the reproduction script.
+
+The most frequently selected circuit, \texttt{L2\_pair\_then\_funnel}, uses RY rotations throughout.
+After the first rotation layer it applies CNOTs $3\!\rightarrow\!2$ and $1\!\rightarrow\!0$; after the second it applies $2\!\rightarrow\!1$ and $3\!\rightarrow\!1$.
+This has a simple interpretation: first form local pairs, then route degrees of freedom associated with the trash subsystem toward a latent qubit before the final local rotation layer.
+
+\section{Results}
+Table~\ref{tab:qae} summarizes protected-test trash fidelity for the validation-selected candidate from each method.
+\begin{table}[ht]
+\centering
+\caption{Selected protected-test trash fidelity across 12 verification seeds. Higher is better.}
+\label{tab:qae}
+\begin{tabular}{lccc}
+\toprule
+Method & Mean & Median & SD\\
+\midrule
+Random & 0.9181 & 0.9166 & 0.0357\\
+RY-only random & 0.9474 & 0.9468 & 0.0166\\
+LLM semantic & \textbf{0.9676} & \textbf{0.9679} & \textbf{0.0029}\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The paired mean fidelity gain of LLM semantic over Random is $+0.0495$; a bootstrap 95\% interval for the mean gain is $[0.0297,0.0693]$.
+The LLM wins 10 of 12 paired seeds, and the exact two-sided Wilcoxon signed-rank test gives $p=0.00244$.
+Against the stronger RY-only topology control, the paired mean gain is $+0.0203$ with bootstrap 95\% interval $[0.0114,0.0294]$.
+The LLM wins 11 of 12 paired seeds and again gives exact Wilcoxon $p=0.00244$.
+The semantic pool selected \texttt{L2\_pair\_then\_funnel} in 11 of 12 seeds and \texttt{L4\_latent\_targets} once.
+
+The anytime validation curves give a complementary view.
+The LLM pool reaches mean best validation fidelity about $0.968$ after only two candidate evaluations, whereas the random methods continue to improve gradually across the full budget.
+This is the expected signature if semantic priors improve \emph{sample efficiency}: the model places probability mass on a useful region of architecture space before expensive circuit training is performed.
+
+\section{Why the New Result Differs from the Earlier Random-Search Result}
+The result does not imply that the old benchmark was wrong.
+The two experiments ask different questions.
+In the earlier gate-search setting, the methods largely differed in how they traversed a shared syntactic grammar.
+Once capacity was controlled, the good regions of that small space were common enough that random, evolutionary, and greedy methods became practically equivalent.
+
+In the QAE task, the prompt exposes three pieces of information that have direct architectural consequences:
+\begin{enumerate}[nosep]
+\item \textbf{Real state family:} RY rotations provide a natural real-amplitude parameterization.
+\item \textbf{Local Hamiltonian:} the Ising chain identifies which qubits are directly correlated.
+\item \textbf{Latent/trash roles:} the objective supplies a direction for information flow and disentangling.
+\end{enumerate}
+Ordinary random search does not condition its proposal distribution on these facts.
+The RY-only control conditions on the first fact but not the second and third.
+The residual gap between LLM semantic and RY-only random is therefore evidence, within this pilot, that topology priors matter beyond the trivial axis choice.
+
+\section{Limitations and Threats to Validity}
+The present result is deliberately narrow.
+It is a noiseless four-qubit statevector simulation with a single Hamiltonian family.
+The LLM pool was generated in one ChatGPT session and then frozen; it has not yet been replayed using a version-pinned external API with complete call provenance.
+The fixed pool is open-loop rather than an adaptive closed-loop agent.
+Only two random controls are included; Evolutionary search, a tensor-network-inspired hand-designed QAE, and stronger QAS methods remain to be added.
+All twelve verification replicates share the same protected-test grid, although they use independently sampled training and validation states.
+We therefore do not claim general LLM superiority, quantum advantage, or hardware relevance.
+
+\section{Next Experiments}
+A publication-quality confirmatory study should:
+\begin{enumerate}
+\item replay the exact prompt across version-pinned LLM APIs and store prompts, raw outputs, token counts, latency, and cost;
+\item add Evolutionary, QAS, and hand-designed tree-tensor-network/QAE baselines;
+\item scale to six and eight qubits and vary the latent dimension;
+\item repeat on Heisenberg and molecular ground-state families;
+\item add realistic noise and hardware connectivity, reporting performance--cost Pareto fronts;
+\item freeze a multi-model, multi-seed confirmatory protocol before protected-test inspection.
+\end{enumerate}
+
+\section{Conclusion}
+Capacity-controlled VQC benchmarks taught a negative but useful lesson: a powerful proposer cannot display meaningful reasoning if the experimental interface offers little meaningful information to reason about.
+Quantum autoencoding provides a cleaner test.
+By exposing the Hamiltonian, the correlation graph, and the latent/trash split while holding circuit capacity and numerical optimization fixed, the benchmark turns architecture search into a semantic design problem.
+In the first frozen verification pilot, the language-model proposal pool outperforms both ordinary random search and an RY-only random topology control.
+The result should be viewed as evidence for a \emph{conditional semantic-prior hypothesis}, not as a universal ranking of search algorithms.
+
+\appendix
+\section{Exact LLM prompt}
+\label{app:prompt}
+\paragraph{System instruction.}
+\begin{quote}
+You are a quantum-autoencoder circuit architect. Your job is architecture proposal, not numerical optimization. Respect the exact resource budget. Use the physical structure in the task description to propose circuit hypotheses. Return circuit structure only.
+\end{quote}
+\paragraph{Task instruction.}
+\begin{quote}
+Compress ground states of the 4-qubit open-chain transverse-field Ising Hamiltonian $H=-\sum Z_iZ_{i+1}-h\sum X_i$, $h\in[0.2,2.0]$, into latent qubits $q_0,q_1$ while trash qubits $q_2,q_3$ should end in $\lvert00\rangle$.
+The Hamiltonian is real in the computational basis, so its ground-state amplitudes can be chosen real. Nearest-neighbor correlations are important.
+Use exactly three 4-qubit rotation layers (12 trainable rotations total) and exactly four CNOTs: two after rotation layer 1 and two after rotation layer 2.
+Rotation axes may be X, Y, or Z.
+Output 8 distinct candidates.
+Prefer hypotheses that preserve a real-valued representation when useful and route correlations/information from the trash qubits toward the latent qubits.
+Do not change the number of qubits, trainable parameters, CNOTs, or optimization budget.
+\end{quote}
+
+\bibliographystyle{unsrt}
+\bibliography{references}
+\end{document}
