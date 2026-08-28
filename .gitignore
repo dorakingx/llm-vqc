@@ -44,3 +44,5 @@ paper/main.pdf
 !outputs/qae_tfim_neutral_v4/**
 !outputs/mini5_ctx_20260804/
 !outputs/mini5_ctx_20260804/**
+!outputs/qae_tfim_neutral_v5/
+!outputs/qae_tfim_neutral_v5/**

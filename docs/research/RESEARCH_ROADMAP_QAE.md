@@ -97,6 +97,21 @@ vs Random, dz=3.5); LLM-Closed's duplicates drop 26/96 → 8/96 and its
 refinement gain is small but positive (+0.0185), yet **no detectable
 closed-loop benefit over the open-loop batch** (−0.0085, p=0.13).
 
+## Step 8 — Incumbent-based free-form redesign (v5, primary, completed)
+
+Pre-registered before running (`docs/research/QAE_PROTOCOL_V5.md`, commit
+33740dc): the LLM-Closed refinement step now receives ONLY the current
+best architecture and its validation trash fidelity, and may redesign
+freely within the 12R+4CX capacity (no one-change restriction, no
+stay-close instruction); Greedy stays one-change local search. Result
+(`outputs/qae_tfim_neutral_v5/REPORT.md`): **first detected closed-loop
+advantage** — LLM-Closed 0.9671 > LLM-Open 0.9605 (+0.0066 [0.0023,
+0.0112], 11/12 seeds, p=0.012, dz=0.81). Redesigns are global (median
+11/16 slots changed; 6/7 acceptances were global); zero duplicate
+proposals (8 capacity-invalid → flagged fallbacks); Greedy again at
+Random-parity (p=0.52). Framing: Greedy vs LLM-Closed differ in search
+expressivity as well as semantics — deliberate, and reported as such.
+
 ## Paper story
 
 The paper is no longer "LLM beats random at VQC design."
