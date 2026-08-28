@@ -1,0 +1,34 @@
+{
+  "Random": {
+    "evaluations": 96,
+    "fallback_evaluations": 0
+  },
+  "Greedy": {
+    "evaluations": 96,
+    "fallback_evaluations": 0,
+    "refine_fallbacks": 0
+  },
+  "LLM-Open": {
+    "evaluations": 96,
+    "fallback_evaluations": 0,
+    "pool_rejected_entries": 0,
+    "pool_fallbacks": 0
+  },
+  "LLM-Closed": {
+    "evaluations": 96,
+    "fallback_evaluations": 8,
+    "refine_fallbacks": 8
+  },
+  "diversity": {
+    "LLM-Open": {
+      "first4_mean_pairwise_distance": 0.7083333333333334,
+      "last4_mean_pairwise_distance": 0.6145833333333334,
+      "unique_of_8": 8
+    },
+    "LLM-Closed": {
+      "warm4_mean_pairwise_distance": 0.8324652777777778,
+      "refine4_mean_pairwise_distance": 0.6579861111111112,
+      "fallback_evaluations_total": 8
+    }
+  }
+}

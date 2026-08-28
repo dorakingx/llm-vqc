@@ -21,9 +21,10 @@ This negative result suggests that an LLM cannot exploit much of its domain know
 We therefore introduce a semantic quantum-autoencoder (QAE) benchmark in which the proposer receives an explicit Hamiltonian, a latent/trash-qubit assignment, and a fixed resource budget.
 The task compresses four-qubit open-chain transverse-field Ising ground states to two latent qubits.
 Every candidate is an ordered sequence of exactly sixteen gates --- twelve trainable single-qubit rotations (free axis and qubit) and four CNOTs (free wiring), with completely free gate ordering; only the architecture proposer differs.
-The primary, pre-registered experiment is a $2\times2$ design over \emph{task semantics} and \emph{validation feedback}: Random (neither), Greedy hill-climbing (feedback only), LLM-Open (semantics only), and LLM-Closed (both), each with eight candidate evaluations per seed and a version-pinned API model (\texttt{gpt-5.4-mini-2026-03-17}).
-Across twelve paired verification seeds, semantics is the decisive axis: LLM-Open reaches mean protected-test trash fidelity $0.9653$ versus $0.8721$ for Random (paired gain $+0.0932$, 95\% CI $[0.064, 0.123]$, $d_z=1.73$, 12/12 seeds, exact Wilcoxon $p=0.00049$), and LLM-Closed beats both non-semantic methods in 12/12 seeds.
-Feedback alone does not help: Greedy ($0.7667$) is significantly \emph{worse} than Random at this budget, and feedback adds nothing once semantics are present (LLM-Closed $-$ LLM-Open $=-0.010$, $p=0.68$).
+We compare four conceptually organized methods --- Random (no semantics, breadth-only), Greedy (no semantics, validation-guided local refinement), LLM-Open (semantics, open-loop batch), and LLM-Closed (semantics, adaptive closed-loop) --- each with eight candidate evaluations per seed and a version-pinned API model (\texttt{gpt-5.4-mini-2026-03-17}).
+A first, single-start experiment (v3) found a large semantic advantage but also that its single-start adaptive arms struggled: Greedy landed significantly below Random and no closed-loop benefit over open-loop was detected.
+A pre-registered multi-start follow-up (v4; four warm starts, then four refinement evaluations) confirms that diagnosis.
+On the held-out test trash fidelity $F_{\rm trash}=\langle 00|\rho_{\rm trash}|00\rangle$, LLM-Open reaches $0.9643$ versus $0.8677$ for Random (paired gain $+0.0965$, 95\% CI $[0.082, 0.112]$, $d_z=3.5$, 12/12 seeds, exact Wilcoxon $p=0.00049$), replicating the v3 pool ($0.9653$) with an independently drawn pool; Greedy recovers to Random-parity with a genuine refinement gain ($+0.0635$, 10/12 seeds); LLM-Closed's duplicate proposals largely disappear, yet no additional closed-loop benefit over the open-loop batch is detected ($-0.0085$, $p=0.13$).
 The result is exploratory rather than a general LLM-superiority claim: it is a small noiseless four-qubit simulation with a single pinned model.
 The main conclusion is conditional: language-model reasoning becomes useful when the task exposes semantic structure that can be converted into circuit priors, rather than merely asking the model to sample gate syntax.
 \end{abstract}
@@ -108,6 +109,9 @@ F_{\rm trash}(\theta)
 \Pr_{\theta,\psi(h_j)}(q_2q_3=00),
 \end{equation}
 or equivalently minimize $1-F_{\rm trash}$.
+Writing $\rho_{\rm trash}$ for the reduced density matrix of $q_2,q_3$ after the encoder, this is the trash-state fidelity $F_{\rm trash}=\langle 00|\rho_{\rm trash}|00\rangle$: if $F_{\rm trash}=1$ the trash subsystem is exactly $\lvert00\rangle$ and the input-dependent information has been routed into the latent subsystem.
+$F_{\rm trash}$ is a compression-side trash/reference fidelity; it is not automatically identical to an end-to-end reconstruction fidelity.
+Throughout, ``held-out (protected) test'' refers only to the data split --- the 64 unseen $h$ values never used for training, architecture selection, or any feedback --- while the fidelity formula itself is identical on every split.
 For a perfect encoder, the input family is compressed into the two latent qubits and the trash state is always $\lvert00\rangle$.
 
 This is the same basic compression principle as the original QAE: successful compression corresponds to disentangling the discarded subsystem and mapping it to a fixed reference state \cite{romero2017}.
@@ -135,64 +139,85 @@ The checkpoint with the best validation trash loss is selected.
 For each of twelve verification seeds, 32 fresh $h$ values are sampled for training, 12 for validation, and a fixed unseen 64-point grid is used only for protected-test evaluation after selection.
 Each architecture-search method receives exactly $B=8$ candidate evaluations.
 
-\subsection{Search methods: a $2\times2$ over semantics and feedback}
+\subsection{Search methods: a conceptual organization over semantics and search policy}
 
-The four primary methods factor two ingredients --- \emph{task semantics} in the proposal distribution and \emph{validation feedback} during search --- with everything else identical:
+The four primary methods organize two ingredients --- \emph{task semantics} in the proposal distribution and \emph{validation-guided adaptivity} during search --- while sharing capacity, trainer, data, and budget:
 
 \begin{center}
-\begin{tabular}{lcc}
+\begin{tabular}{ll}
 \toprule
- & no validation feedback & validation feedback\\
-\midrule
-no task semantics & Random & Greedy\\
-task semantics & LLM-Open & LLM-Closed\\
+Random & no semantics; breadth-only (8 independent draws)\\
+Greedy & no semantics; multi-start + validation-guided local refinement\\
+LLM-Open & semantics; open-loop diverse proposal batch\\
+LLM-Closed & semantics; multi-start + validation-guided adaptive refinement\\
 \bottomrule
 \end{tabular}
 \end{center}
 
+We deliberately do not present this as a causal $2\times2$ factorial: Random and Greedy differ in allocation policy as well as feedback, and LLM-Open versus LLM-Closed compares open-loop batch search against adaptive closed-loop search rather than isolating ``the pure effect of feedback.''
+
+Two allocation designs were run in sequence.
+The first experiment (\textbf{v3}) used single-start adaptive arms: Greedy was one random start plus seven local mutations, and LLM-Closed proposed all eight candidates sequentially.
+After inspecting v3 --- which is preserved unchanged as a diagnostic --- we pre-registered a multi-start follow-up (\textbf{v4}, protocol committed before the v4 matrix ran) in which each adaptive arm spends its budget as \emph{four warm-start evaluations followed by four refinement evaluations}.
+The v4 definitions follow; v3's differences are noted inline.
+
 \paragraph{Random.}
 Eight architectures sampled independently and uniformly from the neutral space: uniform axis and qubit for each rotation, uniform directed pair (with replacement) for each CNOT, uniform interleaving of the sixteen gates.
+(v4 draws fresh streams; it is an independent replication, not a replay of v3.)
 
-\paragraph{Greedy.}
-The first candidate is one Random draw.
-Each subsequent candidate applies exactly one structural change to the incumbent, chosen uniformly among: change one rotation's axis, change one rotation's qubit, change one CNOT's control, change one CNOT's target, or swap two gate positions.
-The mutation is trained and accepted only if its validation loss improves on the incumbent's; every evaluated mutation consumes budget whether accepted or not.
-Greedy has no task knowledge but does exploit validation feedback.
+\paragraph{Greedy (v4: 4+4).}
+Phase 1: four independent Random draws are trained and evaluated; the best by validation loss becomes the incumbent.
+Phase 2: four further evaluations, each applying exactly one structural change to the incumbent, chosen uniformly among: change one rotation's axis, change one rotation's qubit, change one CNOT's control, change one CNOT's target, or swap two gate positions; the mutation is accepted only if its validation loss improves on the incumbent's.
+Every evaluated mutation consumes budget whether accepted or not.
+(v3: one random start plus seven mutations.)
 
 \paragraph{LLM-Open (version-pinned API).}
 One chat-completion call to \texttt{gpt-5.4-mini-2026-03-17} (temperature $0.7$) sends the physics/task card of Appendix~\ref{app:prompt} --- Hamiltonian, real-ground-state property, nearest-neighbour interaction structure, latent/trash roles, and the exact resource contract --- and requests eight distinct candidates in a structured JSON gate-list schema.
-One of the eight returned candidates violated the capacity contract (a miscount) and was replaced through a single bounded repair call quoting the error, per the pre-registered amendment; the final pool holds eight valid, distinct architectures with no random fallbacks.
+The v4 pool returned eight valid, distinct architectures in a single call (the v3 pool needed one bounded capacity-repair call, per its pre-registered amendment).
 No validation result is ever shown to this arm.
 
-\paragraph{LLM-Closed (version-pinned API).}
+\paragraph{LLM-Closed (v4: 4+4).}
 Same pinned model, same task card.
-For each seed, eight sequential calls; after each candidate is trained, the next prompt appends only that seed's validation trash fidelities and duplicate flags --- never protected-test values.
+Phase 1: one batch call per seed requests four distinct candidates \emph{without} any validation feedback, with an explicit instruction to aim for structural diversity; all four are trained and evaluated.
+Phase 2: four sequential calls; each prompt appends the validation trash fidelities and duplicate flags of all candidates evaluated so far in that seed --- never held-out test values --- and requests one new candidate.
 Invalid or duplicate proposals consume one of the eight evaluations and are replaced by flagged random circuits, so budget accounting is identical to every other method.
+(v3: all eight proposals sequential from the start.)
 
 Both LLM arms allow up to two JSON-repair retries per call; every attempt is recorded (system prompt, user prompt, raw response, token counts, latency, model snapshot).
-All API usage ran under a hard \$2.00 cumulative cost cap enforced before every call; the full benchmark used 98 calls and 99{,}758 input + 18{,}342 output tokens.
+All API usage runs under a hard \$2.00 cumulative cost cap enforced before every call; the v4 benchmark used 66 calls and 48{,}952 input + 19{,}177 output tokens (v3: 98 calls, 99{,}758 + 18{,}342).
 
 \paragraph{Historical baselines (v2).}
 An earlier verification in the rigid-layout space compared the LLM pool against an RY-only random control, an equal-budget evolutionary searcher, and a hand-designed reference encoder; the LLM pool beat all of them (mean $0.9700$ vs.\ $0.9424$, $0.9005$, $0.8889$; all $p\le0.0015$).
-Those results (\texttt{outputs/qae\_tfim\_api\_v2/}) are retained as context; v3 is the primary experiment.
+Those results (\texttt{outputs/qae\_tfim\_api\_v2/}) are retained as context; v4 is the primary experiment.
 
 \section{Results}
 
-Table~\ref{tab:qae} summarizes protected-test trash fidelity for the validation-selected candidate from each of the four primary methods.
-All numbers are generated by committed scripts from committed result artifacts (\texttt{outputs/qae\_tfim\_neutral\_v3/}).
+\subsection{v3: the single-start diagnostic}
+
+The v3 experiment (single-start adaptive arms) found means of $0.9653$ (LLM-Open), $0.9553$ (LLM-Closed), $0.8721$ (Random), and $0.7667$ (Greedy) on the held-out test trash fidelity.
+Three observations motivated the v4 follow-up.
+First, Greedy landed significantly \emph{below} Random ($-0.1055$, 2/12 wins, $p=0.005$) despite functioning correctly --- 34/84 mutations accepted, every seed improving on its own start: \emph{single-start local refinement sacrificed too much exploration breadth at $B=8$}.
+Second, no additional closed-loop benefit was detected (LLM-Closed $-$ LLM-Open $=-0.0100$, $p=0.68$); we do not claim closed-loop was worse.
+Third, LLM-Closed produced 26/96 duplicate or invalid proposals, focusing quickly around previously successful structures --- a premature-exploitation signature consistent with the exploration-collapse failure mode reported for agentic VQC design \cite{knipfer2026}.
+v3 is preserved unchanged (\texttt{outputs/qae\_tfim\_neutral\_v3/}); the multi-start v4 protocol was pre-registered before its matrix ran, explicitly motivated by this diagnosis.
+
+\subsection{v4: the pre-registered multi-start experiment (primary)}
+
+Table~\ref{tab:qae} summarizes the held-out test trash fidelity of the validation-selected candidate from each method.
+All numbers are generated by committed scripts from committed result artifacts (\texttt{outputs/qae\_tfim\_neutral\_v4/}).
 
 \begin{table}[ht]
 \centering
-\caption{Selected protected-test trash fidelity across 12 paired verification seeds in the neutral space. Higher is better; every method receives exactly $B=8$ candidate evaluations per seed.}
+\caption{v4: selected-candidate held-out test trash fidelity $F_{\rm trash}$ across 12 paired verification seeds (higher is better; $B=8$ evaluations per method per seed).}
 \label{tab:qae}
-\begin{tabular}{lccccc}
+\begin{tabular}{llccc}
 \toprule
-Method & Semantics & Feedback & Mean & Median & SD\\
+Method & Design & Mean & Median & SD\\
 \midrule
-Greedy & no & yes & 0.7667 & 0.8093 & 0.1143\\
-Random & no & no & 0.8721 & 0.8802 & 0.0524\\
-LLM-Closed & yes & yes & 0.9553 & 0.9693 & 0.0272\\
-LLM-Open & yes & no & \textbf{0.9653} & 0.9665 & \textbf{0.0042}\\
+Random & 8 independent draws & 0.8677 & 0.8691 & 0.0264\\
+Greedy & 4 warm starts + 4 refinements & 0.8793 & 0.8824 & 0.0320\\
+LLM-Closed & 4 warm starts + 4 adaptive & 0.9558 & 0.9559 & 0.0127\\
+LLM-Open & open-loop batch of 8 & \textbf{0.9643} & 0.9675 & 0.0082\\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -200,69 +225,65 @@ LLM-Open & yes & no & \textbf{0.9653} & 0.9665 & \textbf{0.0042}\\
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}
-\begin{axis}[ybar,bar width=20pt,width=0.8\linewidth,height=5.6cm,ymin=0.72,ymax=1.0,
-  ylabel={Mean protected-test trash fidelity},
+\begin{axis}[ybar,bar width=20pt,width=0.8\linewidth,height=5.6cm,ymin=0.82,ymax=1.0,
+  ylabel={Mean held-out test $F_{\rm trash}$ (higher is better)},
   symbolic x coords={Random,Greedy,LLM-Open,LLM-Closed},xtick=data,
   x tick label style={font=\small},
   nodes near coords,nodes near coords align={vertical},every node near coord/.append style={font=\footnotesize},grid=major]
-\addplot coordinates {(Random,0.8721) (Greedy,0.7667) (LLM-Open,0.9653) (LLM-Closed,0.9553)};
+\addplot coordinates {(Random,0.8677) (Greedy,0.8793) (LLM-Open,0.9643) (LLM-Closed,0.9558)};
 \end{axis}
 \end{tikzpicture}
-\caption{Mean protected-test trash fidelity across 12 paired seeds (higher is better). All four methods search the identical neutral space with identical capacity, trainer, and budget; only the proposer differs.}
+\caption{v4 mean held-out test trash fidelity across 12 paired seeds (seed-level distributions and bootstrap 95\% CIs are in the committed figure artifacts). All four methods search the identical neutral space with identical capacity, trainer, and budget.}
 \label{fig:qae-selected}
 \end{figure}
 
-\paragraph{Paired statistics along the $2\times2$.}
+\paragraph{Paired statistics.}
 All comparisons are paired per seed; $p$-values are exact two-sided Wilcoxon signed-rank tests, intervals are bootstrap 95\% CIs of the mean paired gain, and $d_z$ is Cohen's paired effect size.
 \begin{itemize}[nosep]
-\item \textbf{Add semantics without feedback} (LLM-Open $-$ Random): $+0.0932$ $[0.0642, 0.1228]$, $d_z=1.73$, 12/12 wins, $p=0.00049$.
-\item \textbf{Add semantics with feedback} (LLM-Closed $-$ Greedy): $+0.1886$ $[0.1257, 0.2627]$, $d_z=1.49$, 12/12 wins, $p=0.00049$.
-\item \textbf{Add feedback without semantics} (Greedy $-$ Random): $-0.1055$ $[-0.1702, -0.0474]$, $d_z=-0.93$, 2/12 wins, $p=0.00488$.
-\item \textbf{Add feedback with semantics} (LLM-Closed $-$ LLM-Open): $-0.0100$ $[-0.0260, +0.0028]$, $d_z=-0.37$, 6/12 wins, $p=0.68$.
+\item LLM-Open $-$ Random: $+0.0965$ $[0.0824, 0.1120]$, $d_z=3.51$, 12/12 wins, $p=0.00049$.
+\item LLM-Closed $-$ Random: $+0.0880$ $[0.0737, 0.1039]$, $d_z=3.10$, 12/12 wins, $p=0.00049$.
+\item LLM-Open $-$ Greedy: $+0.0850$ $[0.0664, 0.1030]$, $d_z=2.52$, 12/12 wins, $p=0.00049$.
+\item Greedy $-$ Random: $+0.0115$ $[-0.0131, +0.0347]$, $d_z=0.26$, 7/12 wins, $p=0.42$ --- parity; the v3 deficit is gone.
+\item LLM-Closed $-$ LLM-Open: $-0.0085$ $[-0.0177, -0.0007]$, $d_z=-0.55$, 4/12 wins, $p=0.13$ --- no significant difference detected.
 \end{itemize}
-Both LLM arms also beat Random directly in 12/12 seeds ($p=0.00049$).
+
+\paragraph{Refinement gains (pre-declared).}
+Did the four adaptive evaluations add value over the best of the four warm starts?
+For Greedy: $+0.0635$ on held-out test (95\% CI $[+0.0179, +0.1276]$), 10/12 seeds improved, Wilcoxon $p=0.0093$ --- after adequate exploration, validation-guided local refinement genuinely helps, confirming that v3 Greedy's failure was an exploration problem rather than a refinement problem.
+For LLM-Closed: $+0.0185$ (95\% CI $[+0.0053, +0.0341]$), 5/12 improved and 7/12 unchanged --- a small positive contribution that does not close the gap to the open-loop batch.
 
 \paragraph{Anytime behaviour.}
-Figure~\ref{fig:qae-anytime} shows the protected-test fidelity of the best-so-far validation-selected candidate as the budget is consumed.
-Both LLM arms start near $0.90$ with their very first proposal --- above where Random ends after all eight --- and saturate by the third evaluation, whereas Random climbs gradually and Greedy climbs slowest of all.
-This is the expected signature if semantic priors improve \emph{sample efficiency}: the model places probability mass on a useful region of architecture space before any circuit is trained.
+Figure~\ref{fig:qae-anytime} shows the held-out test fidelity of the best-so-far validation-selected candidate as the budget is consumed.
+The LLM-Open batch is strong from its first proposal; LLM-Closed climbs through both phases; Random and Greedy track each other through the warm phase, after which Greedy's refinement pulls slightly ahead.
 
 \begin{figure}[ht]
 \centering
 \begin{tikzpicture}
-\begin{axis}[width=0.85\linewidth,height=6.0cm,xlabel={Candidate evaluations used},
-  ylabel={Best-so-far test fidelity of selected candidate},
-  xmin=1,xmax=8,ymin=0.64,ymax=0.99,xtick={1,2,3,4,5,6,7,8},grid=major,legend pos=south east,
+\begin{axis}[width=0.85\linewidth,height=6.0cm,xlabel={Candidate evaluations used (evaluations 5--8 are the refinement phase of the adaptive arms)},
+  ylabel={Best-so-far held-out test $F_{\rm trash}$},
+  xmin=1,xmax=8,ymin=0.58,ymax=0.99,xtick={1,2,3,4,5,6,7,8},grid=major,legend pos=south east,
   legend style={font=\small}]
-\addplot+[mark=*] coordinates {(1,0.6747)(2,0.7331)(3,0.7989)(4,0.8251)(5,0.8308)(6,0.8375)(7,0.8606)(8,0.8721)};
-\addlegendentry{Random (no semantics, no feedback)}
-\addplot+[mark=x] coordinates {(1,0.6672)(2,0.6751)(3,0.7078)(4,0.7303)(5,0.7360)(6,0.7363)(7,0.7363)(8,0.7667)};
-\addlegendentry{Greedy (no semantics, feedback)}
-\addplot+[mark=triangle*] coordinates {(1,0.9033)(2,0.9033)(3,0.9653)(4,0.9653)(5,0.9653)(6,0.9653)(7,0.9653)(8,0.9653)};
-\addlegendentry{LLM-Open (semantics, no feedback)}
-\addplot+[mark=diamond*] coordinates {(1,0.8935)(2,0.9461)(3,0.9513)(4,0.9512)(5,0.9528)(6,0.9553)(7,0.9553)(8,0.9553)};
-\addlegendentry{LLM-Closed (semantics, feedback)}
+\addplot+[mark=*] coordinates {(1,0.6120)(2,0.7326)(3,0.8102)(4,0.8299)(5,0.8442)(6,0.8478)(7,0.8603)(8,0.8677)};
+\addlegendentry{Random (no semantics, breadth-only)}
+\addplot+[mark=x] coordinates {(1,0.6043)(2,0.6866)(3,0.7981)(4,0.8158)(5,0.8560)(6,0.8626)(7,0.8762)(8,0.8793)};
+\addlegendentry{Greedy (no semantics, 4+4)}
+\addplot+[mark=triangle*] coordinates {(1,0.9603)(2,0.9603)(3,0.9603)(4,0.9602)(5,0.9602)(6,0.9602)(7,0.9602)(8,0.9643)};
+\addlegendentry{LLM-Open (semantics, batch)}
+\addplot+[mark=diamond*] coordinates {(1,0.8912)(2,0.9156)(3,0.9303)(4,0.9372)(5,0.9499)(6,0.9520)(7,0.9558)(8,0.9558)};
+\addlegendentry{LLM-Closed (semantics, 4+4)}
 \end{axis}
 \end{tikzpicture}
-\caption{Anytime performance as the candidate-evaluation budget is consumed (mean over 12 seeds; higher is better). Both LLM arms reach a strong circuit within three evaluations; Random climbs gradually; Greedy spends its budget refining one random start.}
+\caption{v4 anytime performance (mean over 12 seeds; higher is better).}
 \label{fig:qae-anytime}
 \end{figure}
 
-\paragraph{Why Greedy loses to Random.}
-Greedy is not malfunctioning: 34 of its 84 mutations were accepted and every seed improved on its own starting point.
-The failure is search-strategy geometry at this budget: seven single-gate mutations explore a small neighbourhood of one (usually mediocre) random start, while Random draws eight independent circuits and keeps the best.
-With $B=8$ in a large neutral space, breadth beats local depth.
-This is a budget-regime statement, not a general indictment of greedy search --- and it sharpens the interpretation of the LLM arms: feedback-driven local search alone cannot explain their advantage.
+\paragraph{Proposal quality and diversity.}
+Fallback accounting: Random 0/96, Greedy 0/96, LLM-Open 0/96 (its pool of eight arrived valid and distinct in one call), LLM-Closed 8/96 (5 duplicates, 3 invalid) --- down from 26/96 in v3: the diverse warm-start batch largely removed the duplicate-proposal failure mode.
+Mean pairwise structural distance (fraction of differing gate slots): LLM-Closed warm batch 0.832, refinement proposals 0.658; LLM-Open first four 0.708, last four 0.615.
 
-\paragraph{Feedback did not improve on semantic priors.}
-LLM-Closed trails LLM-Open slightly (n.s.).
-Of its 96 proposals, 25 were structural duplicates of already-evaluated circuits and 1 was capacity-invalid; all 26 were replaced, with budget charged, by flagged random circuits (Random, Greedy, and LLM-Open needed no fallbacks; the open pool required one bounded repair call).
-Despite this handicap LLM-Closed still beats both non-semantic methods in 12/12 seeds.
-The duplicate pattern is consistent with the exploration-collapse failure mode reported for agentic VQC design \cite{knipfer2026}.
-
-\paragraph{Consistency with the rigid-space verification (v2).}
-In the earlier, more constrained layout the same pinned model beat RY-only random, Evolutionary, and a hand-designed encoder.
-Moving to the freer neutral space lowers Random (from $0.9182$ to $0.8721$) while the LLM arms stay near $0.96$: the harder the space is to search blindly, the larger the semantic-prior gain.
+\paragraph{Consistency across versions.}
+The semantic advantage replicates across independently drawn pools (v3 pool $0.9653$, v4 pool $0.9643$) and across spaces (rigid-layout v2: $0.9700$ against different baselines).
+Random's level in the neutral space ($0.87$) is well below its rigid-space level ($0.92$): the harder the space is to search blindly, the larger the semantic-prior gain.
 
 \section{Why the New Result Differs from the Earlier Random-Search Result}
 
@@ -279,7 +300,7 @@ In the QAE task, the prompt exposes three pieces of information that have direct
 \item \textbf{Latent/trash roles:} the objective supplies a direction for information flow and disentangling.
 \end{enumerate}
 Ordinary random search does not condition its proposal distribution on these facts, and greedy hill-climbing conditions only on scores of its own past candidates.
-The v2 RY-only control showed that the first fact alone does not explain the gap; the v3 $2\times2$ shows that validation feedback alone does not either --- Greedy, which has feedback but no semantics, is the \emph{worst} method in the comparison.
+The v2 RY-only control showed that the first fact alone does not explain the gap; the v3/v4 sequence shows that validation-guided adaptivity alone does not either --- with a fair multi-start allocation, Greedy reaches only Random-parity, an order of magnitude below the semantic gain.
 What remains is the semantic route: converting stated physics into axis, wiring, and ordering choices before any circuit is trained.
 
 \section{Limitations and Threats to Validity}
@@ -289,9 +310,10 @@ It is a noiseless four-qubit statevector simulation with a single Hamiltonian fa
 The API replay uses a single pinned model (\texttt{gpt-5.4-mini-2026-03-17}); a multi-model confirmatory protocol has not yet been run, so no claim attaches to any particular model family.
 The prompt itself encodes hand-chosen physical hints (real amplitudes, locality, information routing); the benchmark therefore measures whether a language model can \emph{exploit} stated structure, not whether it can \emph{discover} unstated structure.
 Stronger QAS methods and tensor-network-inspired baselines remain to be added.
-The Greedy result is a budget-regime finding: with $B=8$ evaluations from a single random start, local hill-climbing cannot compete with independent sampling; larger budgets, restarts, or population-based variants could behave differently.
-All twelve verification replicates share the same protected-test grid, although they use independently sampled training and validation states.
-Finally, while the protocol is deterministic given a machine, floating-point training is platform-dependent (third-decimal shifts across machines); all v3 comparisons were computed on a single machine with identical paired seeds.
+The Greedy findings are budget-regime statements: v3 showed that a single-start allocation cannot compete with independent sampling at $B=8$, and v4 shows that four starts restore parity; larger budgets or population-based variants could behave differently again.
+Because the methods differ in allocation policy as well as information content, none of the pairwise comparisons isolates a single ingredient causally.
+All twelve verification replicates share the same held-out test grid, although they use independently sampled training and validation states.
+Finally, while the protocol is deterministic given a machine, floating-point training is platform-dependent (third-decimal shifts across machines); all v3/v4 comparisons were computed on a single machine with identical paired seeds.
 
 We therefore do not claim general LLM superiority, quantum advantage, or hardware relevance.
 The supported claim is conditional:
@@ -316,8 +338,8 @@ A publication-quality confirmatory study should:
 Capacity-controlled VQC benchmarks taught a negative but useful lesson: a powerful proposer cannot display meaningful reasoning if the experimental interface offers little meaningful information to reason about.
 Quantum autoencoding provides a cleaner test.
 By exposing the Hamiltonian, the correlation graph, and the latent/trash split while holding circuit capacity and numerical optimization fixed, the benchmark turns architecture search into a semantic design problem.
-In the pre-registered neutral-space $2\times2$, task semantics is the decisive axis: a version-pinned language-model proposer beats equal-budget Random in 12/12 paired seeds whether or not it receives feedback, while validation feedback without semantics (Greedy) is significantly worse than Random and feedback on top of semantics adds nothing detectable.
-The result should be viewed as evidence for a \emph{conditional semantic-prior hypothesis}, not as a universal ranking of search algorithms.
+Across the single-start diagnostic (v3) and the pre-registered multi-start follow-up (v4), the picture is consistent: a version-pinned language-model proposer beats equal-budget Random in 12/12 paired seeds with or without feedback; adequate initial exploration is what makes non-semantic adaptive search competitive at all (Greedy: significantly below Random with one start, parity with four, with a genuine refinement gain); and adaptive closed-loop search shows no detectable benefit over an open-loop semantic batch at this budget.
+The results separate three ingredients --- semantic proposal quality, initial exploration, and adaptive refinement --- and should be viewed as evidence for a \emph{conditional semantic-prior hypothesis}, not as a universal ranking of search algorithms.
 
 \appendix
 \section{Exact LLM prompt}
@@ -328,7 +350,7 @@ The result should be viewed as evidence for a \emph{conditional semantic-prior h
 You are a quantum-autoencoder circuit architect. Your job is architecture proposal, not numerical optimization. Respect the exact resource budget. Use the physical structure in the task description to propose circuit hypotheses. Return circuit structure only.
 \end{quote}
 
-\paragraph{Task instruction (v3, primary).}
+\paragraph{Task instruction (v3/v4).}
 \begin{quote}
 Compress ground states of the 4-qubit open-chain transverse-field Ising Hamiltonian
 $H=-\sum Z_iZ_{i+1}-h\sum X_i$, $h\in[0.2,2.0]$, into latent qubits $q_0,q_1$ while trash qubits $q_2,q_3$ should end in $\lvert00\rangle$.
@@ -348,7 +370,8 @@ Return ONLY a single JSON object, no prose and no markdown fences, with this sch
 \texttt{\ \ \{"g": "RY", "q": 0\}, \{"g": "CNOT", "c": 3, "t": 2\}, ...]\}]\}}\\
 Each gates list holds exactly 16 entries in execution order: a rotation is \texttt{\{"g": "RX"|"RY"|"RZ", "q": 0-3\}} and a CNOT is \texttt{\{"g": "CNOT", "c": 0-3, "t": 0-3, c != t\}}. Exactly 12 rotations and exactly 4 CNOTs per candidate.
 \end{quote}
-If returned candidates violate the capacity contract, up to two bounded repair calls quote the rejected entries and errors and request replacements (pre-registered amendment); only then are remaining slots filled by flagged random draws (none were needed).
+If returned candidates violate the capacity contract, up to two bounded repair calls quote the rejected entries and errors and request replacements (pre-registered amendment); only then are remaining slots filled by flagged random draws.
+The v4 LLM-Closed warm start uses the same task instruction with ``Output 4 distinct candidates. Aim for structural DIVERSITY across the candidates (different orderings, wirings, and axis patterns), \ldots'' in place of the open-loop closing lines.
 The v1/v2 pilot used the same physics sentences with a rigid layered layout and a per-layer axes schema; that version is preserved in the repository history and \texttt{docs/research/LLM\_QAE\_SKILL.md}.
 
 \paragraph{Closed-loop feedback template.}

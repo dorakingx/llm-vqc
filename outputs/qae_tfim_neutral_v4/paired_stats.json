@@ -1,0 +1,80 @@
+{
+  "Greedy_minus_Random": {
+    "mean_paired_gain": 0.011529830942654038,
+    "median_paired_gain": 0.01627789000778712,
+    "bootstrap_95ci": [
+      -0.013125329768914406,
+      0.03470289789881979
+    ],
+    "cohens_dz": 0.2615692412702,
+    "wins_b": 7,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.423828125,
+    "sign_test_two_sided_p": 0.7744140625
+  },
+  "LLM-Open_minus_Random": {
+    "mean_paired_gain": 0.09654371711866534,
+    "median_paired_gain": 0.09133877797749768,
+    "bootstrap_95ci": [
+      0.08237204380429844,
+      0.11202057501687546
+    ],
+    "cohens_dz": 3.5118793221212705,
+    "wins_b": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-Closed_minus_Random": {
+    "mean_paired_gain": 0.08803480487419801,
+    "median_paired_gain": 0.08862191511229667,
+    "bootstrap_95ci": [
+      0.07367859911061109,
+      0.10391204330474993
+    ],
+    "cohens_dz": 3.1036533464625626,
+    "wins_b": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-Open_minus_Greedy": {
+    "mean_paired_gain": 0.08501388617601129,
+    "median_paired_gain": 0.089011854749947,
+    "bootstrap_95ci": [
+      0.06638201519693042,
+      0.10302644931734138
+    ],
+    "cohens_dz": 2.5241152357650214,
+    "wins_b": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-Closed_minus_Greedy": {
+    "mean_paired_gain": 0.07650497393154397,
+    "median_paired_gain": 0.07234402510450955,
+    "bootstrap_95ci": [
+      0.05842685080682586,
+      0.09531740392930528
+    ],
+    "cohens_dz": 2.2612090369624642,
+    "wins_b": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-Closed_minus_LLM-Open": {
+    "mean_paired_gain": -0.008508912244467324,
+    "median_paired_gain": -0.0034760180666507656,
+    "bootstrap_95ci": [
+      -0.01767993931333283,
+      -0.0006528430182751529
+    ],
+    "cohens_dz": -0.5480266804851638,
+    "wins_b": 4,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.12939453125,
+    "sign_test_two_sided_p": 0.3876953125
+  }
+}

@@ -77,10 +77,25 @@ Random / Greedy / LLM-Open / LLM-Closed, B=8, paired seeds, pinned
 `gpt-5.4-mini-2026-03-17`. Result (`outputs/qae_tfim_neutral_v3/REPORT.md`):
 **semantics is the decisive axis** — LLM-Open 0.9653 vs Random 0.8721
 (+0.0932, 12/12 seeds, p=0.00049, dz=1.73); LLM-Closed 0.9553 beats both
-non-semantic arms 12/12; Greedy 0.7667 is *significantly worse* than Random
-(breadth beats one-start local search at B=8); feedback adds nothing given
-semantics (Closed − Open n.s., p=0.68). In the freer space the Random
-baseline drops while the LLM arms hold, so the semantic-prior gain grows.
+non-semantic arms 12/12; Greedy 0.7667 lands *significantly below* Random —
+single-start local refinement sacrificed exploration breadth at B=8 — and
+no additional closed-loop benefit over open-loop was detected (p=0.68,
+26/96 duplicate/invalid proposals). v3 is preserved unchanged as the
+single-start diagnostic.
+
+## Step 7 — Multi-start 4+4 follow-up (v4, primary experiment, completed)
+
+Motivated by the v3 diagnosis and pre-registered before running
+(`docs/research/QAE_PROTOCOL_V4.md`, commit 69f8335): Greedy and
+LLM-Closed get 4 diverse warm starts before 4 refinement evaluations;
+Random and LLM-Open unchanged in design (fresh draws/pool). Result
+(`outputs/qae_tfim_neutral_v4/REPORT.md`): the diagnosis holds —
+**Greedy recovers to Random-parity** (0.8793 vs 0.8677, p=0.42) with a
+genuine refinement gain (+0.0635, 10/12 seeds, p=0.009); the **semantic
+advantage replicates with an independent pool** (LLM-Open 0.9643, 12/12
+vs Random, dz=3.5); LLM-Closed's duplicates drop 26/96 → 8/96 and its
+refinement gain is small but positive (+0.0185), yet **no detectable
+closed-loop benefit over the open-loop batch** (−0.0085, p=0.13).
 
 ## Paper story
 

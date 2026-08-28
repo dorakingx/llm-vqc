@@ -16,16 +16,22 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
    equivalent: `outputs/capacity_controlled_t2_v1/report.md`.
 2. **Task qualification (HIGGS archives)** — why under-qualified tasks produce
    misleading search comparisons: `docs/research/HIGGS_ARCHIVE_SYNTHESIS.md`.
-3. **Semantic QAE benchmark (v3, primary)** — a quantum-autoencoder task in a
-   neutral capacity-controlled space (free ordering of 12 rotations + 4 CNOTs),
-   pre-registered 2×2 comparison Random / Greedy / LLM-Open / LLM-Closed with a
-   version-pinned API model. Task semantics is the decisive axis; validation
-   feedback alone is not: `outputs/qae_tfim_neutral_v3/REPORT.md`.
-   (Earlier rigid-layout verification with RY-only/Evolutionary/hand-designed
-   baselines: `outputs/qae_tfim_api_v2/REPORT.md`.)
+3. **Semantic QAE benchmark** — a quantum-autoencoder task in a neutral
+   capacity-controlled space (free ordering of 12 rotations + 4 CNOTs),
+   comparing Random / Greedy / LLM-Open / LLM-Closed with a version-pinned
+   API model. **v4 (primary)**: pre-registered multi-start (4 warm starts +
+   4 refinements) follow-up — semantic proposal quality dominates, Greedy
+   reaches Random-parity with a real refinement gain, closed-loop still
+   shows no detectable benefit over the open-loop batch:
+   `outputs/qae_tfim_neutral_v4/REPORT.md`. **v3 (archived diagnostic)**:
+   the single-start design that motivated v4:
+   `outputs/qae_tfim_neutral_v3/REPORT.md`. (Earlier rigid-layout
+   verification: `outputs/qae_tfim_api_v2/REPORT.md`; the 2026-08-04
+   historical synthetic-task artifacts: `outputs/mini5_ctx_20260804/`.)
 
 Key documents: `docs/research/RESEARCH_ROADMAP_QAE.md` (story),
-`docs/research/QAE_PROTOCOL_V3.md` (pre-registered primary protocol),
+`docs/research/QAE_PROTOCOL_V4.md` (pre-registered primary protocol),
+`docs/research/QAE_PROTOCOL_V3.md` (archived v3 protocol),
 `docs/research/QAE_PROTOCOL.md` (v1/v2 protocol),
 `docs/research/LLM_QAE_SKILL.md` (prompt/skill lineage),
 `docs/research/BRANCH_STATUS.md` (branch/PR map), `paper/main.tex` (manuscript).
@@ -33,9 +39,9 @@ Key documents: `docs/research/RESEARCH_ROADMAP_QAE.md` (story),
 Reproduce the primary QAE benchmark:
 
 ```bash
-python scripts/qae/run_qae_tfim_neutral_v3.py --no-api   # Random + Greedy only
-LLM_API_BUDGET_USD=2.00 python scripts/qae/run_qae_tfim_neutral_v3.py  # full (paid API)
-python scripts/qae/build_qae_v3_figures.py               # figures from stored CSVs
+python scripts/qae/run_qae_tfim_neutral_v4.py --no-api   # Random + Greedy only
+LLM_API_BUDGET_USD=2.00 python scripts/qae/run_qae_tfim_neutral_v4.py  # full (paid API)
+python scripts/qae/build_qae_v4_figures.py               # figures from stored CSVs
 ```
 
 ---

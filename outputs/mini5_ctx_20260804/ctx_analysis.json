@@ -1,0 +1,234 @@
+{
+  "n_cells": 712,
+  "arms": [
+    "evolutionary",
+    "llm_closed_ctx",
+    "llm_hybrid_ctx",
+    "llm_open_ctx",
+    "random",
+    "reference"
+  ],
+  "n_seeds": 30,
+  "median_test_rmse": {
+    "gauss_peak": {
+      "evolutionary": 0.1445411147294739,
+      "llm_closed_ctx": 0.1602317147301038,
+      "llm_hybrid_ctx": 0.1190315035887545,
+      "llm_open_ctx": 0.11004880546825133,
+      "random": 0.11882566387640328,
+      "reference": 0.2782178482142229
+    },
+    "sin_freq": {
+      "evolutionary": 0.2909491145219756,
+      "llm_closed_ctx": 0.29548508731002104,
+      "llm_hybrid_ctx": 0.29107250328548134,
+      "llm_open_ctx": 0.2928721052384653,
+      "random": 0.29092092910686423,
+      "reference": 0.31786597490291374
+    },
+    "change_point": {
+      "evolutionary": 0.18341079133886964,
+      "llm_closed_ctx": 0.2204145183637779,
+      "llm_hybrid_ctx": 0.19529034812619783,
+      "llm_open_ctx": 0.21212113930374782,
+      "random": 0.18038806711622968,
+      "reference": 0.26578300962325496
+    },
+    "peak_count": {
+      "evolutionary": 0.5006722147991003,
+      "llm_closed_ctx": 0.5052005834677212,
+      "llm_hybrid_ctx": 0.5046299645980294,
+      "llm_open_ctx": 0.5011928663016871,
+      "random": 0.5003211960282741,
+      "reference": 0.5384852691002069
+    }
+  },
+  "primary": [
+    {
+      "task": "gauss_peak",
+      "opponent": "random",
+      "n": 30,
+      "median_diff": 0.0,
+      "wins": 11,
+      "p": 0.6964254688139464,
+      "holm": 1.0,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "gauss_peak",
+      "opponent": "evolutionary",
+      "n": 30,
+      "median_diff": -0.004918776621861909,
+      "wins": 16,
+      "p": 0.12439677550010476,
+      "holm": 0.6066358752089924,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "gauss_peak",
+      "opponent": "reference",
+      "n": 30,
+      "median_diff": -0.15786750199684546,
+      "wins": 28,
+      "p": 2.551823854446411e-07,
+      "holm": 2.8070062398910522e-06,
+      "verdict": "LLM BETTER"
+    },
+    {
+      "task": "sin_freq",
+      "opponent": "random",
+      "n": 30,
+      "median_diff": 0.00018693577643311143,
+      "wins": 7,
+      "p": 0.0674638361316115,
+      "holm": 0.4722468529212805,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "sin_freq",
+      "opponent": "evolutionary",
+      "n": 30,
+      "median_diff": 0.0,
+      "wins": 12,
+      "p": 0.9696103704263741,
+      "holm": 1.0,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "sin_freq",
+      "opponent": "reference",
+      "n": 30,
+      "median_diff": -0.026250692026054623,
+      "wins": 30,
+      "p": 1.862645149230957e-09,
+      "holm": 2.2351741790771484e-08,
+      "verdict": "LLM BETTER"
+    },
+    {
+      "task": "change_point",
+      "opponent": "random",
+      "n": 30,
+      "median_diff": 0.0,
+      "wins": 8,
+      "p": 0.10110597920149873,
+      "holm": 0.6066358752089924,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "change_point",
+      "opponent": "evolutionary",
+      "n": 30,
+      "median_diff": 0.0005962291730387537,
+      "wins": 9,
+      "p": 0.034490871763967416,
+      "holm": 0.27592697411173933,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "change_point",
+      "opponent": "reference",
+      "n": 30,
+      "median_diff": -0.06867620680832637,
+      "wins": 23,
+      "p": 0.000283263623714447,
+      "holm": 0.00283263623714447,
+      "verdict": "LLM BETTER"
+    },
+    {
+      "task": "peak_count",
+      "opponent": "random",
+      "n": 22,
+      "median_diff": 0.0,
+      "wins": 8,
+      "p": 0.5277266198659963,
+      "holm": 1.0,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "peak_count",
+      "opponent": "evolutionary",
+      "n": 22,
+      "median_diff": 0.0013589125561500603,
+      "wins": 8,
+      "p": 0.10746614473256638,
+      "holm": 0.6066358752089924,
+      "verdict": "no difference detected"
+    },
+    {
+      "task": "peak_count",
+      "opponent": "reference",
+      "n": 22,
+      "median_diff": -0.04109526629881294,
+      "wins": 17,
+      "p": 0.0028514862060546875,
+      "holm": 0.025663375854492188,
+      "verdict": "LLM BETTER"
+    }
+  ],
+  "secondary_uncorrected": [
+    {
+      "task": "gauss_peak",
+      "contrast": "hybrid vs pure-LLM",
+      "n": 30,
+      "median_diff": 0.004006327688486064,
+      "wins": 11,
+      "p": 0.308520769700408
+    },
+    {
+      "task": "sin_freq",
+      "contrast": "hybrid vs pure-LLM",
+      "n": 30,
+      "median_diff": -0.001201265767506482,
+      "wins": 17,
+      "p": 0.22855282202363014
+    },
+    {
+      "task": "change_point",
+      "contrast": "hybrid vs pure-LLM",
+      "n": 30,
+      "median_diff": -0.01379866389527469,
+      "wins": 18,
+      "p": 0.46454504504799843
+    },
+    {
+      "task": "peak_count",
+      "contrast": "hybrid vs pure-LLM",
+      "n": 22,
+      "median_diff": 0.004855819973299591,
+      "wins": 10,
+      "p": 0.5445904731750488
+    },
+    {
+      "task": "gauss_peak",
+      "contrast": "closed vs open",
+      "n": 30,
+      "median_diff": 0.05041477491554936,
+      "wins": 7,
+      "p": 0.00020912662148475647
+    },
+    {
+      "task": "sin_freq",
+      "contrast": "closed vs open",
+      "n": 30,
+      "median_diff": 0.001626415930877756,
+      "wins": 12,
+      "p": 0.034536734223365784
+    },
+    {
+      "task": "change_point",
+      "contrast": "closed vs open",
+      "n": 30,
+      "median_diff": 0.002407733603215015,
+      "wins": 13,
+      "p": 0.19807579927146435
+    },
+    {
+      "task": "peak_count",
+      "contrast": "closed vs open",
+      "n": 30,
+      "median_diff": 0.004753441145180365,
+      "wins": 13,
+      "p": 0.07324407435953617
+    }
+  ]
+}

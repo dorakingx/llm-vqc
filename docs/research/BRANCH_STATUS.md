@@ -47,7 +47,22 @@ The consolidation PR (#4) and the API-verification PR (#5) have been squash-merg
 
 ## Experiment lineage
 
-- v1 pilot (chat pool, rigid layout) → v2 API verification (rigid layout, six arms) → **v3 neutral-space 2×2 (primary)**: `docs/research/QAE_PROTOCOL_V3.md`, results `outputs/qae_tfim_neutral_v3/`.
+- 2026-08-04 historical synthetic-signal run (archived artifacts:
+  `outputs/mini5_ctx_20260804/`) → v1 pilot (chat pool, rigid layout) →
+  v2 API verification (rigid layout, six arms) → v3 neutral-space
+  single-start four-method run (archived diagnostic:
+  `docs/research/QAE_PROTOCOL_V3.md`, `outputs/qae_tfim_neutral_v3/`) →
+  **v4 multi-start 4+4 (primary)**: pre-registered at
+  `docs/research/QAE_PROTOCOL_V4.md` (commit 69f8335), results
+  `outputs/qae_tfim_neutral_v4/`.
+
+## Deck lineage in Drive (2026-08-29 meeting)
+
+- Active: `20260829_GSoC.pptx` / `20260829_GSoC.pdf` (v4 story).
+- Archives: `20260829_GSoC_archive` (chat-pilot draft),
+  `20260829_GSoC_v2_archive.{pptx,pdf}` + `_v2_archive_slides`
+  (user's edited native copy), `20260829_GSoC_v3_archive.{pptx,pdf}`
+  + `_v3_archive_slides` (user's native copy of the v3-story deck).
 
 ## Why disconnected histories remain archives
 
