@@ -1,0 +1,123 @@
+{
+  "rows": [
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "real-corr-YZ-latent-pair",
+      "order": 1,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.1079202140631369,
+      "val_loss": 0.11113653938859847,
+      "test_loss": 0.14397816393185492,
+      "train_fid": 0.8920797859368631,
+      "val_fid": 0.8888634606114015,
+      "test_fid": 0.8560218360681451
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "real-neighbor-entangle-YXYX-latent-left",
+      "order": 2,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.10815752651274768,
+      "val_loss": 0.11138051255933179,
+      "test_loss": 0.1441523840081569,
+      "train_fid": 0.8918424734872523,
+      "val_fid": 0.8886194874406682,
+      "test_fid": 0.8558476159918431
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "real-zz-chain-latent-sinks",
+      "order": 3,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.03439606229360781,
+      "val_loss": 0.03667701438299675,
+      "test_loss": 0.05140522162481842,
+      "train_fid": 0.9656039377063922,
+      "val_fid": 0.9633229856170032,
+      "test_fid": 0.9485947783751816
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "real-symmetric-latent-core-trash-sinks",
+      "order": 4,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.09374390939748234,
+      "val_loss": 0.09799636702713466,
+      "test_loss": 0.12648028084156127,
+      "train_fid": 0.9062560906025177,
+      "val_fid": 0.9020036329728653,
+      "test_fid": 0.8735197191584387
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "real-left-to-right-trash-sink-hypothesis",
+      "order": 5,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.06164131753726121,
+      "val_loss": 0.06574531263128014,
+      "test_loss": 0.0895865891091292,
+      "train_fid": 0.9383586824627388,
+      "val_fid": 0.9342546873687199,
+      "test_fid": 0.9104134108908708
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "real-outer-to-inner-trash-sink",
+      "order": 6,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.0967361067542053,
+      "val_loss": 0.099820882704175,
+      "test_loss": 0.12794706461869476,
+      "train_fid": 0.9032638932457947,
+      "val_fid": 0.900179117295825,
+      "test_fid": 0.8720529353813052
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "fallback_p6",
+      "order": 7,
+      "fallback": true,
+      "invalid_errors": "",
+      "train_loss": 0.5041163036236301,
+      "val_loss": 0.5054965067739456,
+      "test_loss": 0.5146272303331734,
+      "train_fid": 0.49588369637636986,
+      "val_fid": 0.4945034932260543,
+      "test_fid": 0.4853727696668267
+    },
+    {
+      "seed": 8,
+      "method": "LLM-API-closed",
+      "candidate": "fallback_p7",
+      "order": 8,
+      "fallback": true,
+      "invalid_errors": "",
+      "train_loss": 0.43245692147853176,
+      "val_loss": 0.43573715397324675,
+      "test_loss": 0.4016317058843989,
+      "train_fid": 0.5675430785214682,
+      "val_fid": 0.5642628460267533,
+      "test_fid": 0.5983682941156011
+    }
+  ],
+  "model_snapshots": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "total_input_tokens": 5613,
+  "total_output_tokens": 670,
+  "budget_spent_usd_estimate": 0.04,
+  "n_calls": 8
+}

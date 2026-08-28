@@ -27,3 +27,14 @@ data/
 !outputs/qae_tfim_semantic_pilot_v1/**
 !outputs/qae_tfim_api_v2/
 !outputs/qae_tfim_api_v2/**
+# LaTeX build artifacts
+paper/main.aux
+paper/main.bbl
+paper/main.bcf
+paper/main.blg
+paper/main.log
+paper/main.out
+paper/main.run.xml
+paper/main.fls
+paper/main.fdb_latexmk
+paper/main.pdf

@@ -1,0 +1,123 @@
+{
+  "rows": [
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-corr-YXYX-bottleneck",
+      "order": 1,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.14812252888699406,
+      "val_loss": 0.1203419344440878,
+      "test_loss": 0.14423367076323512,
+      "train_fid": 0.8518774711130059,
+      "val_fid": 0.8796580655559122,
+      "test_fid": 0.8557663292367649
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-zigzag-entangler",
+      "order": 2,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.08349981417041596,
+      "val_loss": 0.08457365787711846,
+      "test_loss": 0.08317371290914966,
+      "train_fid": 0.916500185829584,
+      "val_fid": 0.9154263421228815,
+      "test_fid": 0.9168262870908503
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-openchain-edge-to-bulk-YZZY",
+      "order": 3,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.1715683354717883,
+      "val_loss": 0.13640847368122966,
+      "test_loss": 0.1667556542471893,
+      "train_fid": 0.8284316645282117,
+      "val_fid": 0.8635915263187703,
+      "test_fid": 0.8332443457528107
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-left-right-symmetric-bond-to-bulk-YXYX",
+      "order": 4,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.16423269548048247,
+      "val_loss": 0.13244123268556995,
+      "test_loss": 0.15982731749708834,
+      "train_fid": 0.8357673045195175,
+      "val_fid": 0.86755876731443,
+      "test_fid": 0.8401726825029117
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-symmetric-outer-to-inner-YZYZ",
+      "order": 5,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.155565882629649,
+      "val_loss": 0.13318516938029656,
+      "test_loss": 0.15207599819561712,
+      "train_fid": 0.844434117370351,
+      "val_fid": 0.8668148306197034,
+      "test_fid": 0.8479240018043829
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-bond-centered-YXYY-cascade",
+      "order": 6,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.14676351143447874,
+      "val_loss": 0.12466013177230195,
+      "test_loss": 0.14319574764534948,
+      "train_fid": 0.8532364885655213,
+      "val_fid": 0.875339868227698,
+      "test_fid": 0.8568042523546505
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-edge-pair-to-center-YXYY",
+      "order": 7,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.10510904210787697,
+      "val_loss": 0.10075138244458282,
+      "test_loss": 0.10384986570949095,
+      "train_fid": 0.894890957892123,
+      "val_fid": 0.8992486175554172,
+      "test_fid": 0.896150134290509
+    },
+    {
+      "seed": 1,
+      "method": "LLM-API-closed",
+      "candidate": "real-outer-to-inner-bond-bridge-YXYX",
+      "order": 8,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.1496520675222648,
+      "val_loss": 0.12043806799502776,
+      "test_loss": 0.14558294842516029,
+      "train_fid": 0.8503479324777352,
+      "val_fid": 0.8795619320049722,
+      "test_fid": 0.8544170515748397
+    }
+  ],
+  "model_snapshots": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "total_input_tokens": 5658,
+  "total_output_tokens": 671,
+  "budget_spent_usd_estimate": 0.04,
+  "n_calls": 8
+}

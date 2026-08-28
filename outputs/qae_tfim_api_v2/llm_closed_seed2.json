@@ -1,0 +1,123 @@
+{
+  "rows": [
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-nearest-neighbor",
+      "order": 1,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.04821320792930639,
+      "val_loss": 0.11352266806129518,
+      "test_loss": 0.07442337269888344,
+      "train_fid": 0.9517867920706936,
+      "val_fid": 0.8864773319387048,
+      "test_fid": 0.9255766273011166
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-boundary-bond-bridge",
+      "order": 2,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.026577425930448095,
+      "val_loss": 0.05777740467654535,
+      "test_loss": 0.0400314678036513,
+      "train_fid": 0.9734225740695519,
+      "val_fid": 0.9422225953234546,
+      "test_fid": 0.9599685321963487
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-central-bridge",
+      "order": 3,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.03865834731309237,
+      "val_loss": 0.09047181603963261,
+      "test_loss": 0.059592519077867,
+      "train_fid": 0.9613416526869076,
+      "val_fid": 0.9095281839603674,
+      "test_fid": 0.940407480922133
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-crossed-boundary-merge",
+      "order": 4,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.03620942378858749,
+      "val_loss": 0.0761856010959393,
+      "test_loss": 0.054624555644011585,
+      "train_fid": 0.9637905762114125,
+      "val_fid": 0.9238143989040607,
+      "test_fid": 0.9453754443559884
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-latent-merge-via-central-trash-",
+      "order": 5,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.03748888742088541,
+      "val_loss": 0.08945249002751277,
+      "test_loss": 0.059825487903603536,
+      "train_fid": 0.9625111125791146,
+      "val_fid": 0.9105475099724872,
+      "test_fid": 0.9401745120963965
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "fallback_p5",
+      "order": 6,
+      "fallback": true,
+      "invalid_errors": "",
+      "train_loss": 0.33858579770005226,
+      "val_loss": 0.26195458291697793,
+      "test_loss": 0.315782159359274,
+      "train_fid": 0.6614142022999477,
+      "val_fid": 0.7380454170830221,
+      "test_fid": 0.684217840640726
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-latent-symmetrize-edge-to-cente",
+      "order": 7,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.08324630395348909,
+      "val_loss": 0.15307565813519297,
+      "test_loss": 0.11139714381875476,
+      "train_fid": 0.9167536960465109,
+      "val_fid": 0.846924341864807,
+      "test_fid": 0.8886028561812452
+    },
+    {
+      "seed": 2,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-parity-central-dimer-to-latent-merge",
+      "order": 8,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.08348026915009343,
+      "val_loss": 0.17302050853212292,
+      "test_loss": 0.11786587598324627,
+      "train_fid": 0.9165197308499066,
+      "val_fid": 0.8269794914678771,
+      "test_fid": 0.8821341240167537
+    }
+  ],
+  "model_snapshots": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "total_input_tokens": 5538,
+  "total_output_tokens": 681,
+  "budget_spent_usd_estimate": 0.04,
+  "n_calls": 8
+}
