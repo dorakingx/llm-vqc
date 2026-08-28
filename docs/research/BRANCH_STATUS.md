@@ -1,6 +1,6 @@
 # Research branch status
 
-The consolidation PR (#4) has been squash-merged. `main` is now the single active research line.
+The consolidation PR (#4) and the API-verification PR (#5) have been squash-merged. `main` is the single active research line.
 
 ## Active line
 
@@ -36,7 +36,14 @@ The consolidation PR (#4) has been squash-merged. `main` is now the single activ
 - PR #2 was closed without merge and retained only as provenance.
 - PR #3 was closed without merge and retained only as provenance.
 - PR #4 `research/unified-qae-v1 -> main` was squash-merged successfully.
-- There are no open pull requests after consolidation.
+- PR #5 `claude/llm-vqc-consolidate-qae-673a04 -> main` (QAE v2 version-pinned API verification + Evolutionary/hand-designed baselines + paper update) was squash-merged on 2026-08-28.
+- There are no open pull requests.
+
+## External deliverables
+
+- Meeting deck (2026-08-29): `20260829_GSoC.pptx` + `20260829_GSoC.pdf` in the shared Google Drive `slides` folder; the earlier draft is retained as `20260829_GSoC_archive`.
+- Manuscript: `paper/main.tex` (canonical, in this repo) is synced to the Overleaf project (git remote `git.overleaf.com/6a1b64ed666041bd4b9014fe`, commit "Update manuscript with QAE v2 version-pinned API verification results").
+- Literature: the six queued references in `REFERENCES_TO_ADD_TO_PAPERPILE.md` were imported into the Paperpile `llm-vqc` folder on 2026-08-28.
 
 ## Why disconnected histories remain archives
 

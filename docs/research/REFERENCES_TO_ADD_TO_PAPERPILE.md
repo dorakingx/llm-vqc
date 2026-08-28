@@ -31,3 +31,9 @@ Recommended additions:
 ## Paperpile note
 
 The connected tools expose Google Drive files but not Paperpile’s internal collection/tag API. Therefore the repository records the exact references to add, while the Drive `llm-vqc` literature folder is used as the visible shared reference location. Do not claim Paperpile tagging succeeded unless it is confirmed in Paperpile itself.
+
+## Status update (2026-08-28)
+
+All six references above were imported into the Paperpile `llm-vqc` folder on
+2026-08-28 via the Paperpile web app (folder count 9 → 15). The list above is
+retained as the canonical record of what was added and why.
