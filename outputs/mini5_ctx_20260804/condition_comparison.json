@@ -1,0 +1,119 @@
+{
+  "fixed 5 gates B = 8": {
+    "median_test_rmse": {
+      "gauss_peak": {
+        "random": 0.13867707269069043,
+        "evolutionary": 0.151962351928179,
+        "greedy": 0.1475511984079798,
+        "llm_open": 0.16976342885850865,
+        "llm_closed": 0.180728751969015
+      },
+      "sin_freq": {
+        "random": 0.2952681348105234,
+        "evolutionary": 0.27305109971207253,
+        "greedy": 0.27117662867746467,
+        "llm_open": 0.20421540002865313,
+        "llm_closed": 0.21305918448656488
+      },
+      "change_point": {
+        "random": 0.18397878142832788,
+        "evolutionary": 0.20533952101433336,
+        "greedy": 0.2742676863187527,
+        "llm_open": 0.2572013265820734,
+        "llm_closed": 0.3692313337678621
+      },
+      "peak_count": {
+        "random": 0.4965746622013628,
+        "evolutionary": 0.5046741003224329,
+        "greedy": 0.5404217813291095,
+        "llm_open": 0.5255832616459064,
+        "llm_closed": 0.5474555908825416
+      }
+    },
+    "selected_gate_count_median": {
+      "random": 5.0,
+      "evolutionary": 5.0,
+      "greedy": 5.0,
+      "llm_open": 5.0,
+      "llm_closed": 5.0
+    }
+  },
+  "variable 1-5 gates B = 8": {
+    "median_test_rmse": {
+      "gauss_peak": {
+        "random": 0.1434425345541422,
+        "evolutionary": 0.16189511986944788,
+        "greedy": 0.16658716501268495,
+        "llm_open": 0.16786557640991107,
+        "llm_closed": 0.1686774716348701
+      },
+      "sin_freq": {
+        "random": 0.27628249409213074,
+        "evolutionary": 0.2612715371365959,
+        "greedy": 0.29976675991074586,
+        "llm_open": 0.20355643715269145,
+        "llm_closed": 0.21212425188554113
+      },
+      "change_point": {
+        "random": 0.23780550375165632,
+        "evolutionary": 0.2713092717590026,
+        "greedy": 0.31937375362018333,
+        "llm_open": 0.3204788030598474,
+        "llm_closed": 0.3652769581941875
+      },
+      "peak_count": {
+        "random": 0.5223342719116625,
+        "evolutionary": 0.536897586196863,
+        "greedy": 0.546655383477864,
+        "llm_open": 0.5258239680191421,
+        "llm_closed": 0.5301683114794777
+      }
+    },
+    "selected_gate_count_median": {
+      "random": 4.0,
+      "evolutionary": 4.0,
+      "greedy": 4.0,
+      "llm_open": 5.0,
+      "llm_closed": 5.0
+    }
+  },
+  "variable 1-5 gates B = 4  (pilot setting)": {
+    "median_test_rmse": {
+      "gauss_peak": {
+        "random": 0.16657476109750158,
+        "evolutionary": 0.16657476109750158,
+        "greedy": 0.18050773741737863,
+        "llm_open": 0.17018801140827483,
+        "llm_closed": 0.1701277004658745
+      },
+      "sin_freq": {
+        "random": 0.28776264057419715,
+        "evolutionary": 0.28776264057419715,
+        "greedy": 0.3040644451617857,
+        "llm_open": 0.20413392485072873,
+        "llm_closed": 0.20365993881349365
+      },
+      "change_point": {
+        "random": 0.30132484440930407,
+        "evolutionary": 0.30132484440930407,
+        "greedy": 0.31994339023461316,
+        "llm_open": 0.3212146179406028,
+        "llm_closed": 0.36757648987827574
+      },
+      "peak_count": {
+        "random": 0.536897586196863,
+        "evolutionary": 0.536897586196863,
+        "greedy": 0.5535050601828374,
+        "llm_open": 0.5342824628984213,
+        "llm_closed": 0.5308914340967719
+      }
+    },
+    "selected_gate_count_median": {
+      "random": 4.0,
+      "evolutionary": 4.0,
+      "greedy": 3.5,
+      "llm_open": 5.0,
+      "llm_closed": 5.0
+    }
+  }
+}
