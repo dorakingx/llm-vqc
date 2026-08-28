@@ -1,0 +1,123 @@
+{
+  "rows": [
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "nn_real_evenbond",
+      "order": 1,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.020290655396114854,
+      "val_loss": 0.04228990851659009,
+      "test_loss": 0.030185082196809487,
+      "train_fid": 0.9797093446038851,
+      "val_fid": 0.9577100914834099,
+      "test_fid": 0.9698149178031905
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "mirror_nn_real_zzladders",
+      "order": 2,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.1539116189953047,
+      "val_loss": 0.27200205870572036,
+      "test_loss": 0.19562023236204484,
+      "train_fid": 0.8460883810046953,
+      "val_fid": 0.7279979412942796,
+      "test_fid": 0.8043797676379552
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "nn_real_centered_ladder",
+      "order": 3,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.03249327115868417,
+      "val_loss": 0.07703111486787506,
+      "test_loss": 0.05184959799713518,
+      "train_fid": 0.9675067288413158,
+      "val_fid": 0.9229688851321249,
+      "test_fid": 0.9481504020028648
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "fallback_p3",
+      "order": 4,
+      "fallback": true,
+      "invalid_errors": "",
+      "train_loss": 0.5396611152818902,
+      "val_loss": 0.5432398375627778,
+      "test_loss": 0.5417086117111172,
+      "train_fid": 0.4603388847181098,
+      "val_fid": 0.45676016243722223,
+      "test_fid": 0.4582913882888828
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "boundary_parity_bridge",
+      "order": 5,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.10809225127910294,
+      "val_loss": 0.2056024468768568,
+      "test_loss": 0.1441684093605804,
+      "train_fid": 0.8919077487208971,
+      "val_fid": 0.7943975531231432,
+      "test_fid": 0.8558315906394196
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "fallback_p5",
+      "order": 6,
+      "fallback": true,
+      "invalid_errors": "",
+      "train_loss": 0.14636164924752326,
+      "val_loss": 0.2525982972289108,
+      "test_loss": 0.18421948949821743,
+      "train_fid": 0.8536383507524767,
+      "val_fid": 0.7474017027710892,
+      "test_fid": 0.8157805105017826
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "boundary_to_bulk_real_ladder",
+      "order": 7,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.020242337688337164,
+      "val_loss": 0.04209300458108156,
+      "test_loss": 0.030094410833067742,
+      "train_fid": 0.9797576623116628,
+      "val_fid": 0.9579069954189184,
+      "test_fid": 0.9699055891669323
+    },
+    {
+      "seed": 2,
+      "method": "LLM-Closed",
+      "candidate": "nn_real_boundary_to_bulk_with_mid_swap",
+      "order": 8,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.09705744552336326,
+      "val_loss": 0.17852830525506302,
+      "test_loss": 0.12614466296055837,
+      "train_fid": 0.9029425544766367,
+      "val_fid": 0.821471694744937,
+      "test_fid": 0.8738553370394416
+    }
+  ],
+  "model_snapshots": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "total_input_tokens": 7988,
+  "total_output_tokens": 1400,
+  "budget_spent_usd_estimate": 0.04,
+  "n_calls": 8
+}

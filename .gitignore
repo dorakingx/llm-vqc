@@ -38,3 +38,5 @@ paper/main.run.xml
 paper/main.fls
 paper/main.fdb_latexmk
 paper/main.pdf
+!outputs/qae_tfim_neutral_v3/
+!outputs/qae_tfim_neutral_v3/**
