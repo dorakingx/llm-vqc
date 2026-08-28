@@ -44,3 +44,13 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+# Legacy analysis/experiment code merged from the archived research lines is
+# grandfathered on style-only rules; new code must satisfy the full rule set.
+[tool.ruff.lint.per-file-ignores]
+"scripts/capacity_controlled/*" = ["E402", "E501", "E702", "E741", "F401", "F841", "B007", "B905", "I001"]
+"scripts/build_methodology_figures.py" = ["E501", "E741", "B905"]
+"llm_vqc/evaluation/harness.py" = ["E501"]
+"llm_vqc/experiments/capacity_controlled/*" = ["E402", "E501", "E702", "B007", "I001"]
+"llm_vqc/experiments/qae_tfim/pilot.py" = ["E501"]
+"tests/test_capacity_controlled*.py" = ["E501", "E702", "F401", "F841", "B007", "I001"]
