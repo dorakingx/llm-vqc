@@ -1,29 +1,29 @@
 # Research branch status
 
-This document makes `research/unified-qae-v1` the single active integration line for the project.
+The consolidation PR (#4) has been squash-merged. `main` is now the single active research line.
 
 ## Active line
 
 | Branch | Status | Action |
 |---|---|---|
-| `main` | stable baseline | merge only through the unified PR |
-| `research/unified-qae-v1` | **ACTIVE** | canonical research integration branch; based on `experiment/capacity-controlled-t2-v1` |
+| `main` | **ACTIVE** | canonical research branch containing capacity-controlled T1/T2, the semantic QAE pilot, reproducibility docs, and the manuscript |
+| `research/unified-qae-v1` | merged checkpoint | PR #4 was squash-merged into `main`; keep only as temporary provenance if desired |
 
 ## Incorporated / superseded lines
 
 | Branch | Status | Reason |
 |---|---|---|
-| `experiment/capacity-controlled-t1-v1` | superseded | T1-v1 is contained in the later capacity-controlled line |
-| `experiment/capacity-controlled-t1-v2` | historical checkpoint | T1-v2 is contained in the T2-v1 ancestry and its conclusions are preserved |
-| `experiment/capacity-controlled-t2-v1` | incorporated base | chosen as the common-ancestor base for the unified branch |
+| `experiment/capacity-controlled-t1-v1` | superseded | T1-v1 is contained in the later capacity-controlled line now incorporated into `main` |
+| `experiment/capacity-controlled-t1-v2` | historical checkpoint | T1-v2 conclusions and artifacts are incorporated into `main` |
+| `experiment/capacity-controlled-t2-v1` | incorporated | T2-v1 formed the base of the consolidation and is now in `main` |
 
 ## Preserve as read-only scientific archives; do not merge directly
 
 | Branch | Status | Reason |
 |---|---|---|
-| `experiment/capacity-controlled-higgs-v1` | archive | useful HIGGS diagnosis but Git history is disconnected from `main`; conclusions are summarized in the unified docs rather than force-merging unrelated history |
+| `experiment/capacity-controlled-higgs-v1` | archive | useful HIGGS diagnosis but Git history is disconnected from `main`; conclusions are summarized in `docs/research/HIGGS_ARCHIVE_SYNTHESIS.md` rather than force-merging unrelated history |
 | `experiment/higgs-data-scale-qualification-v1` | archive | follow-up HIGGS data/training qualification; same disconnected-history issue |
-| `experiment/free-amplitude-fixed-readout-v1` | legacy archive | ancestor of the old rigorous-QAS line, but disconnected from current `main` history |
+| `experiment/free-amplitude-fixed-readout-v1` | legacy archive | ancestor of the old rigorous-QAS line, disconnected from current `main` history |
 | `research/rigorous-qas-benchmark-v2` | legacy archive | preserves earlier benchmark infrastructure/results; not a merge target |
 | `presentation/rebuild-gsoc-benchmark-v2` | superseded presentation branch | old draft presentation work |
 | `experiment/bench-v2-real-llm-cost-minimal` | superseded experiment branch | old draft real-LLM cost work |
@@ -33,16 +33,13 @@ This document makes `research/unified-qae-v1` the single active integration line
 
 ## Pull requests
 
-The two open draft PRs on the disconnected `research/rigorous-qas-benchmark-v2` line are superseded by the unified branch:
-- PR #2 `presentation/rebuild-gsoc-benchmark-v2` -> `research/rigorous-qas-benchmark-v2`
-- PR #3 `experiment/bench-v2-real-llm-cost-minimal` -> `research/rigorous-qas-benchmark-v2`
+- PR #2 was closed without merge and retained only as provenance.
+- PR #3 was closed without merge and retained only as provenance.
+- PR #4 `research/unified-qae-v1 -> main` was squash-merged successfully.
+- There are no open pull requests after consolidation.
 
-They should remain in GitHub history for provenance, but are closed rather than merged.
+## Why disconnected histories remain archives
 
-## Why we do not force-merge disconnected histories
+Force-merging unrelated ancestry would make it difficult to audit which result came from which experimental protocol. Instead, `main` now contains the clean scientific narrative and reproducible active benchmark, while disconnected histories remain read-only evidence for earlier experiments.
 
-A force merge would combine unrelated ancestry and make it difficult to audit which result came from which experimental protocol. The unified branch instead:
-1. keeps the capacity-controlled T1/T2 history intact,
-2. summarizes the HIGGS lessons with explicit branch pointers,
-3. adds the QAE benchmark as the next scientific step,
-4. creates one clean PR to `main`.
+If branch deletion is desired later, delete only branches marked `superseded`, `archive`, or `merged checkpoint` after confirming no external work still points to them.
