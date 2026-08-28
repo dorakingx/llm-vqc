@@ -12,15 +12,19 @@ Recommended additions:
    arXiv:2511.19246.  
    Why: directly studies automated QAE circuit architecture search with a genetic algorithm; critical baseline/related work for LLM-guided QAE search.
 
-3. **Du et al. (2022), “Quantum circuit architecture search for variational quantum algorithms.”**  
+3. **Kulshrestha, Liu, Ushijima-Mwesigwa, Safro (2025), “Neural Architecture Search Algorithms for Quantum Autoencoders.”**  
+   arXiv:2509.15451.  
+   Why: proposes two QAE-specific Quantum-NAS algorithms and reports efficient autoencoder designs on denoising, classical compression, and pure-quantum compression tasks; this is a particularly important confirmatory baseline for the next experiment.
+
+4. **Du et al. (2022), “Quantum circuit architecture search for variational quantum algorithms.”**  
    npj Quantum Information 8, 62. DOI: 10.1038/s41534-022-00570-y.  
    Why: established automated quantum architecture search under VQA constraints.
 
-4. **Frehner & Stockinger (2025), “Applying quantum autoencoders for time series anomaly detection.”**  
+5. **Frehner & Stockinger (2025), “Applying quantum autoencoders for time series anomaly detection.”**  
    Quantum Machine Intelligence 7, 59. DOI: 10.1007/s42484-025-00285-1. arXiv:2410.04154.  
    Why: compares QAE ansätze/depths and demonstrates QAE behavior on a practical anomaly-detection setting.
 
-5. **Dai et al. (2026), “EAQAS: Embedding-Aware Quantum Architecture Search via cross-attention fusion and hierarchical representation learning.”**  
+6. **Dai et al. (2026), “EAQAS: Embedding-Aware Quantum Architecture Search via cross-attention fusion and hierarchical representation learning.”**  
    EPJ Quantum Technology 13, 22. DOI: 10.1140/epjqt/s40507-026-00478-y.  
    Why: explicitly argues that data embedding and circuit structure should be searched jointly; supports the project’s move from flat gate search to semantically meaningful design choices.
 
