@@ -68,6 +68,20 @@ fidelity 0.9700) beats Random (+0.0518, 11/12 seeds), the RY-only control
 reference (+0.0811, 12/12). Closed-loop feedback added no measurable value over
 open-loop priors at this budget (23/96 proposals were duplicates).
 
+## Step 6 — Neutral-space 2×2 (v3, primary experiment, completed)
+
+v3 (`docs/research/QAE_PROTOCOL_V3.md`, pre-registered) removed the rigid
+layer layout (free ordering of 12 rotations + 4 CNOTs) and reduced the
+comparison to a clean 2×2 over semantics × validation feedback:
+Random / Greedy / LLM-Open / LLM-Closed, B=8, paired seeds, pinned
+`gpt-5.4-mini-2026-03-17`. Result (`outputs/qae_tfim_neutral_v3/REPORT.md`):
+**semantics is the decisive axis** — LLM-Open 0.9653 vs Random 0.8721
+(+0.0932, 12/12 seeds, p=0.00049, dz=1.73); LLM-Closed 0.9553 beats both
+non-semantic arms 12/12; Greedy 0.7667 is *significantly worse* than Random
+(breadth beats one-start local search at B=8); feedback adds nothing given
+semantics (Closed − Open n.s., p=0.68). In the freer space the Random
+baseline drops while the LLM arms hold, so the semantic-prior gain grows.
+
 ## Paper story
 
 The paper is no longer "LLM beats random at VQC design."
