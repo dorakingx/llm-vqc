@@ -2,6 +2,8 @@
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amssymb,booktabs,graphicx,hyperref,microtype}
 \usepackage{enumitem}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
 \usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
 \addbibresource{references.bib}
 \title{When Does Language-Model Reasoning Help Variational Quantum Circuit Search?\\
@@ -173,8 +175,14 @@ LLM semantic & \textbf{0.9676} & \textbf{0.9679} & \textbf{0.0029}\\
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.82\linewidth]{figures/fig_qae_selected_test_fidelity.png}
-\caption{Protected-test trash fidelity for the validation-selected circuit in each verification seed. All methods use the same circuit capacity and candidate budget.}
+\begin{tikzpicture}
+\begin{axis}[ybar,bar width=18pt,width=0.78\linewidth,height=5.2cm,ymin=0.88,ymax=0.98,
+  ylabel={Mean protected-test trash fidelity},symbolic x coords={Random,RY-random,LLM-semantic},xtick=data,
+  nodes near coords,nodes near coords align={vertical},every node near coord/.append style={font=\small},grid=major]
+\addplot coordinates {(Random,0.9181) (RY-random,0.9474) (LLM-semantic,0.9676)};
+\end{axis}
+\end{tikzpicture}
+\caption{Mean protected-test trash fidelity across 12 verification seeds. All methods use the same circuit capacity and candidate budget.}
 \label{fig:qae-selected}
 \end{figure}
 
@@ -191,7 +199,17 @@ This is the expected signature if semantic priors improve \emph{sample efficienc
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.82\linewidth]{figures/fig_qae_anytime_validation.png}
+\begin{tikzpicture}
+\begin{axis}[width=0.82\linewidth,height=5.5cm,xlabel={Candidates evaluated},ylabel={Mean best validation fidelity},
+  xmin=1,xmax=8,ymin=0.74,ymax=0.99,xtick={1,2,3,4,5,6,7,8},grid=major,legend pos=south east]
+\addplot+[mark=*] coordinates {(1,0.7711)(2,0.8161)(3,0.8764)(4,0.8783)(5,0.8839)(6,0.8859)(7,0.9096)(8,0.9207)};
+\addlegendentry{Random}
+\addplot+[mark=square*] coordinates {(1,0.8861)(2,0.9166)(3,0.9227)(4,0.9362)(5,0.9394)(6,0.9406)(7,0.9453)(8,0.9524)};
+\addlegendentry{RY-random}
+\addplot+[mark=triangle*] coordinates {(1,0.9318)(2,0.9677)(3,0.9677)(4,0.9678)(5,0.9678)(6,0.9678)(7,0.9678)(8,0.9678)};
+\addlegendentry{LLM-semantic}
+\end{axis}
+\end{tikzpicture}
 \caption{Anytime validation performance as the candidate-evaluation budget is consumed. The semantic pool reaches a strong circuit early, while both random controls improve more gradually.}
 \label{fig:qae-anytime}
 \end{figure}
