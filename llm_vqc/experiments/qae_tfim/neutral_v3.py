@@ -308,19 +308,21 @@ def generate_open_pool(destination: Path) -> LLMPool:
     seen: set[str] = set()
     fallback_names: list[str] = []
     rejected: list[dict] = []
+    records: list[LLMCallRecord] = []
 
-    parsed, records = _complete_json(
-        provider, budget, OPEN_LOOP_PROMPT, "open_pool", POOL_CALL_COST_ESTIMATE_USD
-    )
-    if parsed is not None:
-        for i, entry in enumerate(parsed.get("candidates", [])[: BUDGET * 2]):
+    def absorb(parsed_obj: dict | None) -> list[dict]:
+        """Validate one response's candidates; return the newly rejected ones."""
+        newly_rejected: list[dict] = []
+        if parsed_obj is None:
+            return newly_rejected
+        for i, entry in enumerate(parsed_obj.get("candidates", [])[: BUDGET * 2]):
             architecture, errors = parse_candidate(entry)
             if architecture is None:
-                rejected.append({"index": i, "errors": errors, "entry": entry})
+                newly_rejected.append({"index": i, "errors": errors, "entry": entry})
                 continue
             key = architecture_key(architecture)
             if key in seen:
-                rejected.append({"index": i, "errors": ["duplicate"], "entry": entry})
+                newly_rejected.append({"index": i, "errors": ["duplicate"], "entry": entry})
                 continue
             if len(candidates) >= BUDGET:
                 break
@@ -329,6 +331,40 @@ def generate_open_pool(destination: Path) -> LLMPool:
             while name in candidates:
                 name += "_"
             candidates[name] = architecture
+        return newly_rejected
+
+    parsed, call_records = _complete_json(
+        provider, budget, OPEN_LOOP_PROMPT, "open_pool", POOL_CALL_COST_ESTIMATE_USD
+    )
+    records.extend(call_records)
+    rejected.extend(absorb(parsed))
+
+    # Pre-inspection amendment 1: bounded capacity repair. Up to 2 extra
+    # calls request replacements for rejected entries, quoting the errors.
+    repair_round = 0
+    while len(candidates) < BUDGET and rejected and repair_round < MAX_REPAIR_ATTEMPTS:
+        repair_round += 1
+        deficit = BUDGET - len(candidates)
+        complaint_lines = [
+            f"- {json.dumps(r['entry'], separators=(',', ':'))[:400]} rejected: "
+            + "; ".join(r["errors"])[:200]
+            for r in rejected[-deficit:]
+        ]
+        repair_prompt = (
+            TASK_CARD
+            + "\nYour earlier candidates below were REJECTED for violating the exact "
+            "resource contract (exactly 12 rotations and exactly 4 CNOTs, 16 gates):\n"
+            + "\n".join(complaint_lines)
+            + f"\nOutput exactly {deficit} NEW distinct candidates that satisfy the "
+            "contract exactly. Count the gates before answering.\n"
+            + JSON_SCHEMA_CARD
+        )
+        parsed, call_records = _complete_json(
+            provider, budget, repair_prompt, f"open_pool_repair{repair_round}",
+            POOL_CALL_COST_ESTIMATE_USD,
+        )
+        records.extend(call_records)
+        rejected.extend(absorb(parsed))
 
     deficit_rng = np.random.default_rng(999_999)
     while len(candidates) < BUDGET:
