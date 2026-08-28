@@ -1,0 +1,144 @@
+{
+  "space_name": "T1_capacity_controlled_v1",
+  "task": "T1_gaussian_peak",
+  "data_split_seed": 0,
+  "budget": 25,
+  "repetition_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "arms": [
+    "controlled_random",
+    "controlled_greedy",
+    "controlled_evolutionary"
+  ],
+  "greedy_k": 5,
+  "evo_config": {
+    "mu": 5,
+    "lambda_": 5,
+    "crossover_rate": 0.5,
+    "mutation_rate": 0.5,
+    "tournament_size": 2
+  },
+  "fixed_controls": {
+    "n_qubits": 4,
+    "encoding_type": "angle",
+    "encoding_gate": "RY",
+    "encoding_wires": "all",
+    "amplitude_encoding": "forbidden",
+    "measurement_observable": "Z",
+    "measurement_wires": "all",
+    "classical_embed": "Linear(21->4)",
+    "classical_head": "Linear(4->1)",
+    "quantum_param_count": 12,
+    "embed_params": 88,
+    "head_params": 5,
+    "total_trainable_params": 105
+  },
+  "structural_limits": {
+    "max_blocks": 6,
+    "max_depth": 30,
+    "max_total_gates": 32,
+    "max_two_qubit_gates": 24
+  },
+  "param_block_kinds": [
+    "RX",
+    "RY",
+    "RZ",
+    "CRZ"
+  ],
+  "free_block_templates": [
+    [
+      "entangle",
+      "CNOT",
+      "ring",
+      null
+    ],
+    [
+      "entangle",
+      "CNOT",
+      "line",
+      null
+    ],
+    [
+      "entangle",
+      "CNOT",
+      "star",
+      0
+    ],
+    [
+      "entangle",
+      "CZ",
+      "ring",
+      null
+    ],
+    [
+      "entangle",
+      "CZ",
+      "line",
+      null
+    ],
+    [
+      "entangle",
+      "CZ",
+      "star",
+      0
+    ],
+    [
+      "hadamard",
+      "H",
+      null,
+      null
+    ]
+  ],
+  "training_config": {
+    "optimizer": "adamw",
+    "learning_rate": 0.05,
+    "epochs": 20,
+    "batch_size": 16,
+    "lr_decay_factor": 0.5,
+    "lr_decay_epochs": [
+      7,
+      13,
+      17
+    ],
+    "weight_decay": 1e-05,
+    "device": "cpu",
+    "dtype": "float64"
+  },
+  "init_policy": {
+    "name": "explicit_kaiming_uniform_qc_v1",
+    "version": "v1",
+    "classical_weight": "uniform[-1/sqrt(fan_in), +1/sqrt(fan_in)] (PyTorch Linear semantics, explicit)",
+    "classical_bias": "uniform[-1/sqrt(fan_in), +1/sqrt(fan_in)]",
+    "quantum_angles": "uniform[-3.141592653589793, 3.141592653589793]",
+    "seed_source": "TrainingSeeds.param_init (SeedSequence-derived)",
+    "draw_order": [
+      "embed.weight",
+      "embed.bias",
+      "q_layer.weights",
+      "head.weight",
+      "head.bias"
+    ],
+    "diff_method": "best"
+  },
+  "baselines": {
+    "C1": "bottleneck 21->4->1 (93 params)",
+    "C2": "MLP 21->4->3->1 (107 params, +2 vs 105)",
+    "Q1": "fixed hardware-efficient RY x3 + CNOT-ring x2 (105 params)",
+    "Q2": "fixed random architecture, seed 20260719 (105 params)"
+  },
+  "git_sha": "78cb6d3ed3fabbc8835462fc997cddbfbbeade92",
+  "integrity": [
+    "no LLM arms",
+    "no LLM API calls",
+    "no amplitude encoding",
+    "validation-only search feedback",
+    "protected test scored once after selection",
+    "quantum param count NOT tuned after seeing results",
+    "identical init policy for every arm"
+  ]
+}

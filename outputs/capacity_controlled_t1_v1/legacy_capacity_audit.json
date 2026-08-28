@@ -1,0 +1,32 @@
+{
+  "note": "Legacy unrestricted B=25 non-LLM pilot capacity audit; read-only, historical results unchanged. Total trainable params = embed + quantum + head.",
+  "n_circuits": 222,
+  "total_trainable_params": {
+    "min": 24,
+    "max": 22609,
+    "median": 113.0,
+    "ratio_max_over_min": 942.0416666666666
+  },
+  "embed_params": {
+    "min": 22,
+    "max": 22528
+  },
+  "quantum_params": {
+    "min": 0,
+    "max": 70
+  },
+  "by_encoding_type": {
+    "angle": {
+      "n": 181,
+      "min_total": 24,
+      "max_total": 284,
+      "median_total": 79.0
+    },
+    "amplitude": {
+      "n": 41,
+      "min_total": 47,
+      "max_total": 22609,
+      "median_total": 2831.0
+    }
+  }
+}

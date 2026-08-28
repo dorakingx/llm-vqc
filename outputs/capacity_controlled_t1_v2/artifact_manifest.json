@@ -1,0 +1,40 @@
+{
+  "figures": [
+    "fig01_test_rmse_by_arm_split.png",
+    "fig02_val_rmse_by_arm_split.png",
+    "fig03_equivalence_intervals.png",
+    "fig04_anytime_proposals.png",
+    "fig05_anytime_unique_trainings.png",
+    "fig06_anytime_walltime.png",
+    "fig07_proposal_rates.png",
+    "fig08_runtime_distribution.png",
+    "fig09_vqc_vs_analytical.png",
+    "fig10_vqc_vs_classical_search.png",
+    "fig11_quantum_ablations.png",
+    "fig12_pred_vs_true.png",
+    "fig13_residuals.png",
+    "fig14_capacity_verification.png",
+    "fig15_split_variability.png",
+    "fig16_v1_vs_v2.png"
+  ],
+  "tables": [
+    "analytical_baseline_summary.csv",
+    "candidate_results.csv",
+    "classical_search_summary.csv",
+    "quantum_ablation_summary.csv",
+    "resource_accounting.csv",
+    "run_summary.csv",
+    "split_summary.csv"
+  ],
+  "analyses": [
+    "artifact_manifest.json",
+    "equivalence_analysis.json",
+    "experiment_config.json",
+    "experiment_manifest.json",
+    "figure_data.json",
+    "power_analysis.json",
+    "protocol.json",
+    "run_summary.json",
+    "statistical_analysis.json"
+  ]
+}

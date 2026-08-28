@@ -1,0 +1,16 @@
+run_id,arm,seed,num_valid,num_invalid,num_duplicate,num_failed,consumed_budget,selected_val_rmse,test_rmse,selected_total_params,selected_depth,selected_two_qubit
+controlled_random_s0,controlled_random,0,24,0,1,0,25,0.014917766430759618,0.016967381413512523,105,11,8
+controlled_random_s1,controlled_random,1,23,0,2,0,25,0.014349298059282378,0.0163277169005443,105,11,9
+controlled_random_s2,controlled_random,2,25,0,0,0,25,0.019895725954787963,0.02428102872720275,105,10,4
+controlled_random_s3,controlled_random,3,24,0,1,0,25,0.017554465186755765,0.01771613240556008,105,7,3
+controlled_random_s4,controlled_random,4,25,0,0,0,25,0.018206241051814297,0.02053942343521537,105,15,14
+controlled_greedy_s0,controlled_greedy,0,25,0,0,0,25,0.015763946271228818,0.01707820503666429,105,12,8
+controlled_greedy_s1,controlled_greedy,1,25,0,0,0,25,0.015087964076343741,0.017364988928337544,105,13,10
+controlled_greedy_s2,controlled_greedy,2,23,0,2,0,25,0.017189771771136703,0.018093859962306075,105,9,6
+controlled_greedy_s3,controlled_greedy,3,24,0,1,0,25,0.015049463894768465,0.017676817531146347,105,15,14
+controlled_greedy_s4,controlled_greedy,4,23,0,2,0,25,0.013951449261179265,0.01587179017874151,105,15,11
+controlled_evolutionary_s0,controlled_evolutionary,0,19,0,6,0,25,0.013984771369478465,0.016897446878757386,105,13,10
+controlled_evolutionary_s1,controlled_evolutionary,1,15,0,10,0,25,0.016339629769331565,0.021210701065134303,105,16,17
+controlled_evolutionary_s2,controlled_evolutionary,2,21,0,4,0,25,0.014816270974189489,0.0157084712220176,105,14,10
+controlled_evolutionary_s3,controlled_evolutionary,3,18,0,7,0,25,0.015147513891879977,0.0152118424721768,105,11,9
+controlled_evolutionary_s4,controlled_evolutionary,4,17,0,8,0,25,0.017807392777339937,0.017356764396643205,105,10,6

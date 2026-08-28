@@ -26,6 +26,7 @@ with).
 from __future__ import annotations
 
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Literal
 
@@ -86,12 +87,26 @@ def train_model(
     train_val: TrainValData,
     config: TrainingConfig,
     train_seed: int,
+    init_policy: Callable[[HybridQNNModel, int], None] | None = None,
+    freeze_quantum: bool = False,
 ) -> TrainingOutput:
     """Train a fresh model on `ir` against `train_val`, deterministic given
     `(ir, train_val, config, train_seed)`. Never raises — training failures
     (divergence, backend errors) are reported in the returned
     `TrainingOutput`, not propagated as exceptions, so the harness can
     record a failed candidate without aborting the whole evaluation loop.
+
+    `init_policy` (optional, backward compatible): a callable
+    `(model, param_init_seed) -> None` applied to the freshly-built model to
+    set an *explicit, versioned* initialization. When `None` (the default, and
+    the only behavior any legacy run used), the model keeps PyTorch/PennyLane
+    dependency-default initialization under the seeded RNG — legacy runs are
+    never silently re-initialized.
+
+    `freeze_quantum` (optional, backward compatible, default False): when True,
+    the quantum layer's angles are initialized (by `init_policy` if given) and
+    then frozen — only the classical embed and head are trained. Used by the v2
+    "frozen random quantum features" ablation; `False` reproduces all prior runs.
     """
     seeds = TrainingSeeds.from_train_seed(train_seed)
     start = time.perf_counter()
@@ -102,9 +117,14 @@ def train_model(
         raw_feature_dim=train_val.spec.raw_feature_dim,
         head_out_dim=train_val.spec.classical_head_out_dim,
     )
+    if init_policy is not None:
+        init_policy(model, seeds.param_init)
+    if freeze_quantum:
+        model.q_layer.weights.requires_grad_(False)
 
+    trainable_params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=config.learning_rate, weight_decay=config.weight_decay
+        trainable_params, lr=config.learning_rate, weight_decay=config.weight_decay
     )
     scheduler = torch.optim.lr_scheduler.MultiStepLR(
         optimizer, milestones=list(config.lr_decay_epochs), gamma=config.lr_decay_factor

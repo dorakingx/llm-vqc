@@ -1,0 +1,29 @@
+{
+  "space": "T2_capacity_controlled_v1",
+  "total_trainable_params": 61,
+  "splits": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "budget": 25,
+  "arms": [
+    "controlled_random",
+    "controlled_evolutionary",
+    "controlled_greedy"
+  ],
+  "selection_metric": "logloss",
+  "primary_test_metric": "balanced_accuracy_error",
+  "equivalence_margin": 0.03,
+  "git_sha": "b978c5294a9ebc63f0a0606a7a50d721f2bff63e"
+}

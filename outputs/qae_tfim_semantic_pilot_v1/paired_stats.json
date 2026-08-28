@@ -1,0 +1,20 @@
+{
+  "Random": {
+    "mean_paired_fidelity_gain": 0.04951069675104879,
+    "median_paired_fidelity_gain": 0.05066530159466792,
+    "llm_wins": 10,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00244140625,
+    "sign_test_two_sided_p": 0.03857421875,
+    "bootstrap_95_ci_mean_gain": [0.029706221798160987, 0.0692575119293038]
+  },
+  "RY-random": {
+    "mean_paired_fidelity_gain": 0.020256931462927414,
+    "median_paired_fidelity_gain": 0.017412733905113664,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00244140625,
+    "sign_test_two_sided_p": 0.00634765625,
+    "bootstrap_95_ci_mean_gain": [0.011417790937864918, 0.02942636103192575]
+  }
+}

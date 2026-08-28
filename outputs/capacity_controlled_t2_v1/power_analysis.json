@@ -1,0 +1,24 @@
+{
+  "note": "post-run power using observed paired-diff SD",
+  "observed_paired_diff_sd": 0.013814478650663235,
+  "n_cells": 30,
+  "margin": 0.03,
+  "scenarios": {
+    "0.00": {
+      "P_equivalence": 1.0,
+      "P_detect": 0.0497
+    },
+    "0.01": {
+      "P_equivalence": 1.0,
+      "P_detect": 0.9694
+    },
+    "0.02": {
+      "P_equivalence": 0.9874,
+      "P_detect": 1.0
+    },
+    "0.03": {
+      "P_equivalence": 0.0498,
+      "P_detect": 1.0
+    }
+  }
+}

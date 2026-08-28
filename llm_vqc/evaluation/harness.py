@@ -33,6 +33,7 @@ both to get the original Phase 1/2 in-memory-only behavior.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from typing import Protocol
 
 from llm_vqc.evaluation.model import HybridQNNModel
@@ -56,7 +57,7 @@ from llm_vqc.ir.canonicalize import structural_hash as compute_structural_hash
 from llm_vqc.ir.compiler_pennylane import CompilerError
 from llm_vqc.ir.metrics import circuit_cost_summary
 from llm_vqc.ir.schema import CircuitIR
-from llm_vqc.ir.validators import validate_proposal
+from llm_vqc.ir.validators import ValidationIssue, validate_proposal
 from llm_vqc.tasks.base import TrainValData
 
 
@@ -93,12 +94,21 @@ def evaluate_candidate(
     git_dirty: bool | None = None,
     proposal_event_store: ProposalEventStore | None = None,
     run_id: str | None = None,
+    extra_validator: Callable[[CircuitIR], list[ValidationIssue]] | None = None,
+    init_policy: Callable[[HybridQNNModel, int], None] | None = None,
 ) -> EvaluationResult:
     """Validate, (maybe) compile, (maybe) train, and score one proposal.
 
     `train_val` must be the task's train+val partition (never test data —
     the type does not permit it). Returns an `EvaluationResult` reporting
     only validation-set metrics.
+
+    `extra_validator` (optional, backward compatible): an additional
+    experiment-specific invariant check run *after* the standard
+    `validate_proposal` succeeds. If it returns any issues, the proposal is
+    recorded as INVALID (transparently, with those issues, budget-free — the
+    same contract as a schema-invalid proposal) and never trained. Nothing is
+    silently repaired. `init_policy` is forwarded to `train_model`.
     """
 
     def _record(record: ProposalRecord) -> None:
@@ -132,6 +142,33 @@ def evaluate_candidate(
         return result
 
     ir = validation.ir
+
+    if extra_validator is not None:
+        extra_issues = extra_validator(ir)
+        if extra_issues:
+            result = EvaluationResult(
+                proposal_id=proposal_id,
+                task_name=task_name,
+                run_seed=run_seed,
+                structural_hash=None,
+                circuit_canonical_json=None,
+                validation_outcome=ValidationOutcome.INVALID,
+                validation_issues=extra_issues,
+                compilation_outcome=CompilationOutcome.NOT_ATTEMPTED,
+                training_outcome=TrainingOutcome.NOT_ATTEMPTED,
+                failure_category=FailureCategory.INVALID_PROPOSAL,
+                git_sha=git_sha,
+                git_dirty=git_dirty,
+            )
+            _record(
+                ProposalRecord(
+                    outcome=ProposalOutcome.INVALID,
+                    structural_hash=None,
+                    issues=extra_issues,
+                )
+            )
+            return result
+
     ir_hash = compute_structural_hash(ir)
     ir_json = canonical_json(ir)
     train_seed = train_seed_for_circuit(run_seed, ir_hash)
@@ -196,7 +233,7 @@ def evaluate_candidate(
         _record(ProposalRecord(outcome=ProposalOutcome.FAILED, structural_hash=ir_hash, cost=cost))
         return result
 
-    training_output = train_model(ir, train_val, training_config, train_seed)
+    training_output = train_model(ir, train_val, training_config, train_seed, init_policy=init_policy)
 
     if not training_output.success:
         result = EvaluationResult(

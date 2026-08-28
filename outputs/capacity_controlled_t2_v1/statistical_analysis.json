@@ -1,0 +1,121 @@
+{
+  "note": "T2-v1 5 splits x 6 seeds; primary test metric balanced_accuracy_error (lower better); selection on val logloss; every candidate 61 params.",
+  "per_arm_test": {
+    "controlled_random": {
+      "n": 30,
+      "median": 0.028174603174603186,
+      "iqr": 0.028571428571428692,
+      "mean": 0.03772486772486773,
+      "sd": 0.026630652216748187,
+      "boot_ci95_median": [
+        0.02123015873015871,
+        0.04246031746031753
+      ]
+    },
+    "controlled_evolutionary": {
+      "n": 30,
+      "median": 0.02857142857142858,
+      "iqr": 0.038690476190476275,
+      "mean": 0.0400925925925926,
+      "sd": 0.028608935754404936,
+      "boot_ci95_median": [
+        0.021031746031746013,
+        0.04246031746031753
+      ]
+    },
+    "controlled_greedy": {
+      "n": 30,
+      "median": 0.028174603174603186,
+      "iqr": 0.0277777777777779,
+      "mean": 0.033915343915343905,
+      "sd": 0.0244982785439328,
+      "boot_ci95_median": [
+        0.014285714285714235,
+        0.02857142857142858
+      ]
+    }
+  },
+  "per_arm_val_logloss": {
+    "controlled_random": {
+      "median": 0.040753503362807995
+    },
+    "controlled_evolutionary": {
+      "median": 0.03933087268741131
+    },
+    "controlled_greedy": {
+      "median": 0.03977391327891991
+    }
+  },
+  "kruskal_wallis_test": {
+    "H": 0.8197328901187588,
+    "p_value": 0.6637388898250716
+  },
+  "pairwise_test": [
+    {
+      "a": "controlled_random",
+      "b": "controlled_evolutionary",
+      "p_raw": 0.8053379164590136,
+      "cliffs_delta": -0.03777777777777778,
+      "p_holm": 1.0
+    },
+    {
+      "a": "controlled_random",
+      "b": "controlled_greedy",
+      "p_raw": 0.5273926510491357,
+      "cliffs_delta": 0.09444444444444444,
+      "p_holm": 1.0
+    },
+    {
+      "a": "controlled_evolutionary",
+      "b": "controlled_greedy",
+      "p_raw": 0.3900885581792778,
+      "cliffs_delta": 0.1288888888888889,
+      "p_holm": 1.0
+    }
+  ],
+  "ablation_freeze_minus_train": {
+    "n": 300,
+    "mean_diff": -0.007582010582010577,
+    "median_diff": 0.0,
+    "ci95_mean": [
+      -0.014292834394881148,
+      -0.0008711867691400064
+    ],
+    "cohen_dz": -0.1278509599755659,
+    "wilcoxon_p": 0.11968537446217503,
+    "frac_positive": 0.23,
+    "interpretation": "positive => trainable better than frozen"
+  },
+  "ablation_product_minus_entangled": {
+    "n": 300,
+    "mean_diff": 6.613756613758071e-06,
+    "median_diff": 0.0,
+    "ci95_mean": [
+      -0.0054394871413247165,
+      0.005452714654552232
+    ],
+    "cohen_dz": 0.0001374225394721656,
+    "wilcoxon_p": 0.02835786385838964,
+    "frac_positive": 0.17666666666666667,
+    "interpretation": "positive => entangled better than product"
+  },
+  "baselines_test_bae_median": {
+    "C0_trivial": 0.5,
+    "C1_logreg": 0.014285714285714235,
+    "C2_linear_svm": 0.02777777777777779,
+    "C3_rbf_svm": 0.0,
+    "C4_trees": 0.01388888888888884,
+    "C5_fixed_mlp": 0.028174603174603186,
+    "C6_fair_nas": 0.03531746031746036,
+    "QS_searched_best_arm": 0.028174603174603186
+  },
+  "selection_gain": {
+    "fixed_arch_expected_test_bae": 0.028174603174603186,
+    "best_of_B_median": {
+      "1": 0.028174603174603186,
+      "5": 0.02123015873015871,
+      "10": 0.02857142857142858,
+      "25": 0.028174603174603186
+    }
+  }
+}

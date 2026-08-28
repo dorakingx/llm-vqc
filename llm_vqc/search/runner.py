@@ -26,11 +26,16 @@ would be if lost.
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from llm_vqc.evaluation.harness import evaluate_candidate
+from llm_vqc.evaluation.model import HybridQNNModel
 from llm_vqc.evaluation.seeds import derive_child_seed, train_seed_for_circuit
 from llm_vqc.evaluation.store import ResultStore
 from llm_vqc.evaluation.training import TrainingConfig
 from llm_vqc.ir.budget import BudgetLedger
+from llm_vqc.ir.schema import CircuitIR
+from llm_vqc.ir.validators import ValidationIssue
 from llm_vqc.search.arm import SearchArm
 from llm_vqc.search.feedback import SearchFeedback
 from llm_vqc.search.results import SearchRunResult
@@ -62,6 +67,8 @@ class SearchRunner:
         run_id: str,
         git_sha: str | None = None,
         git_dirty: bool | None = None,
+        extra_validator: Callable[[CircuitIR], list[ValidationIssue]] | None = None,
+        init_policy: Callable[[HybridQNNModel, int], None] | None = None,
     ) -> None:
         self.arm = arm
         self.task_name = task_name
@@ -73,6 +80,8 @@ class SearchRunner:
         self.run_id = run_id
         self.git_sha = git_sha
         self.git_dirty = git_dirty
+        self.extra_validator = extra_validator
+        self.init_policy = init_policy
 
     def _load_or_initialize_state(self):
         raw = self.result_store.load_run_state(self.run_id)
@@ -113,6 +122,8 @@ class SearchRunner:
                 git_dirty=self.git_dirty,
                 proposal_event_store=self.result_store,
                 run_id=self.run_id,
+                extra_validator=self.extra_validator,
+                init_policy=self.init_policy,
             )
             feedback = SearchFeedback.from_evaluation_result(result)
             state = self.arm.update_state(state, raw_proposal, feedback)

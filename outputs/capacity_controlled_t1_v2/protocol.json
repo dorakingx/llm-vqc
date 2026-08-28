@@ -1,0 +1,87 @@
+{
+  "version": "capacity_controlled_t1_v2",
+  "predeclared_before_results": true,
+  "branches_from": "03ad011dea0001758fbf2fafe52faf294c210217",
+  "inherits_space_from": "T1_capacity_controlled_v1",
+  "fixed_controlled_space": {
+    "task": "T1_gaussian_peak", "n_qubits": 4, "encoding": "angle_RY_all",
+    "amplitude_encoding": "forbidden", "measurement": "Z_all",
+    "embed": "Linear(21->4)", "head": "Linear(4->1)",
+    "quantum_param_count": 12, "total_trainable_params": 105,
+    "init_policy": "explicit_kaiming_uniform_qc_v1", "quantum_angle_init": "U(-pi,pi)",
+    "training": {"optimizer": "adamw", "lr": 0.05, "epochs": 20, "batch_size": 16,
+                 "weight_decay": 1e-05, "lr_decay_factor": 0.5, "lr_decay_epochs": [7, 13, 17],
+                 "device": "cpu", "dtype": "float64", "early_stopping": false},
+    "structural_limits": {"max_blocks": 6, "max_depth": 30, "max_total_gates": 32,
+                          "max_two_qubit_gates": 24}
+  },
+  "design": {
+    "data_split_seeds": [0, 1, 2],
+    "repetition_seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    "search_arms": ["controlled_random", "controlled_evolutionary", "controlled_greedy"],
+    "budget": 25,
+    "n_search_runs": 90,
+    "within_split_partitions_shared": true,
+    "per_split_store": true,
+    "resumable_no_extra_budget": true
+  },
+  "primary_hypothesis": {
+    "id": "H1", "type": "confirmatory",
+    "claim": "Random, Evolutionary, Greedy practically equivalent on protected-test RMSE",
+    "equivalence_margin_rmse": 0.002,
+    "margin_rationale": ["mu in [0,1]; 0.002 = 0.2% of target range",
+                         "below v1 seed SD (~0.0025-0.003)",
+                         "~2.5x the v1 observed arm median gap (~0.0008)"],
+    "test": "paired TOST by (split,seed) cell, alpha=0.05, equivalence iff 90% CI of mean diff within (-delta,+delta)",
+    "sensitivity_margins": [0.001, 0.002, 0.003],
+    "non_significance_is_not_equivalence": true
+  },
+  "secondary_hypotheses": {
+    "H2_anytime_efficiency": "arms may differ in best-val vs proposals/unique-trainings/wallclock",
+    "H3_efficiency": "arms may differ in duplicate rate / unique trainings",
+    "H4_quantum_source": "trainable entangled VQC > frozen-quantum and product-state",
+    "H5_fair_classical": "searched VQC vs fair classical MLP search and analytical estimators"
+  },
+  "analytical_baselines": {
+    "A1_argmax": "grid position of max normalized input",
+    "A2_quadratic_peak": "parabola through argmax + 2 neighbors; edges fall back to A1",
+    "A3_weighted_centroid": "sum(w*x)/sum(w), w=(normalized height)^2 (predeclared, not tuned)",
+    "A4_gaussian_nlls": "per-sample LSQ fit A*exp(-(x-mu)^2/2sig^2)+c, mu in [0,1], sig in [0.005,0.5]; A1 init; failures->A1; never uses true params"
+  },
+  "classical_search_C3": {
+    "budget": 25, "selection": "validation_only", "protected_test": "once",
+    "grammar": {"hidden": [[4], [5], [4, 3], [4, 2], [3, 3], [5, 2], [6, 2]],
+                "activation": ["relu", "tanh", "sigmoid"],
+                "lr": [0.01, 0.05, 0.1], "weight_decay": [0, 1e-05, 0.0001],
+                "optimizer": ["adamw"]},
+    "allowed_total_param_range": [90, 120], "target_params": 105
+  },
+  "quantum_ablations": {
+    "Q0_no_quantum": "embed->sigmoid*pi->identity->head->sigmoid; 93 trainable, 0 quantum",
+    "QF_frozen_random": "fixed Q2 arch, quantum angles frozen; 93 trainable + 12 frozen = 105 total",
+    "QP_product_state": "3 single-qubit rotation layers (RX,RY,RZ all), NO two-qubit gates; 12 trainable quantum, 105 total",
+    "QE_fixed_entangled": "v1 Q1 HEA fixed; 12 trainable quantum, 105 total",
+    "QR_fixed_random": "v1 Q2 fixed random; 12 trainable quantum, 105 total",
+    "QS_searched": "primary Random/Evo/Greedy searched condition"
+  },
+  "statistics": {
+    "primary": ["paired_TOST_delta_0.002", "blocked_bootstrap_ci_median_diff_2000"],
+    "secondary_exploratory": ["kruskal_wallis", "mannwhitney_holm", "cliffs_delta",
+                              "anytime_auc", "duplicate_invalid_failed_rates", "runtime",
+                              "unique_training_efficiency"]
+  },
+  "power_analysis": {
+    "method": "simulation_TOST", "assumed_paired_diff_sd": 0.0025,
+    "true_diffs": [0.001, 0.002, 0.003], "n_paired_cells": 30,
+    "note": "v1 variance is a small-sample estimate; design not revised on favorable scenarios"
+  },
+  "decision_gates": {
+    "search": ["S1_equivalent", "S2_differs", "S3_inconclusive"],
+    "quantum": ["Q1_trainable_gt_frozen", "Q2_entangled_gt_product", "Q3_search_gt_fixed", "Q4_inconclusive"],
+    "classical": ["C1_vqc_gt_classical", "C2_classical_ge_vqc", "C3_depends_or_inconclusive"]
+  },
+  "integrity": ["no slides", "no LLM API", "no amplitude in primary", "test never in selection",
+                "margin/budget/seeds/splits frozen", "no seed/split exclusion",
+                "no test tuning of baselines", "no quantum-advantage claim", "no HEP claim from T1",
+                "v1 not overwritten", "no raw stores/weights/credentials committed"]
+}
