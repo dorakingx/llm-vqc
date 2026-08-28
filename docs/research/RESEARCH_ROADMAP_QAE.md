@@ -1,0 +1,75 @@
+# Research roadmap: from controlled VQC search to semantic QAE search
+
+## Central research question
+
+**When does language-model reasoning actually help variational quantum-circuit architecture search?**
+
+The project originally asked whether an LLM can propose better VQC gate structures than random or evolutionary search. The controlled experiments showed that this question is too broad: when the search task contains little semantic structure, different search strategies can be practically equivalent.
+
+The new roadmap makes the role of semantics explicit.
+
+## Step 1 — Establish a fair search benchmark (completed)
+
+Capacity-controlled T1/T2 fixed the main confounders:
+- identical parameter budgets across candidate circuits,
+- identical training and validation pipelines,
+- protected test data not exposed during search,
+- equal candidate-evaluation budgets,
+- explicit classical and analytical baselines.
+
+On T1-v2, Random / Evolutionary / Greedy were practically equivalent within the frozen margin, even though selecting the best of a budget of candidates helped. This says that *architecture selection can matter while the particular search algorithm does not*.
+
+## Step 2 — Diagnose task degeneracy before comparing searchers (completed)
+
+The first HIGGS study showed that a difficult-looking real dataset can still be a bad architecture-search benchmark if the learning pipeline is under-qualified. The follow-up data-scale study traced the near-baseline behavior to:
+1. too few training examples,
+2. an inherited learning rate that was too large,
+3. information loss from PCA(8).
+
+After increasing the data scale, using raw features, and auditing the optimizer, trainable quantum angles and entanglement became mildly useful again. The lesson is methodological: **qualify the task before judging the search strategy**.
+
+The HIGGS branches are retained as archives because their Git ancestry is disconnected from `main`. Their scientific conclusions are summarized here instead of force-merging their history.
+
+## Step 3 — Give the LLM a decision that can use meaning (new QAE study)
+
+A Quantum Autoencoder (QAE) provides an architecture-search task with explicit semantic structure:
+- which qubits are latent and which are trash,
+- which correlations should be routed toward the latent subsystem,
+- which gate axes match the state family,
+- which entanglement topology matches the Hamiltonian interaction graph.
+
+The first QAE task compresses 4-qubit transverse-field Ising ground states to 2 latent qubits. All methods receive exactly 12 trainable rotations and 4 CNOTs. The LLM is given the Hamiltonian, the latent/trash assignment, and the fact that the ground states can be chosen real.
+
+This isolates a new hypothesis:
+
+> **Semantic-prior hypothesis.** An LLM gains sample efficiency when the prompt contains task information that can be converted into useful circuit-architecture priors.
+
+## Step 4 — Controls that distinguish LLM reasoning from a trivial heuristic
+
+The QAE pilot includes:
+- **Random**: axes and CNOT topology both random.
+- **RY-only random**: all rotations fixed to RY, but CNOT topology remains random.
+- **LLM semantic pool**: uses the same exact capacity but may use the Hamiltonian and latent/trash roles.
+
+RY-only random is important. If the LLM only beats ordinary random, the result could be explained by one simple heuristic: "the target states are real, so use RY." Beating the RY-only control tests whether topology reasoning adds value beyond that heuristic.
+
+## Step 5 — Confirm before generalizing
+
+The current QAE result is an exploratory/frozen verification pilot, not a final publication claim. Before claiming general LLM superiority:
+1. replay the exact prompt through version-pinned APIs and save raw provenance,
+2. add Evolutionary and a hand-designed tensor-network/QAE baseline,
+3. repeat on 6–8 qubits and other Hamiltonians,
+4. add noise and hardware connectivity,
+5. freeze a confirmatory multi-model protocol before inspecting protected test results.
+
+## Paper story
+
+The paper is no longer "LLM beats random at VQC design."
+
+The stronger story is:
+
+1. Controlled benchmarks reveal that search strategies are interchangeable when the task exposes little semantic information.
+2. Task qualification explains why misleading negative or positive results appear.
+3. A QAE benchmark exposes meaningful physical structure to the proposer.
+4. Under exact capacity control, a task-aware language-model proposal pool becomes more sample-efficient than random controls.
+5. The boundary of the claim is explicit: the benefit is **conditional on useful semantic priors**.
