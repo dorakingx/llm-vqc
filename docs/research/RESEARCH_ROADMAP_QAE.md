@@ -56,11 +56,17 @@ RY-only random is important. If the LLM only beats ordinary random, the result c
 ## Step 5 — Confirm before generalizing
 
 The current QAE result is an exploratory/frozen verification pilot, not a final publication claim. Before claiming general LLM superiority:
-1. replay the exact prompt through version-pinned APIs and save raw provenance,
-2. add Evolutionary and a hand-designed tensor-network/QAE baseline,
+1. ~~replay the exact prompt through version-pinned APIs and save raw provenance~~ — **done** (v2: `gpt-5.4-mini-2026-03-17`, open- and closed-loop, full call provenance in `outputs/qae_tfim_api_v2/`),
+2. ~~add Evolutionary and a hand-designed QAE baseline~~ — **done** (v2; both underperform even unconstrained Random at B=8),
 3. repeat on 6–8 qubits and other Hamiltonians,
 4. add noise and hardware connectivity,
-5. freeze a confirmatory multi-model protocol before inspecting protected test results.
+5. freeze a confirmatory multi-model protocol (several pinned models, pre-registered) before inspecting protected test results.
+
+The v2 verification confirmed the pilot: the API open-loop pool (mean test trash
+fidelity 0.9700) beats Random (+0.0518, 11/12 seeds), the RY-only control
+(+0.0276, 12/12), Evolutionary (+0.0695, 11/12), and the hand-designed
+reference (+0.0811, 12/12). Closed-loop feedback added no measurable value over
+open-loop priors at this budget (23/96 proposals were duplicates).
 
 ## Paper story
 

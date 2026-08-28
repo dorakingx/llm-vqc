@@ -52,3 +52,22 @@ After each candidate is trained, append:
 > Propose **one** new candidate with exactly one clearly stated structural hypothesis. Do not use or request test-set information.
 
 This keeps the LLM’s role interpretable: it chooses **architecture**, while the same optimizer chooses **parameters** for every search method.
+
+## API replay (v2, completed)
+
+The v2 experiment (`llm_vqc/experiments/qae_tfim/api_v2.py`) sends exactly the
+open-loop prompt above through the version-pinned chat-completions API
+(`gpt-5.4-mini-2026-03-17`, temperature 0.7), with one addition: a JSON schema
+card so the response is machine-parseable —
+
+```json
+{"candidates": [{"name": "<short-id>",
+  "axes": [["Y","Y","Y","Y"],["Y","Y","Y","Y"],["Y","Y","Y","Y"]],
+  "cnots_after_layer1": [[3,2],[1,0]],
+  "cnots_after_layer2": [[2,1],[3,1]]}]}
+```
+
+Retry policy: up to 2 JSON-repair retries per call; every attempt is stored as
+an `LLMCallRecord` under `outputs/qae_tfim_api_v2/llm_calls/`. The closed-loop
+version above is implemented verbatim (feedback = validation trash fidelity +
+duplicate flag only; protected-test values never enter any prompt).

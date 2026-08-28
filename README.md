@@ -6,6 +6,37 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
 
 ---
 
+## Current research line (start here)
+
+`main` is the single active research branch. The current study asks:
+**when does language-model reasoning actually help VQC architecture search?**
+
+1. **Capacity-controlled benchmarks (T1/T2)** — with circuit size, training, and
+   budgets matched, Random / Evolutionary / Greedy search are practically
+   equivalent: `outputs/capacity_controlled_t2_v1/report.md`.
+2. **Task qualification (HIGGS archives)** — why under-qualified tasks produce
+   misleading search comparisons: `docs/research/HIGGS_ARCHIVE_SYNTHESIS.md`.
+3. **Semantic QAE benchmark** — a quantum-autoencoder task whose prompt exposes
+   physical structure; a version-pinned LLM proposal pool beats Random,
+   RY-only random, Evolutionary, and a hand-designed reference under identical
+   budgets: `outputs/qae_tfim_api_v2/REPORT.md`.
+
+Key documents: `docs/research/RESEARCH_ROADMAP_QAE.md` (story),
+`docs/research/QAE_PROTOCOL.md` (frozen protocol),
+`docs/research/LLM_QAE_SKILL.md` (exact prompt/skill),
+`docs/research/BRANCH_STATUS.md` (branch/PR map), `paper/main.tex` (manuscript).
+
+Reproduce the QAE benchmark:
+
+```bash
+python scripts/qae/run_qae_tfim_pilot.py                 # deterministic pilot
+python scripts/qae/run_qae_tfim_api_v2.py --no-api       # v2 without API calls
+LLM_API_BUDGET_USD=2.00 python scripts/qae/run_qae_tfim_api_v2.py  # full (paid API)
+python scripts/qae/build_qae_v2_figures.py               # figures from stored CSVs
+```
+
+---
+
 ## Project Overview
 
 Designing Variational Quantum Circuits (VQCs) requires navigating an exponentially large combinatorial space of gate sequences. This project automates that exploration by delegating high-level scientific reasoning to an LLM while executing precise quantum simulations locally.
