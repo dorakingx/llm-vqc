@@ -20,3 +20,21 @@ dist/
 build/
 !outputs/capacity_controlled_t2_v1/
 !outputs/capacity_controlled_t2_v1/**
+# Local dataset caches (HIGGS etc.) are reproducible via scripts; never committed.
+data/
+# Publication-safe QAE artifacts (reports, CSVs, provenance; no weights/DBs):
+!outputs/qae_tfim_semantic_pilot_v1/
+!outputs/qae_tfim_semantic_pilot_v1/**
+!outputs/qae_tfim_api_v2/
+!outputs/qae_tfim_api_v2/**
+# LaTeX build artifacts
+paper/main.aux
+paper/main.bbl
+paper/main.bcf
+paper/main.blg
+paper/main.log
+paper/main.out
+paper/main.run.xml
+paper/main.fls
+paper/main.fdb_latexmk
+paper/main.pdf

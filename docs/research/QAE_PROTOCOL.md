@@ -43,3 +43,25 @@ For each of 12 verification seeds:
 
 ## Scope
 This is a small, noiseless 4-qubit simulation and an exploratory semantic-prior pilot. It is not evidence of general LLM superiority, quantum advantage, or hardware performance. The exact prompt should be replayed through a version-pinned API before publication-quality claims.
+
+## v2 — version-pinned API verification (completed)
+
+`llm_vqc/experiments/qae_tfim/api_v2.py` replays the frozen prompt through the
+real OpenAI API and extends the method matrix under the identical budget:
+
+- **LLM-API-open:** one call to `gpt-5.4-mini-2026-03-17` (temperature 0.7)
+  requesting 8 distinct JSON candidates; pool frozen, then evaluated on all
+  12 seeds.
+- **LLM-API-closed:** per seed, 8 sequential calls receiving only validation
+  trash fidelity + duplicate flags of that seed's earlier candidates. Invalid
+  or duplicate proposals consume budget and are replaced by flagged random
+  circuits.
+- **Evolutionary:** 4 random parents + 4 mutations (one axis or one CNOT pair)
+  of the top-2 parents by validation loss; exactly 8 evaluations.
+- **Reference-QAE:** one hand-designed textbook encoder (RY–RZ–RY layers,
+  brickwork nearest-neighbour CNOTs), no search.
+- **Random / RY-random / frozen chat pool:** identical rng streams to the pilot.
+
+Hard cost cap via `LLM_API_BUDGET_USD`; every raw call, token count, and model
+snapshot stored under `outputs/qae_tfim_api_v2/llm_calls/`. Results:
+`outputs/qae_tfim_api_v2/REPORT.md`.

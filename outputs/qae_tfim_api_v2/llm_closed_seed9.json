@@ -1,0 +1,123 @@
+{
+  "rows": [
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-sym-nn-ent",
+      "order": 1,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.06268537548516928,
+      "val_loss": 0.06230559684784609,
+      "test_loss": 0.05746825267228084,
+      "train_fid": 0.9373146245148307,
+      "val_fid": 0.9376944031521539,
+      "test_fid": 0.9425317473277192
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-even-bridge",
+      "order": 2,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.02321115519739314,
+      "val_loss": 0.018448324691723195,
+      "test_loss": 0.02245982219557363,
+      "train_fid": 0.9767888448026069,
+      "val_fid": 0.9815516753082768,
+      "test_fid": 0.9775401778044264
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-bridge-to-latent",
+      "order": 3,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.02177184881234817,
+      "val_loss": 0.019035182314964483,
+      "test_loss": 0.020330878756942727,
+      "train_fid": 0.9782281511876518,
+      "val_fid": 0.9809648176850355,
+      "test_fid": 0.9796691212430573
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-chain-to-latent-hyp",
+      "order": 4,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.052953171121554066,
+      "val_loss": 0.047671709786006655,
+      "test_loss": 0.049540737570509696,
+      "train_fid": 0.9470468288784459,
+      "val_fid": 0.9523282902139933,
+      "test_fid": 0.9504592624294903
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-parity-merge-into-latent",
+      "order": 5,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.048730103883554365,
+      "val_loss": 0.04324644991178772,
+      "test_loss": 0.045762973174303,
+      "train_fid": 0.9512698961164456,
+      "val_fid": 0.9567535500882123,
+      "test_fid": 0.954237026825697
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-latent-sink-from-right-bridge",
+      "order": 6,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.04313588273972124,
+      "val_loss": 0.037157089699928036,
+      "test_loss": 0.040557418388723177,
+      "train_fid": 0.9568641172602788,
+      "val_fid": 0.962842910300072,
+      "test_fid": 0.9594425816112768
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "fallback_p6",
+      "order": 7,
+      "fallback": true,
+      "invalid_errors": "",
+      "train_loss": 0.35346967661360074,
+      "val_loss": 0.33595794210536434,
+      "test_loss": 0.35381929356972175,
+      "train_fid": 0.6465303233863993,
+      "val_fid": 0.6640420578946357,
+      "test_fid": 0.6461807064302783
+    },
+    {
+      "seed": 9,
+      "method": "LLM-API-closed",
+      "candidate": "real-left-to-latent-merge-hyp",
+      "order": 8,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.031898634324288855,
+      "val_loss": 0.02881387161224469,
+      "test_loss": 0.02945535226145446,
+      "train_fid": 0.9681013656757111,
+      "val_fid": 0.9711861283877553,
+      "test_fid": 0.9705446477385455
+    }
+  ],
+  "model_snapshots": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "total_input_tokens": 5523,
+  "total_output_tokens": 656,
+  "budget_spent_usd_estimate": 0.04,
+  "n_calls": 8
+}

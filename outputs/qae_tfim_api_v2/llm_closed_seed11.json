@@ -1,0 +1,123 @@
+{
+  "rows": [
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn_YZ-latent-swap-hypothesis",
+      "order": 1,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.11490566768953436,
+      "val_loss": 0.06795792481693519,
+      "test_loss": 0.11314014628837565,
+      "train_fid": 0.8850943323104656,
+      "val_fid": 0.9320420751830648,
+      "test_fid": 0.8868598537116243
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn_yz-latent-balance-hypothesis",
+      "order": 2,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.06415360043960083,
+      "val_loss": 0.031219495712097145,
+      "test_loss": 0.06476206357964598,
+      "train_fid": 0.9358463995603992,
+      "val_fid": 0.9687805042879029,
+      "test_fid": 0.935237936420354
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn_YXZ-staggered-ladder-hypothesis",
+      "order": 3,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.32169829313851017,
+      "val_loss": 0.335047852956215,
+      "test_loss": 0.323862545183478,
+      "train_fid": 0.6783017068614898,
+      "val_fid": 0.664952147043785,
+      "test_fid": 0.676137454816522
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn-YZ-edges-then-center-hypothesis",
+      "order": 4,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.03564083384097283,
+      "val_loss": 0.01687233696646262,
+      "test_loss": 0.03638766622960654,
+      "train_fid": 0.9643591661590272,
+      "val_fid": 0.9831276630335374,
+      "test_fid": 0.9636123337703935
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn-YZ-fringes-to-center-hypothesis",
+      "order": 5,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.145970334064218,
+      "val_loss": 0.06616551496954648,
+      "test_loss": 0.14389011060199453,
+      "train_fid": 0.854029665935782,
+      "val_fid": 0.9338344850304535,
+      "test_fid": 0.8561098893980055
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn-YZ-mirror-pairing-hypothesis",
+      "order": 6,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.051763610004802674,
+      "val_loss": 0.02204827648003127,
+      "test_loss": 0.052316566780371,
+      "train_fid": 0.9482363899951973,
+      "val_fid": 0.9779517235199687,
+      "test_fid": 0.947683433219629
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn-YZ-center-outward-correlation-hypothesis",
+      "order": 7,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.09197167416366725,
+      "val_loss": 0.04590311876270581,
+      "test_loss": 0.0918488886239639,
+      "train_fid": 0.9080283258363328,
+      "val_fid": 0.9540968812372942,
+      "test_fid": 0.9081511113760361
+    },
+    {
+      "seed": 11,
+      "method": "LLM-API-closed",
+      "candidate": "real_nn-YZ-endcap-then-core-hypothesis",
+      "order": 8,
+      "fallback": false,
+      "invalid_errors": "",
+      "train_loss": 0.0803600318778055,
+      "val_loss": 0.04037413509083054,
+      "test_loss": 0.08086847824028409,
+      "train_fid": 0.9196399681221945,
+      "val_fid": 0.9596258649091695,
+      "test_fid": 0.9191315217597159
+    }
+  ],
+  "model_snapshots": [
+    "gpt-5.4-mini-2026-03-17"
+  ],
+  "total_input_tokens": 5730,
+  "total_output_tokens": 688,
+  "budget_spent_usd_estimate": 0.04,
+  "n_calls": 8
+}

@@ -1,0 +1,98 @@
+{
+  "LLM-API-open_vs_Random": {
+    "mean_paired_fidelity_gain": 0.05178931502717559,
+    "median_paired_fidelity_gain": 0.05215209054920561,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00146484375,
+    "sign_test_two_sided_p": 0.00634765625
+  },
+  "LLM-API-open_vs_RY-random": {
+    "mean_paired_fidelity_gain": 0.027562953200240586,
+    "median_paired_fidelity_gain": 0.030585801598574713,
+    "llm_wins": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-API-open_vs_Evolutionary": {
+    "mean_paired_fidelity_gain": 0.06949223723458962,
+    "median_paired_fidelity_gain": 0.06389374957395921,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.0009765625,
+    "sign_test_two_sided_p": 0.00634765625
+  },
+  "LLM-API-open_vs_Reference-QAE": {
+    "mean_paired_fidelity_gain": 0.08109535325603456,
+    "median_paired_fidelity_gain": 0.0805013942328951,
+    "llm_wins": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-API-closed_vs_Random": {
+    "mean_paired_fidelity_gain": 0.04356128002040352,
+    "median_paired_fidelity_gain": 0.038410950235840735,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00244140625,
+    "sign_test_two_sided_p": 0.00634765625
+  },
+  "LLM-API-closed_vs_RY-random": {
+    "mean_paired_fidelity_gain": 0.019334918193468515,
+    "median_paired_fidelity_gain": 0.021257358408856564,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.0341796875,
+    "sign_test_two_sided_p": 0.00634765625
+  },
+  "LLM-API-closed_vs_Evolutionary": {
+    "mean_paired_fidelity_gain": 0.06126420222781756,
+    "median_paired_fidelity_gain": 0.05339070176527311,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.0009765625,
+    "sign_test_two_sided_p": 0.00634765625
+  },
+  "LLM-API-closed_vs_Reference-QAE": {
+    "mean_paired_fidelity_gain": 0.0728673182492625,
+    "median_paired_fidelity_gain": 0.07879047655409194,
+    "llm_wins": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  },
+  "LLM-chat-frozen_vs_Random": {
+    "mean_paired_fidelity_gain": 0.049259594039293975,
+    "median_paired_fidelity_gain": 0.05027951896547833,
+    "llm_wins": 10,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00244140625,
+    "sign_test_two_sided_p": 0.03857421875
+  },
+  "LLM-chat-frozen_vs_RY-random": {
+    "mean_paired_fidelity_gain": 0.02503323221235897,
+    "median_paired_fidelity_gain": 0.027233981916046146,
+    "llm_wins": 10,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00244140625,
+    "sign_test_two_sided_p": 0.03857421875
+  },
+  "LLM-chat-frozen_vs_Evolutionary": {
+    "mean_paired_fidelity_gain": 0.06696251624670801,
+    "median_paired_fidelity_gain": 0.05949157322737686,
+    "llm_wins": 11,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.0009765625,
+    "sign_test_two_sided_p": 0.00634765625
+  },
+  "LLM-chat-frozen_vs_Reference-QAE": {
+    "mean_paired_fidelity_gain": 0.07856563226815295,
+    "median_paired_fidelity_gain": 0.0788149200055191,
+    "llm_wins": 12,
+    "n": 12,
+    "wilcoxon_exact_two_sided_p": 0.00048828125,
+    "sign_test_two_sided_p": 0.00048828125
+  }
+}

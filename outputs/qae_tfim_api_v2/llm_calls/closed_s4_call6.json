@@ -1,0 +1,62 @@
+{
+  "proposal_id": "closed_s4_p6",
+  "call_index": 0,
+  "system_prompt": "You are a quantum-autoencoder circuit architect. Your job is architecture proposal, not numerical optimization. Respect the exact resource budget. Use the physical structure in the task description to propose circuit hypotheses. Return circuit structure only.",
+  "user_prompt": "Compress ground states of the 4-qubit open-chain transverse-field Ising Hamiltonian H = -sum_i Z_i Z_{i+1} - h sum_i X_i, h in [0.2, 2.0], into latent qubits q0,q1 while trash qubits q2,q3 should end in |00>. The Hamiltonian is real in the computational basis, so its ground-state amplitudes can be chosen real. Nearest-neighbor correlations are important. Use exactly three 4-qubit rotation layers (12 trainable rotations total) and exactly four CNOTs: two after rotation layer 1 and two after rotation layer 2. Rotation axes may be X, Y, or Z.\n\nFeedback on candidates evaluated so far (validation only):\n- candidate {\"name\":\"real_corr_pairing\",\"axes\":[[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]],\"cnots_after_layer1\":[[0,1],[2,3]],\"cnots_after_layer2\":[[1,2],[0,3]]} validation trash fidelity: 0.9418 duplicate: false\n- candidate {\"name\":\"mirror_entangle_latent_edges\",\"axes\":[[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]],\"cnots_after_layer1\":[[0,1],[3,2]],\"cnots_after_layer2\":[[1,2],[2,3]]} validation trash fidelity: 0.9737 duplicate: false\n- candidate {\"name\":\"latent_center_bridge\",\"axes\":[[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]],\"cnots_after_layer1\":[[1,2],[0,1]],\"cnots_after_layer2\":[[2,3],[1,2]]} validation trash fidelity: 0.8914 duplicate: false\n- candidate {\"name\":\"outer_to_latent_fold\",\"axes\":[[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]],\"cnots_after_layer1\":[[0,1],[3,2]],\"cnots_after_layer2\":[[1,2],[0,3]]} validation trash fidelity: 0.9385 duplicate: false\n- candidate {\"name\":\"fallback_random_p4\",\"note\":\"fallback\"} validation trash fidelity: 0.7784 duplicate: true\n- candidate {\"name\":\"boundary_to_latent_fold\",\"axes\":[[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]],\"cnots_after_layer1\":[[0,1],[3,2]],\"cnots_after_layer2\":[[1,0],[2,3]]} validation trash fidelity: 0.8467 duplicate: false\n\nPropose ONE new candidate with exactly one clearly stated structural hypothesis in its name. Do not repeat an already-evaluated candidate. Do not use or request test-set information.\nReturn ONLY a single JSON object, no prose and no markdown fences, with this schema:\n{\"candidates\": [{\"name\": \"<short-id>\", \"axes\": [[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]], \"cnots_after_layer1\": [[3,2],[1,0]], \"cnots_after_layer2\": [[2,1],[3,1]]}, ...]}\naxes is 3 layers x 4 qubits, each entry X, Y, or Z. Each CNOT is [control, target] with control != target, qubits 0-3.\nThe candidates array must contain exactly 1 candidate.",
+  "model": "gpt-5.4-mini-2026-03-17",
+  "temperature": 0.7,
+  "raw_response": "{\"candidates\":[{\"name\":\"left_right_symmetric_fold\",\"axes\":[[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"],[\"Y\",\"Y\",\"Y\",\"Y\"]],\"cnots_after_layer1\":[[0,1],[3,2]],\"cnots_after_layer2\":[[1,2],[0,3]]}]}",
+  "parsed_proposal": {
+    "candidates": [
+      {
+        "name": "left_right_symmetric_fold",
+        "axes": [
+          [
+            "Y",
+            "Y",
+            "Y",
+            "Y"
+          ],
+          [
+            "Y",
+            "Y",
+            "Y",
+            "Y"
+          ],
+          [
+            "Y",
+            "Y",
+            "Y",
+            "Y"
+          ]
+        ],
+        "cnots_after_layer1": [
+          [
+            0,
+            1
+          ],
+          [
+            3,
+            2
+          ]
+        ],
+        "cnots_after_layer2": [
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            3
+          ]
+        ]
+      }
+    ]
+  },
+  "validation_errors": [],
+  "input_tokens": 847,
+  "output_tokens": 79,
+  "estimated_cost_usd": null,
+  "latency_seconds": 0.8905494999780785,
+  "created_at": "2026-08-28T06:35:17.116344+00:00"
+}
