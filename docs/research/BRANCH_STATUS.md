@@ -41,9 +41,13 @@ The consolidation PR (#4) and the API-verification PR (#5) have been squash-merg
 
 ## External deliverables
 
-- Meeting deck (2026-08-29): `20260829_GSoC.pptx` + `20260829_GSoC.pdf` in the shared Google Drive `slides` folder; the earlier draft is retained as `20260829_GSoC_archive`.
-- Manuscript: `paper/main.tex` (canonical, in this repo) is synced to the Overleaf project (git remote `git.overleaf.com/6a1b64ed666041bd4b9014fe`, commit "Update manuscript with QAE v2 version-pinned API verification results").
+- Meeting deck (2026-08-29): `20260829_GSoC.pptx` + `20260829_GSoC.pdf` in the shared Google Drive `slides` folder, rebuilt around the v3 four-method result. Earlier versions retained as `20260829_GSoC_archive` (chat-pilot draft), `20260829_GSoC_v2_archive.{pptx,pdf}`, and `20260829_GSoC_v2_archive_slides` (the user's native-Slides copy of v2, edits preserved).
+- Manuscript: `paper/main.tex` (canonical, in this repo) is synced to the Overleaf project (git remote `git.overleaf.com/6a1b64ed666041bd4b9014fe`, latest commit "Primary experiment: v3 neutral-space four-method 2x2").
 - Literature: the six queued references in `REFERENCES_TO_ADD_TO_PAPERPILE.md` were imported into the Paperpile `llm-vqc` folder on 2026-08-28.
+
+## Experiment lineage
+
+- v1 pilot (chat pool, rigid layout) → v2 API verification (rigid layout, six arms) → **v3 neutral-space 2×2 (primary)**: `docs/research/QAE_PROTOCOL_V3.md`, results `outputs/qae_tfim_neutral_v3/`.
 
 ## Why disconnected histories remain archives
 
