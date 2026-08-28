@@ -50,19 +50,23 @@ The consolidation PR (#4) and the API-verification PR (#5) have been squash-merg
 - 2026-08-04 historical synthetic-signal run (archived artifacts:
   `outputs/mini5_ctx_20260804/`) → v1 pilot (chat pool, rigid layout) →
   v2 API verification (rigid layout, six arms) → v3 neutral-space
-  single-start four-method run (archived diagnostic:
-  `docs/research/QAE_PROTOCOL_V3.md`, `outputs/qae_tfim_neutral_v3/`) →
-  **v4 multi-start 4+4 (primary)**: pre-registered at
-  `docs/research/QAE_PROTOCOL_V4.md` (commit 69f8335), results
-  `outputs/qae_tfim_neutral_v4/`.
+  single-start run (archived diagnostic: `QAE_PROTOCOL_V3.md`,
+  `outputs/qae_tfim_neutral_v3/`) → v4 multi-start 4+4
+  (archived diagnostic: `QAE_PROTOCOL_V4.md`, pre-registered 69f8335,
+  `outputs/qae_tfim_neutral_v4/`) → **v5 incumbent-based free-form
+  redesign (primary)**: pre-registered at `QAE_PROTOCOL_V5.md`
+  (commit 33740dc), results `outputs/qae_tfim_neutral_v5/` —
+  first detected closed-loop advantage.
 
 ## Deck lineage in Drive (2026-08-29 meeting)
 
-- Active: `20260829_GSoC.pptx` / `20260829_GSoC.pdf` (v4 story).
+- Active: `20260829_GSoC.pptx` / `20260829_GSoC.pdf` (v5 story).
 - Archives: `20260829_GSoC_archive` (chat-pilot draft),
-  `20260829_GSoC_v2_archive.{pptx,pdf}` + `_v2_archive_slides`
-  (user's edited native copy), `20260829_GSoC_v3_archive.{pptx,pdf}`
-  + `_v3_archive_slides` (user's native copy of the v3-story deck).
+  `_v2_archive.{pptx,pdf}` + `_v2_archive_slides` (user's edited native),
+  `_v3_archive.{pptx,pdf}` + `_v3_archive_slides` (user's native),
+  `_v4_archive.{pptx,pdf}` + `_v4_archive_slides` (user's edited native
+  copy of the v4 deck, edits preserved) + `_v4_archive_slides.pdf`
+  (user's own export).
 
 ## Why disconnected histories remain archives
 
