@@ -23,7 +23,7 @@ figures = _load(FIGURES, "qae_slice_figures")
 
 def test_glossary_audit_flags_a_use_before_its_definition():
     texts = ["We measured F_trash on slide one.",
-             "Trash fidelity:  F_trash = ⟨00| ρ_trash |00⟩"]
+             "Trash fidelity  F_trash = P(trash qubits q2 q3 = 00)"]
     problems = slides.glossary_audit(texts)
     assert any("'trash fidelity'" in p and "before its definition" in p for p in problems)
 
