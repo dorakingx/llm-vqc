@@ -30,7 +30,17 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
    the 2026-08-04 historical synthetic-task artifacts:
    `outputs/mini5_ctx_20260804/`.)
 
+4. **Controlled robustness study (current)** — the previous QAE result
+   stress-tested by changing exactly one factor at a time: candidate budget
+   `B in {4, 8, 16}`, qubit count `n in {4, 6, 8}`, Hamiltonian family
+   (TFIM vs XXZ) and the underlying LLM model. Every other component —
+   prompts, schema, retry policy, trainer, optimizer, splits, selection rule,
+   gate set, method logic, RNG streams and analysis conventions — is frozen
+   and machine-verified per condition:
+   `outputs/qae_robustness/REPORT.md`, deck in `outputs/qae_robustness/deck/`.
+
 Key documents: `docs/research/RESEARCH_ROADMAP_QAE.md` (story),
+`docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (pre-registered robustness protocol),
 `docs/research/QAE_PROTOCOL_V5.md` (pre-registered primary protocol),
 `docs/research/QAE_PROTOCOL_V4.md` / `QAE_PROTOCOL_V3.md` (archived),
 `docs/research/QAE_PROTOCOL.md` (v1/v2 protocol),
@@ -43,6 +53,16 @@ Reproduce the primary QAE benchmark:
 python scripts/qae/run_qae_tfim_neutral_v5.py --no-api   # Random + Greedy only
 LLM_API_BUDGET_USD=2.00 python scripts/qae/run_qae_tfim_neutral_v5.py  # full (paid API)
 python scripts/qae/build_qae_v5_figures.py               # figures from stored CSVs
+```
+
+Reproduce the robustness study (each condition is resumable):
+
+```bash
+python scripts/qae/run_qae_robustness.py --estimate --conditions all
+LLM_API_BUDGET_USD=5.00 python scripts/qae/run_qae_robustness.py --conditions all
+python scripts/qae/build_qae_robustness_figures.py
+python scripts/qae/build_qae_robustness_report.py
+python scripts/qae/build_qae_robustness_deck.py
 ```
 
 ---

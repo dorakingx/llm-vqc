@@ -14,7 +14,8 @@ import numpy as np
 import pandas as pd
 from scipy.stats import binomtest, wilcoxon
 
-from llm_vqc.experiments.qae_robustness import arms, manifest as M
+from llm_vqc.experiments.qae_robustness import arms
+from llm_vqc.experiments.qae_robustness import manifest as M
 from llm_vqc.experiments.qae_robustness.conditions import (
     CONDITIONS_BY_KEY,
     REFERENCE,
@@ -333,3 +334,132 @@ def run_condition(
 def main(keys: list[str], *, with_api: bool = True, root: Path = STUDY_ROOT) -> None:
     for key in keys:
         run_condition(CONDITIONS_BY_KEY[key], with_api=with_api, root=root)
+
+
+# ---------------------------------------------------------- aggregation -----
+
+def condition_summary(condition: Condition, root: Path = STUDY_ROOT) -> dict:
+    """Everything the cross-condition table and the deck need for one cell."""
+    destination = root / condition.key
+    selected_path = destination / "selected_results.csv"
+    if not selected_path.exists():
+        return {"key": condition.key, "status": "missing"}
+    selected = pd.read_csv(selected_path)
+    stats = json.loads((destination / "paired_stats.json").read_text())
+    quality = json.loads((destination / "proposal_quality.json").read_text())
+    usage = json.loads((destination / "api_usage.json").read_text())
+
+    per_method = {}
+    complete = True
+    for method in METHODS:
+        values = selected[selected["method"] == method]["test_fid"].to_numpy()
+        if len(values) != len(VERIFY_SEEDS):
+            complete = False
+        rng = np.random.default_rng(0)
+        per_method[method] = {
+            "mean": float(values.mean()) if len(values) else None,
+            "median": float(np.median(values)) if len(values) else None,
+            "sd": float(values.std(ddof=1)) if len(values) > 1 else None,
+            "n_seeds": int(len(values)),
+            "bootstrap_95ci": _boot_ci(values, rng) if len(values) else None,
+        }
+    contrasts = {
+        f"{b}_minus_{a}": stats.get(f"{b}_minus_{a}")
+        for a, b in REPORTED_CONTRASTS
+    }
+    llm_evaluations = sum(
+        quality.get(m, {}).get("evaluations", 0) for m in ("LLM-Open", "LLM-Closed")
+    )
+    llm_fallbacks = sum(
+        quality.get(m, {}).get("fallback_evaluations", 0)
+        for m in ("LLM-Open", "LLM-Closed")
+    )
+    return {
+        "key": condition.key,
+        "factor": condition.factor,
+        "label": condition.label,
+        "factors": condition.factors,
+        "changed_factors": M.C.changed_factors(condition),
+        "status": "complete" if complete else "preliminary",
+        "n_seeds": int(selected["seed"].nunique()),
+        "per_method": per_method,
+        "contrasts": contrasts,
+        "llm_proposal_validity": {
+            "evaluations": llm_evaluations,
+            "flagged_random_fallbacks": llm_fallbacks,
+            "valid_fraction": (round(1 - llm_fallbacks / llm_evaluations, 4)
+                               if llm_evaluations else None),
+        },
+        "api_usage": usage,
+        "manifest_violations": M.verify(condition),
+    }
+
+
+def summarize_all(root: Path = STUDY_ROOT) -> dict:
+    from llm_vqc.experiments.qae_robustness.conditions import CONDITIONS
+
+    summaries = {c.key: condition_summary(c, root) for c in CONDITIONS}
+    reference = summaries[REFERENCE.key]
+    for key, entry in summaries.items():
+        if key == REFERENCE.key or entry.get("status") == "missing":
+            continue
+        entry["vs_reference"] = {
+            name: {
+                "reference_mean_paired_gain": (
+                    reference["contrasts"].get(name) or {}).get("mean_paired_gain"),
+                "condition_mean_paired_gain": (
+                    entry["contrasts"].get(name) or {}).get("mean_paired_gain"),
+                "sign_preserved": _sign_preserved(
+                    (reference["contrasts"].get(name) or {}).get("mean_paired_gain"),
+                    (entry["contrasts"].get(name) or {}).get("mean_paired_gain"),
+                ),
+                "significant_at_0_05": (
+                    ((entry["contrasts"].get(name) or {})
+                     .get("wilcoxon_exact_two_sided_p", 1.0) or 1.0) < 0.05),
+            }
+            for name in (f"{b}_minus_{a}" for a, b in REPORTED_CONTRASTS)
+        }
+    total = {"n_calls": 0, "input_tokens": 0, "output_tokens": 0, "models": set()}
+    for entry in summaries.values():
+        usage = entry.get("api_usage") or {}
+        total["n_calls"] += usage.get("n_calls", 0)
+        total["input_tokens"] += usage.get("input_tokens", 0)
+        total["output_tokens"] += usage.get("output_tokens", 0)
+        total["models"].update(usage.get("model_snapshots", []))
+    total["models"] = sorted(total["models"])
+    return {"reference_key": REFERENCE.key, "conditions": summaries,
+            "api_usage_total": total}
+
+
+def _sign_preserved(reference_value, condition_value) -> bool | None:
+    if reference_value is None or condition_value is None:
+        return None
+    return bool(np.sign(reference_value) == np.sign(condition_value))
+
+
+def summary_table(summary: dict) -> pd.DataFrame:
+    rows = []
+    for key, entry in summary["conditions"].items():
+        if entry.get("status") == "missing":
+            continue
+        row = {"condition": key, "label": entry["label"],
+               "factor": entry["factor"], "status": entry["status"],
+               "n_qubits": entry["factors"]["n_qubits"],
+               "family": entry["factors"]["family"],
+               "budget": entry["factors"]["budget"],
+               "model": entry["factors"]["model"],
+               "seeds": entry["n_seeds"]}
+        for method in METHODS:
+            row[f"{method}_mean"] = entry["per_method"][method]["mean"]
+        for a, b in REPORTED_CONTRASTS:
+            name = f"{b}_minus_{a}"
+            contrast = entry["contrasts"].get(name) or {}
+            row[f"{name}_gain"] = contrast.get("mean_paired_gain")
+            row[f"{name}_ci_lo"] = (contrast.get("bootstrap_95ci") or [None, None])[0]
+            row[f"{name}_ci_hi"] = (contrast.get("bootstrap_95ci") or [None, None])[1]
+            row[f"{name}_p"] = contrast.get("wilcoxon_exact_two_sided_p")
+            row[f"{name}_wins"] = contrast.get("wins_b")
+        row["llm_valid_fraction"] = entry["llm_proposal_validity"]["valid_fraction"]
+        row["api_calls"] = (entry.get("api_usage") or {}).get("n_calls")
+        rows.append(row)
+    return pd.DataFrame(rows)

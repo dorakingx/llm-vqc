@@ -25,12 +25,12 @@ import torch
 
 from llm_vqc.experiments.qae_tfim.pilot import (
     EPOCHS,
-    LEARNING_RATE,
     I2,
+    LEARNING_RATE,
+    EvalResult,
     X,
     Y,
     Z,
-    EvalResult,
     architecture_key,
 )
 

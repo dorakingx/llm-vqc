@@ -19,7 +19,8 @@ from pathlib import Path
 
 import numpy as np
 
-from llm_vqc.experiments.qae_robustness import arms, manifest as M, study
+from llm_vqc.experiments.qae_robustness import arms, study
+from llm_vqc.experiments.qae_robustness import manifest as M
 from llm_vqc.experiments.qae_robustness.conditions import (
     CONDITIONS,
     CONDITIONS_BY_KEY,

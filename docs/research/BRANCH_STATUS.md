@@ -56,7 +56,25 @@ The consolidation PR (#4) and the API-verification PR (#5) have been squash-merg
   `outputs/qae_tfim_neutral_v4/`) → **v5 incumbent-based free-form
   redesign (primary)**: pre-registered at `QAE_PROTOCOL_V5.md`
   (commit 33740dc), results `outputs/qae_tfim_neutral_v5/` —
-  first detected closed-loop advantage.
+  first detected closed-loop advantage → **controlled robustness study
+  (2026-09-04)**: `QAE_ROBUSTNESS_PROTOCOL.md`, results
+  `outputs/qae_robustness/`.
+
+## Robustness study (2026-09-04)
+
+The v5 result was stress-tested one factor at a time: budget `B in {4,8,16}`,
+qubits `n in {4,6,8}`, TFIM vs a pre-declared XXZ chain, and
+`gpt-5.4-mini-2026-03-17` vs `gpt-4.1-mini-2025-04-14`. Protocol frozen at
+`docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (commit 6933d3f) BEFORE the run;
+the v5 cell is reused, not re-run, and `tests/test_qae_robustness_reference.py`
+proves the new code reproduces it bit-for-bit. Results, figures, tables and
+the 2026-09-04 deck live in `outputs/qae_robustness/`.
+
+Headline: **Open - Random keeps its sign in 6/6 varied conditions** (significant
+in 4/6), while **Closed - Open does not generalise** - it grows to +0.081 at
+B=4, vanishes at B=16, and reverses at 6 and 8 qubits. A separate,
+newly-quantified failure mode is resource-contract compliance (as low as 65%
+valid proposals with the alternative model).
 
 ## Deck lineage in Drive (2026-08-29 meeting)
 

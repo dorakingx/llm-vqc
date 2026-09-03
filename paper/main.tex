@@ -303,6 +303,139 @@ LLM-Closed leads from its warm batch onward and keeps improving through the rede
 The semantic advantage replicates across three independently drawn pools (v3 $0.9653$, v4 $0.9643$, v5 open pool $0.9605$) and across spaces (rigid-layout v2: $0.9700$ against different baselines), while the non-semantic arms sit near $0.85$--$0.88$ in every neutral-space draw.
 The closed-versus-open outcome, by contrast, depended on the refinement interface: history-conditioned prompting showed no benefit (v3, v4), while incumbent-based free redesign did (v5).
 
+\section{Controlled Robustness Study}
+\label{sec:robustness}
+
+The v5 result rests on one cell of the design space: four qubits, a
+transverse-field Ising family, $B=8$, and one pinned model.
+We therefore ran a pre-registered one-factor-at-a-time stress test
+(\texttt{docs/research/QAE\_ROBUSTNESS\_PROTOCOL.md}, frozen before the run),
+varying exactly one of four factors per condition:
+the candidate budget $B \in \{4,8,16\}$;
+the qubit count $n \in \{4,6,8\}$;
+the Hamiltonian family (TFIM versus a pre-declared open-chain XXZ model
+$H=\sum_i (X_iX_{i+1}+Y_iY_{i+1}+\Delta Z_iZ_{i+1})$, $\Delta \in [0.2,2.0]$);
+and the model (\texttt{gpt-5.4-mini-2026-03-17} versus
+\texttt{gpt-4.1-mini-2025-04-14}).
+
+Everything else is frozen: prompt template and wording, output schema,
+validation and retry policy, temperature, trainer, optimizer, epochs,
+initialization, split sizes and Hamiltonian-parameter streams, the
+validation-only selection rule, the gate set, every method's logic, the RNG
+stream offsets, and the analysis conventions.
+Each condition carries a manifest with a fingerprint of all of the above; an
+automated check refuses to run a condition whose frozen block differs from the
+reference or that moves more than one factor.
+Circuit width scales by a declared rule --- $3n$ rotations and $n$ CNOTs, the
+same for all four methods --- so $n=4$ reproduces the v5 contract exactly;
+latent and trash registers are always $n/2$ each; adaptive methods always split
+$B$ evenly between exploration and refinement.
+For the Hamiltonian factor only the physical facts are substituted, and a
+check renders both prompts, undoes those substitutions, and asserts byte
+equality.
+The v5 cell is reused rather than re-run, and tests prove that the robustness
+code reproduces its data, architecture streams, prompts, and trainer
+bit-for-bit.
+
+\begin{table}[t]
+\centering\small
+\caption{Selected-architecture held-out test $F_{\mathrm{trash}}$ (mean over 12
+paired seeds) in every condition, with the share of evaluated semantic
+candidates that satisfied the exact resource contract. Higher is better.}
+\label{tab:robustness-means}
+\begin{tabular}{lccccc}
+\toprule
+Condition & Random & Greedy & LLM-Open & LLM-Closed & valid \\
+\midrule
+$n{=}4$, TFIM, $B{=}8$ (previous) & 0.8520 & 0.8696 & 0.9605 & \textbf{0.9671} & 95.8\% \\
+$B{=}4$ & 0.8001 & 0.7520 & 0.8682 & \textbf{0.9494} & 96.9\% \\
+$B{=}16$ & 0.8893 & 0.9069 & \textbf{0.9681} & 0.9659 & 96.1\% \\
+$n{=}6$ & 0.7254 & 0.6936 & \textbf{0.9222} & 0.8728 & 84.9\% \\
+$n{=}8$ & 0.5924 & 0.5245 & \textbf{0.8765} & 0.8013 & 88.5\% \\
+XXZ chain & 0.8094 & 0.7338 & 0.9215 & \textbf{0.9563} & 95.8\% \\
+alternative model & 0.8520 & 0.8696 & \textbf{0.9503} & 0.9166 & 65.1\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[t]
+\centering\small
+\caption{Paired contrasts across conditions (exact two-sided Wilcoxon,
+bootstrap 95\% CI over 10{,}000 resamples, Cohen's $d_z$, win counts).}
+\label{tab:robustness-contrasts}
+\begin{tabular}{lccccc}
+\toprule
+Condition & mean gain & 95\% CI & $d_z$ & wins & $p$ \\
+\midrule
+\multicolumn{6}{l}{\textit{LLM-Open $-$ Random}}\\
+$n{=}4$, TFIM, $B{=}8$ (previous) & $+0.1084$ & $[+0.0726, +0.1471]$ & $1.58$ & 11/12 & $p<0.001$ \\
+$B{=}4$ & $+0.0681$ & $[+0.0096, +0.1408]$ & $0.56$ & 8/12 & $p=0.064$ \\
+$B{=}16$ & $+0.0789$ & $[+0.0558, +0.1013]$ & $1.87$ & 11/12 & $p<0.001$ \\
+$n{=}6$ & $+0.1968$ & $[+0.1798, +0.2135]$ & $6.26$ & 12/12 & $p<0.001$ \\
+$n{=}8$ & $+0.2841$ & $[+0.2572, +0.3125]$ & $5.55$ & 12/12 & $p<0.001$ \\
+XXZ chain & $+0.1121$ & $[+0.0152, +0.2208]$ & $0.59$ & 5/12 & $p=0.791$ \\
+alternative model & $+0.0982$ & $[+0.0623, +0.1366]$ & $1.44$ & 11/12 & $p<0.001$ \\
+\midrule
+\multicolumn{6}{l}{\textit{LLM-Closed $-$ LLM-Open}}\\
+$n{=}4$, TFIM, $B{=}8$ (previous) & $+0.0066$ & $[+0.0023, +0.0112]$ & $0.81$ & 11/12 & $p=0.012$ \\
+$B{=}4$ & $+0.0812$ & $[+0.0602, +0.0987]$ & $2.25$ & 11/12 & $p<0.001$ \\
+$B{=}16$ & $-0.0023$ & $[-0.0078, +0.0017]$ & $-0.25$ & 9/12 & $p=0.677$ \\
+$n{=}6$ & $-0.0494$ & $[-0.0783, -0.0239]$ & $-0.97$ & 0/12 & $p<0.001$ \\
+$n{=}8$ & $-0.0752$ & $[-0.1320, -0.0271]$ & $-0.78$ & 1/12 & $p=0.007$ \\
+XXZ chain & $+0.0348$ & $[+0.0297, +0.0406]$ & $3.45$ & 12/12 & $p<0.001$ \\
+alternative model & $-0.0336$ & $[-0.0551, -0.0114]$ & $-0.83$ & 4/12 & $p=0.052$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{The semantic advantage is the durable part.}
+LLM-Open $-$ Random keeps its sign in all six varied conditions and is
+significant in four; it is largest, not smallest, at the widest registers
+($+0.2841$ at $n=8$), where the non-semantic arms degrade fastest.
+The two non-significant cells are informative rather than contradictory: at
+$B=4$ the effect is positive but the budget is too small to separate the arms
+reliably (8/12 seeds), and on the XXZ chain Random has a heavy tail
+(SD $0.19$, median $0.9237$ against mean $0.8094$) that inflates the mean gain
+while leaving only 5/12 per-seed wins.
+LLM-Closed $-$ Random is significant in all six varied conditions.
+
+\paragraph{The closed-loop advantage does not generalise as stated.}
+It is the fragile claim of v5, and it fails to survive: across budgets it runs
+$+0.0812 \to +0.0066 \to -0.0023$, and across register sizes
+$+0.0066 \to -0.0494 \to -0.0752$.
+Both ladders move monotonically against it.
+Free-form redesign is therefore worth most when the exploration budget is
+smallest --- exactly where the open-loop batch is thinnest --- and is a
+liability once the open batch is wide enough, or once the design space is large
+enough that the incumbent-conditioned call becomes hard to satisfy.
+The claim must be restated as budget- and width-dependent rather than general.
+
+\paragraph{A separate, measurable failure mode: contract compliance.}
+The share of evaluated semantic candidates that satisfied the exact resource
+contract falls from $95.8\%$ at the previous condition to $84.9\%$ at $n=6$ and
+$65.1\%$ with the alternative model, and \emph{which} call breaks is
+condition-specific: with the alternative model the eight-candidate open batch
+fell to $38\%$ while the closed loop stayed at $93\%$, whereas at $n=6$ the
+closed loop's warm batch fell to $70\%$ while the open batch stayed at $100\%$.
+Because the frozen policy replaces an invalid proposal with a flagged random
+draw, part of what looks like a method effect at larger $n$ or with a weaker
+model is a generation-validity effect.
+This is a concrete, cheap engineering target that is independent of the
+reasoning question.
+
+\paragraph{Scope of the robustness study.}
+Twelve paired seeds per cell is adequate for large effects and underpowered for
+small ones, so a non-significant cell is not evidence of absence.
+One factor at a time estimates no interactions --- a large budget at eight
+qubits, for example, was not run.
+Two Hamiltonian families and two models are two points, not a survey.
+The study consumed 511 recorded model calls (428{,}651 input and 225{,}577
+output tokens) under a hard spending cap; simulation cost, not model cost, is
+the binding constraint, since statevector training grows exponentially in $n$
+while the number of calls grows only linearly in $B$.
+A prompt-semantic ablation was deliberately out of scope here and remains the
+main open item from Section~\ref{sec:next}.
+
 \section{Why the New Result Differs from the Earlier Random-Search Result}
 
 The result does not imply that the old benchmark was wrong.
@@ -338,15 +471,17 @@ The supported claim is conditional:
 \emph{when the task description exposes useful physical structure, a task-aware language-model proposal distribution can be substantially more sample-efficient than equal-capacity random architecture sampling.}
 
 \section{Next Experiments}
+\label{sec:next}
 
 A publication-quality confirmatory study should:
 \begin{enumerate}
 \item run a prompt-semantic ablation: the identical resource contract with the physics sentences removed, isolating the semantic content of the prompt from its formatting;
 \item replay the frozen prompt across \emph{several} version-pinned LLM APIs (the present work pins one model and stores complete prompts, raw outputs, token counts, latency, and budget accounting);
 \item add gradient-based QAS, restart/population variants of Greedy, and tree-tensor-network baselines;
-\item probe larger budgets $B$, where local search and closed-loop feedback may matter more than at $B=8$;
-\item scale to six and eight qubits and vary the latent dimension;
-\item repeat on Heisenberg and molecular ground-state families;
+\item vary the latent dimension independently of $n$ (Section~\ref{sec:robustness} scales them together);
+\item repeat on molecular ground-state families;
+\item estimate the interactions the single-factor grid could not: large budgets at large $n$, and each factor crossed with the model;
+\item close the generation-validity gap (constrained decoding or a repair loop) so that method effects are not confounded with contract compliance;
 \item add realistic noise and hardware connectivity, reporting performance--cost Pareto fronts;
 \item freeze a multi-model, multi-seed confirmatory protocol before protected-test inspection.
 \end{enumerate}

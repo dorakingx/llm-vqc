@@ -46,3 +46,5 @@ paper/main.pdf
 !outputs/mini5_ctx_20260804/**
 !outputs/qae_tfim_neutral_v5/
 !outputs/qae_tfim_neutral_v5/**
+!outputs/qae_robustness/
+!outputs/qae_robustness/**

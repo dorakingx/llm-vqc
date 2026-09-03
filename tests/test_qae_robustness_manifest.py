@@ -9,7 +9,8 @@ import copy
 
 import pytest
 
-from llm_vqc.experiments.qae_robustness import conditions as C, manifest as M
+from llm_vqc.experiments.qae_robustness import conditions as C
+from llm_vqc.experiments.qae_robustness import manifest as M
 from llm_vqc.experiments.qae_robustness import prompts as P
 
 NON_REFERENCE = [c for c in C.CONDITIONS if c.factor != "reference"]
