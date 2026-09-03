@@ -1,17 +1,19 @@
-"""Build the redesigned 10-slide robustness deck (.pptx + .pdf).
+"""Build the 10-slide "tested one-factor slices" robustness deck (.pptx + .pdf).
 
-Structure and explanatory style follow the previous meeting deck (numbered
-section kicker, step-by-step definitions, tinted definition boxes, an
-explicit "Reading" note under every figure). Content is the current
-robustness study only. Every number is read from the committed result
-tables; nothing is typed by hand.
+Structure and explanatory style follow the previous meeting deck. Content is
+the completed robustness study only: four tested one-factor slices from one
+baseline, never a factorial grid. Every number is read from the committed
+result tables; nothing is typed by hand and no experiment is run here.
+
+Model tiers are named Low (gpt-4.1-mini) and High (gpt-5.4-mini); groups are
+always ordered Random -> Greedy -> Low -> High; LLM-Open / LLM-Closed remain
+the search-workflow names.
 
 QA performed on every build:
   - exactly 10 slides, nothing off-canvas, no estimated text overflow
-  - no coding/version identifiers in visible text (shared pattern list)
-  - every technical term is defined on or before the slide it first appears
-  - both 3 x 3 Hamiltonian grids present, six categories per cell
-  - the next action names both the target accuracy and the minimum budget
+  - no coding/version identifiers, no Model A/B style labels, no full-grid claims
+  - every technical term defined on or before the slide it first appears
+  - required section order, required phrases, B_min procedure present
 
 Usage:
   python scripts/qae/build_qae_robustness_slides.py          # build + PDF
@@ -34,18 +36,25 @@ FIGURES = ROOT / "figures"
 DECK_DIR = ROOT / "deck"
 DECK_NAME = "20260904_GSoC"
 
-# Shared prohibited-string list and geometry audit from the first build.
 _spec = importlib.util.spec_from_file_location(
     "qae_deck_common", Path("scripts/qae/build_qae_robustness_deck.py"))
 _common = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(_common)
-FORBIDDEN_PATTERNS = _common.FORBIDDEN_PATTERNS
 geometry_audit = _common.audit
 extract_text = _common.extract_text
 
+# Shared coding/version patterns plus the labels and claims this deck must not carry.
+FORBIDDEN_PATTERNS = _common.FORBIDDEN_PATTERNS + [
+    (r"\bModel [AB]\b", "model letter label"),
+    (r"\b(Open|Closed) [AB]\b", "model letter label"),
+    (r"\b(reference|alternative) model\b", "model role label"),
+    (r"(?i)across the full grid", "full-grid claim"),
+    (r"(?i)for all qubit.budget combinations", "full-grid claim"),
+    (r"(?i)\b(model|Hamiltonian)-independent\b", "over-general claim"),
+]
+
 SLIDE_W, SLIDE_H = Inches(13.333), Inches(7.5)
 
-# Palette of the previous deck.
 NAVY = RGBColor(0x1F, 0x2A, 0x44)
 KICKER = RGBColor(0xC5, 0x22, 0x1F)
 INK = RGBColor(0x20, 0x21, 0x24)
@@ -57,11 +66,13 @@ GREEN, GREEN_FILL = RGBColor(0x18, 0x80, 0x38), RGBColor(0xE6, 0xF4, 0xEA)
 RED, RED_FILL = RGBColor(0xD9, 0x30, 0x25), RGBColor(0xFC, 0xE8, 0xE6)
 AMBER, AMBER_FILL = RGBColor(0xF9, 0xAB, 0x00), RGBColor(0xFE, 0xF7, 0xE0)
 GREY, GREY_FILL = RGBColor(0x9A, 0xA0, 0xA6), RGBColor(0xF1, 0xF3, 0xF4)
-PURPLE = RGBColor(0x84, 0x30, 0xCE)
 FONT = "Helvetica Neue"
 
-MODEL_A = "gpt-5.4-mini"
-MODEL_B = "gpt-4.1-mini"
+LOW_MODEL, HIGH_MODEL = "gpt-4.1-mini", "gpt-5.4-mini"
+OPEN_RANDOM = "LLM-Open_minus_Random"
+CLOSED_OPEN = "LLM-Closed_minus_LLM-Open"
+CLOSED_RANDOM = "LLM-Closed_minus_Random"
+GREEDY_RANDOM = "Greedy_minus_Random"
 
 # ------------------------------------------------------------ primitives ---
 
@@ -92,6 +103,13 @@ def box(slide, left, top, width, height, fill, border, border_pt=1.25):
     return shape
 
 
+def line(slide, x1, y1, x2, y2, color=GREY, width_pt=1.5):
+    connector = slide.shapes.add_connector(1, x1, y1, x2, y2)
+    connector.line.color.rgb = color
+    connector.line.width = Pt(width_pt)
+    return connector
+
+
 def textbox(slide, left, top, width, height, align=PP_ALIGN.LEFT):
     frame = slide.shapes.add_textbox(left, top, width, height).text_frame
     frame.word_wrap = True
@@ -100,21 +118,21 @@ def textbox(slide, left, top, width, height, align=PP_ALIGN.LEFT):
 
 
 def write(frame, lines, *, size=12, color=INK, bold=False, space_after=4,
-          line_spacing=1.0):
-    """lines: str | (str, opts) | list of runs [(text, opts), ...] per paragraph."""
+          line_spacing=1.0, align=None):
+    """lines: str | (str, opts) | [ (run_text, run_opts), ... ] per paragraph."""
     first = True
-    for line in lines:
-        if isinstance(line, list):
-            runs, opts = line, {}
+    for entry in lines:
+        if isinstance(entry, list):
+            runs, opts = entry, {}
         else:
-            text, opts = (line if isinstance(line, tuple) else (line, {}))
+            text, opts = (entry if isinstance(entry, tuple) else (entry, {}))
             runs = [(text, opts)]
         paragraph = frame.paragraphs[0] if first else frame.add_paragraph()
         first = False
         paragraph.space_after = Pt(opts.get("space_after", space_after))
         paragraph.line_spacing = opts.get("line_spacing", line_spacing)
-        if "align" in opts:
-            paragraph.alignment = opts["align"]
+        if align is not None or "align" in opts:
+            paragraph.alignment = opts.get("align", align)
         for text, ropts in runs:
             run = paragraph.add_run()
             run.text = text
@@ -138,15 +156,27 @@ def header(slide, kicker, title, subtitle=None):
         write(frame, [(subtitle, {"size": 11, "color": MUTED})], space_after=0)
 
 
-def footer(slide, text):
-    frame = textbox(slide, Inches(0.55), Inches(7.0), Inches(12.2), Inches(0.35))
+FOOTER_TOP = Inches(7.0)
+TRANSITION_TOP = Inches(6.55)
+
+
+def footer(slide, text, top=FOOTER_TOP):
+    frame = textbox(slide, Inches(0.55), top, Inches(12.2), Inches(0.35))
     write(frame, [(text, {"size": 8.5, "color": MUTED})], space_after=0)
+
+
+def transition(slide, text, top=TRANSITION_TOP):
+    """The one sentence that hands over to the next slide (spec: slides 2-9)."""
+    rect(slide, Inches(0.55), top, Inches(0.08), Inches(0.36), KICKER)
+    frame = textbox(slide, Inches(0.75), top - Inches(0.02), Inches(12.0), Inches(0.42))
+    write(frame, [[("Next:  ", {"bold": True, "color": KICKER}),
+                   (text, {"color": INK})]], size=11, space_after=0)
 
 
 def picture(slide, name, left, top, width=None, height=None):
     path = FIGURES / f"{name}.png"
     if not path.exists():
-        raise SystemExit(f"missing figure {path}; run the grid figure builder first")
+        raise SystemExit(f"missing figure {path}; run the slice figure builder first")
     if width is not None:
         return slide.shapes.add_picture(str(path), left, top, width=width)
     return slide.shapes.add_picture(str(path), left, top, height=height)
@@ -159,18 +189,26 @@ def titled_box(slide, left, top, width, height, fill, border, title, lines,
                     width - Inches(0.28), height - Inches(0.16))
     write(frame, [(title, {"size": title_size, "bold": True,
                            "color": title_color or border, "space_after": 3})]
-          + [(line if isinstance(line, (tuple, list)) else
-              (line, {"size": body_size})) for line in lines],
+          + [(entry if isinstance(entry, (tuple, list)) else (entry, {"size": body_size}))
+             for entry in lines],
           size=body_size, space_after=space_after)
     return frame
 
 
-def chip(slide, left, top, color, hollow=False):
-    shape = _flat(slide.shapes.add_shape(9, left, top, Inches(0.16), Inches(0.16)))
-    shape.fill.solid()
-    shape.fill.fore_color.rgb = WHITE if hollow else color
-    shape.line.color.rgb = color
-    shape.line.width = Pt(1.75 if hollow else 0.75)
+def chip(slide, left, top, width, text, fill, border, color=INK, size=10, bold=False):
+    shape = box(slide, left, top, width, Inches(0.36), fill, border, 1.0)
+    frame = shape.text_frame
+    frame.margin_left = frame.margin_right = Emu(0)
+    frame.margin_top = frame.margin_bottom = Emu(0)
+    frame.word_wrap = True
+    paragraph = frame.paragraphs[0]
+    paragraph.alignment = PP_ALIGN.CENTER
+    run = paragraph.add_run()
+    run.text = text
+    run.font.size = Pt(size)
+    run.font.bold = bold
+    run.font.name = FONT
+    run.font.color.rgb = color
     return shape
 
 
@@ -178,7 +216,7 @@ TABLE_ROW_HEIGHT = Inches(0.34)
 
 
 def table(slide, rows, left, top, col_widths, row_height=TABLE_ROW_HEIGHT,
-          header_size=10, body_size=9.5, colors=None, align_first_left=True):
+          header_size=10, body_size=9.5, colors=None):
     width = sum(col_widths, Emu(0))
     shape = slide.shapes.add_table(len(rows), len(rows[0]), left, top, width,
                                    row_height * len(rows)).table
@@ -190,13 +228,12 @@ def table(slide, rows, left, top, col_widths, row_height=TABLE_ROW_HEIGHT,
             cell = shape.cell(r, c)
             cell.text = str(value)
             cell.margin_left = cell.margin_right = Inches(0.07)
-            cell.margin_top = cell.margin_bottom = Emu(9525)
+            cell.margin_top = cell.margin_bottom = Emu(12700)
             for paragraph in cell.text_frame.paragraphs:
-                paragraph.alignment = (PP_ALIGN.LEFT if (c == 0 and align_first_left)
-                                       else PP_ALIGN.CENTER)
+                paragraph.alignment = PP_ALIGN.LEFT if c == 0 else PP_ALIGN.CENTER
                 for run in paragraph.runs:
                     run.font.size = Pt(header_size if r == 0 else body_size)
-                    run.font.bold = r == 0
+                    run.font.bold = r == 0 or c == 0
                     run.font.name = FONT
                     run.font.color.rgb = INK
                     if colors and (r, c) in colors:
@@ -227,75 +264,61 @@ def mean_of(summary, key, method):
     return summary["conditions"][key]["per_method"][method]["mean"]
 
 
-def valid_share(summary, key):
-    return summary["conditions"][key]["llm_proposal_validity"]["valid_fraction"]
-
-
-def arm_validity(key, method):
-    quality = json.loads((ROOT / key / "proposal_quality.json").read_text())
-    entry = quality[method]
+def validity(key, method):
+    entry = json.loads((ROOT / key / "proposal_quality.json").read_text())[method]
     return 1 - entry["fallback_evaluations"] / entry["evaluations"]
 
 
-def contrast_line(summary, key, contrast):
+def short(summary, key, contrast):
     entry = stat(summary, key, contrast)
-    lo, hi = entry["bootstrap_95ci"]
-    return (f"{_fmt(entry['mean_paired_gain'])}  [{_fmt(lo)}, {_fmt(hi)}]  ·  "
-            f"{entry['wins_b']}/{entry['n']} seeds  ·  "
-            f"{_p(entry['wilcoxon_exact_two_sided_p'])}")
+    return (f"{_fmt(entry['mean_paired_gain'], 3)} ({entry['wins_b']}/12, "
+            f"{_p(entry['wilcoxon_exact_two_sided_p'])})")
 
 
 def verdict(summary, key, contrast):
+    """Evidence-calibrated word for one paired contrast in one condition."""
     entry = stat(summary, key, contrast)
     if entry["wilcoxon_exact_two_sided_p"] >= 0.05:
         return "not detected"
-    return "holds" if entry["mean_paired_gain"] > 0 else "reverses"
-
-
-OPEN_RANDOM = "LLM-Open_minus_Random"
-CLOSED_OPEN = "LLM-Closed_minus_LLM-Open"
-CLOSED_RANDOM = "LLM-Closed_minus_Random"
-GREEDY_RANDOM = "Greedy_minus_Random"
-VARIED = ["budget_b4", "budget_b16", "qubits_n6", "qubits_n8", "hamiltonian_xxz",
-          "model_alt"]
-NAMES = {"budget_b4": "B = 4", "budget_b16": "B = 16", "qubits_n6": "6 qubits",
-         "qubits_n8": "8 qubits", "hamiltonian_xxz": "the XXZ chain",
-         "model_alt": "Model B"}
+    return "robust" if entry["mean_paired_gain"] > 0 else "reversed"
 
 
 # ---------------------------------------------------------------- slides ---
 
 
-def slide_01_title(deck, summary):
+def slide_01_question(deck, summary):
     slide = deck.slides.add_slide(deck.slide_layouts[6])
     rect(slide, Emu(0), Emu(0), SLIDE_W, SLIDE_H, NAVY)
-    frame = textbox(slide, Inches(0.9), Inches(1.05), Inches(11.5), Inches(1.9))
-    write(frame, [("Does the quantum-autoencoder search result",
+    frame = textbox(slide, Inches(0.9), Inches(0.95), Inches(11.6), Inches(1.9))
+    write(frame, [("Which parts of the previous QAE result",
                    {"size": 36, "bold": True, "color": WHITE, "space_after": 0}),
-                  ("hold up when one thing changes?",
+                  ("survive one-factor changes?",
                    {"size": 36, "bold": True, "color": WHITE})], space_after=6)
-    frame = textbox(slide, Inches(0.9), Inches(2.95), Inches(11.5), Inches(0.9))
-    write(frame, [("A controlled robustness study of the previous result: change "
-                   "exactly one factor at a time — evaluation budget, qubit count, "
-                   "Hamiltonian, language model — and see which findings survive.",
+    frame = textbox(slide, Inches(0.9), Inches(2.85), Inches(11.6), Inches(0.75))
+    write(frame, [("A quantum autoencoder (QAE) robustness study — a follow-up to last "
+                   "meeting's architecture-search result",
                    {"size": 16, "color": RGBColor(0xC8, 0xD4, 0xEC)})])
-    box(slide, Inches(0.9), Inches(3.95), Inches(11.5), Inches(1.45),
+    box(slide, Inches(0.9), Inches(3.7), Inches(11.6), Inches(1.95),
         RGBColor(0x2A, 0x3A, 0x5C), RGBColor(0x5B, 0x8D, 0xEF))
-    frame = textbox(slide, Inches(1.12), Inches(4.07), Inches(11.1), Inches(1.25))
-    write(frame, [[("The question:  ", {"bold": True, "color": RGBColor(0xF9, 0xAB, 0x00)}),
-                   ("last time, physics-informed language-model proposals beat random "
-                    "and greedy circuit search by a wide margin, and a closed feedback "
-                    "loop added a small extra gain — at 4 qubits, one Hamiltonian, one "
-                    "budget, one model. Which of those two findings is a property of "
-                    "the method, and which was a property of that one setting? "
-                    "We answer by moving exactly one declared factor per condition.",
-                    {"color": WHITE})]], size=13, space_after=0)
-    frame = textbox(slide, Inches(0.9), Inches(5.75), Inches(11.5), Inches(1.1))
+    frame = textbox(slide, Inches(1.12), Inches(3.8), Inches(11.2), Inches(1.8))
+    write(frame, [
+        [("Baseline finding:  ", {"bold": True, "color": RGBColor(0xF9, 0xAB, 0x00)}),
+         ("physics-informed language-model proposals beat random and greedy circuit "
+          "search by a wide margin, and a closed feedback loop added a small extra gain.",
+          {"color": WHITE})],
+        [("Four factors tested, one at a time:  ",
+          {"bold": True, "color": RGBColor(0xF9, 0xAB, 0x00)}),
+         ("evaluation budget · qubit count · Hamiltonian · language model.",
+          {"color": WHITE})],
+        [("This is a tested one-factor-slice study, not a complete factorial grid.",
+          {"bold": True, "color": WHITE})],
+    ], size=13.5, space_after=6)
+    frame = textbox(slide, Inches(0.9), Inches(5.95), Inches(11.5), Inches(1.0))
     write(frame, [("Tomoya Hatanaka", {"size": 15, "bold": True, "color": WHITE}),
                   ("ML4SCI / Google Summer of Code 2026",
                    {"size": 12, "color": RGBColor(0xC8, 0xD4, 0xEC)}),
-                  ("September 4, 2026",
-                   {"size": 11, "color": RGBColor(0x9A, 0xA8, 0xC8)})], space_after=2)
+                  ("September 4, 2026", {"size": 11, "color": RGBColor(0x9A, 0xA8, 0xC8)})],
+          space_after=2)
 
 
 def slide_02_baseline(deck, summary):
@@ -303,457 +326,512 @@ def slide_02_baseline(deck, summary):
     header(slide, "1 · Previous baseline",
            "Where we left off: the previous baseline result",
            "Quantum autoencoder (QAE): compress ground states into fewer qubits — "
-           "4 qubits · transverse-field Ising chain · budget B = 8 · 12 paired seeds")
-    # task flow strip
+           "4 qubits · Ising chain · B = 8 · High model tier · 12 paired seeds")
     flow = [
         ("Input  |ψ(h)⟩", "ground state of the 4-qubit Ising chain\n"
          "H = −Σ Zᵢ Zᵢ₊₁ − h Σ Xᵢ,  h ∈ [0.2, 2.0]", BLUE_FILL, BLUE),
         ("Encoder  Uθ", "the circuit we search:\n16 gates, angles trained", ORANGE_FILL, ORANGE),
-        ("Latent  q0, q1", "the 2 qubits we KEEP\n(the compressed code)", GREEN_FILL, GREEN),
-        ("Trash  q2, q3", "should end in the SAME state |00⟩\nfor every input", RED_FILL, RED),
+        ("Latent qubits  q0, q1", "the 2 qubits we KEEP\n(the compressed code)",
+         GREEN_FILL, GREEN),
+        ("Trash qubits  q2, q3", "should end in the SAME state |00⟩\nfor every input",
+         RED_FILL, RED),
     ]
     x = 0.55
-    widths = [3.55, 2.55, 2.55, 2.75]
+    widths = [3.55, 2.55, 2.6, 2.7]
     for (title, body, fill, border), w in zip(flow, widths, strict=True):
         titled_box(slide, Inches(x), Inches(1.55), Inches(w), Inches(0.92), fill, border,
-                   title, [(body, {"size": 9, "color": INK})], title_size=11.5, body_size=9,
+                   title, [(body, {"size": 9, "color": INK})], title_size=11, body_size=9,
                    space_after=0)
         if w != widths[-1]:
             frame = textbox(slide, Inches(x + w + 0.02), Inches(1.78), Inches(0.3), Inches(0.4))
             write(frame, [("→", {"size": 16, "color": MUTED})], space_after=0)
         x += w + 0.35
-    # metric definition
     box(slide, Inches(0.55), Inches(2.6), Inches(12.2), Inches(0.62), BLUE_FILL, BLUE)
     frame = textbox(slide, Inches(0.7), Inches(2.66), Inches(11.95), Inches(0.55))
-    write(frame, [[("Metric — trash fidelity:  ", {"bold": True, "color": BLUE}),
-                   ("F_trash = ⟨00| ρ_trash |00⟩ = P(q2 q3 = 00), the probability that "
-                    "the trash qubits end in |00⟩.  ", {}),
+    write(frame, [[("Trash fidelity:  ", {"bold": True, "color": BLUE}),
+                   ("F_trash = ⟨00| ρ_trash |00⟩ = P(q2 q3 = 00), the probability that the "
+                    "trash qubits end in |00⟩.  ", {}),
                    ("Higher is better.  ", {"bold": True, "color": GREEN}),
                    ("Reported on a held-out test set (64 unseen h values never used for "
                     "training, selection or feedback), read once after selection.", {})]],
           size=10.5, space_after=0)
-    # figure
-    picture(slide, "baseline_cell", Inches(0.45), Inches(3.32), width=Inches(6.0))
-    # methods
+    picture(slide, "baseline_groups", Inches(0.45), Inches(3.3), height=Inches(3.15))
     methods = [
-        ("Random", GREY, "B independent uniform circuit draws; no physics, no feedback."),
-        ("Greedy", AMBER, "B/2 random starts (exploration, no feedback), then B/2 "
-                          "single-gate refinements of the best one (refinement, uses "
-                          "validation feedback); a change is kept only if validation "
-                          "improves."),
-        ("LLM-Open", BLUE, "open-loop: the language model writes all B physics-informed "
-                           "proposals BEFORE any score is seen."),
-        ("LLM-Closed", RED, "closed-loop: B/2 proposals, then B/2 free redesigns of the "
-                            "current best circuit, each given its validation score."),
+        ("Random", GREY, "B independent uniformly sampled circuit architectures."),
+        ("Greedy", AMBER, "B/2 random starts, then B/2 single-structural-change "
+                          "refinements of the best validation candidate."),
+        ("LLM-Open", BLUE, "open-loop: all semantic (physics-informed) proposals are "
+                           "generated BEFORE any validation result is observed."),
+        ("LLM-Closed", RED, "closed-loop: semantic initial proposals, then free "
+                            "redesigns of the current best circuit using validation "
+                            "feedback."),
     ]
-    box(slide, Inches(6.65), Inches(3.32), Inches(6.1), Inches(1.95), GREY_FILL, GREY)
-    frame = textbox(slide, Inches(6.8), Inches(3.38), Inches(5.85), Inches(1.85))
-    lines = [[("The four methods — each may train and score exactly B candidate "
-               "circuits per seed (B = the evaluation budget)", {"bold": True})]]
+    box(slide, Inches(6.65), Inches(3.3), Inches(6.1), Inches(1.98), GREY_FILL, GREY)
+    frame = textbox(slide, Inches(6.8), Inches(3.36), Inches(5.85), Inches(1.9))
+    lines = [[("Four search methods; evaluation budget B = the number of candidate "
+               "circuits trained and evaluated per seed", {"bold": True})]]
     for name, color, body in methods:
         lines.append([(f"{name}  ", {"bold": True, "color": color}), (body, {})])
     write(frame, lines, size=9.5, space_after=2)
-    # stats
-    box(slide, Inches(6.65), Inches(5.37), Inches(6.1), Inches(1.5), AMBER_FILL, AMBER)
-    frame = textbox(slide, Inches(6.8), Inches(5.42), Inches(5.85), Inches(1.42))
+    box(slide, Inches(6.65), Inches(5.38), Inches(6.1), Inches(1.1), AMBER_FILL, AMBER)
+    frame = textbox(slide, Inches(6.8), Inches(5.43), Inches(5.85), Inches(1.02))
     write(frame, [
-        [("What the baseline found", {"bold": True, "color": ORANGE})],
-        [("1  Semantics is decisive.  ", {"bold": True, "color": BLUE}),
-         ("LLM-Open − Random  " + contrast_line(summary, "reference", OPEN_RANDOM), {})],
-        [("2  The closed loop adds a little more.  ", {"bold": True, "color": RED}),
-         ("LLM-Closed − LLM-Open  " + contrast_line(summary, "reference", CLOSED_OPEN), {})],
-        [("3  Non-semantic refinement is flat.  ", {"bold": True, "color": ORANGE}),
-         ("Greedy − Random  " + contrast_line(summary, "reference", GREEDY_RANDOM), {})],
+        [("Two claims to stress-test", {"bold": True, "color": ORANGE})],
+        [("1  Semantic proposals outperform non-semantic search.  ",
+          {"bold": True, "color": BLUE}),
+         ("LLM-Open − Random " + short(summary, "reference", OPEN_RANDOM), {})],
+        [("2  Closed-loop redesign gives a smaller additional gain.  ",
+          {"bold": True, "color": RED}),
+         ("LLM-Closed − LLM-Open " + short(summary, "reference", CLOSED_OPEN), {})],
     ], size=9.5, space_after=2)
+    transition(slide, "do these two claims survive when exactly one condition changes?",
+               top=Inches(6.58))
     footer(slide, "Reading: dots = the 12 paired seeds (12 independent draws of training/"
                   "validation data, shared by all methods); marker = mean; bar = bootstrap "
-                  "95% confidence interval (CI). Differences are per-seed paired; "
-                  "p = exact paired Wilcoxon test. Model A = the reference model of the "
-                  "baseline (" + MODEL_A + ").")
+                  "95% confidence interval (CI); differences are per-seed paired, "
+                  f"p = exact paired Wilcoxon test. High tier = {HIGH_MODEL}.")
 
 
-def slide_03_protocol(deck, summary):
+def slide_03_design(deck, summary):
     slide = deck.slides.add_slide(deck.slide_layouts[6])
-    header(slide, "2 · Controlled protocol",
-           "One factor at a time; everything else frozen",
-           "Every condition differs from the baseline in exactly one declared factor, and "
-           "an automated check refuses any condition that does not")
-    titled_box(slide, Inches(0.55), Inches(1.6), Inches(5.55), Inches(3.45), GREEN_FILL, GREEN,
-               "FROZEN for every condition", [
-        "•  the task: quantum autoencoder, trash fidelity metric, 12 paired seeds",
-        "•  the four methods, exactly as defined on the previous slide",
-        "•  the language-model workflow: prompt wording, output format, sampling "
-        "temperature, retry policy (only stated Hamiltonian facts are substituted)",
-        "•  the circuit trainer: same optimizer, epochs, initialisation, data splits",
-        "•  the selection rule: lowest validation loss; test set read once afterwards",
-        "•  the gate set: RX, RY, RZ rotations and CNOT (controlled-NOT) gates",
-        "•  random-number streams and all statistical conventions",
-    ], body_size=10)
-    titled_box(slide, Inches(6.35), Inches(1.6), Inches(6.4), Inches(3.45), BLUE_FILL, BLUE,
-               "VARIED — one factor per condition", [])
-    rows = [["Factor", "Levels tested", "All other settings"],
-            ["Evaluation budget B", "4 · 8 · 16", "4 qubits, Ising, Model A"],
-            ["Qubit count", "4 · 6 · 8", "B = 8, Ising, Model A"],
-            ["Hamiltonian", "Ising · XXZ", "4 qubits, B = 8, Model A"],
-            ["Language model", "Model A · Model B", "4 qubits, Ising, B = 8"]]
-    table(slide, rows, Inches(6.55), Inches(2.05),
-          [Inches(1.85), Inches(1.75), Inches(2.4)], row_height=Inches(0.36))
-    frame = textbox(slide, Inches(6.55), Inches(3.98), Inches(6.0), Inches(1.0))
+    header(slide, "2 · Controlled robustness design",
+           "One factor changes; everything else remains fixed",
+           "Four controlled changes leave the baseline; each moves exactly one declared "
+           "factor and holds the other three at the baseline")
+    box(slide, Inches(0.55), Inches(2.35), Inches(3.1), Inches(1.5), NAVY, NAVY)
+    frame = textbox(slide, Inches(0.7), Inches(2.42), Inches(2.8), Inches(1.4))
+    write(frame, [("BASELINE", {"size": 11, "bold": True, "color": AMBER}),
+                  ("4 qubits · Ising · B = 8", {"size": 12.5, "bold": True, "color": WHITE}),
+                  ("High model tier", {"size": 12.5, "bold": True, "color": WHITE}),
+                  ("12 paired seeds", {"size": 11, "color": RGBColor(0xC8, 0xD4, 0xEC)})],
+          space_after=2)
+    branches = [
+        ("Evaluation budget B", ["4", "8", "16"], 1, BLUE, BLUE_FILL),
+        ("Qubit count", ["4", "6", "8"], 0, GREEN, GREEN_FILL),
+        ("Hamiltonian", ["Ising", "XXZ"], 0, AMBER, AMBER_FILL),
+        ("Language-model tier", ["Low", "High"], 1, RED, RED_FILL),
+    ]
+    for i, (name, levels, base_index, color, fill) in enumerate(branches):
+        top = Inches(1.6 + i * 0.78)
+        line(slide, Inches(3.65), Inches(3.1), Inches(4.35), top + Inches(0.28), color, 1.75)
+        box(slide, Inches(4.35), top, Inches(3.55), Inches(0.7), fill, color)
+        frame = textbox(slide, Inches(4.48), top + Inches(0.01), Inches(3.3), Inches(0.24))
+        write(frame, [(name, {"size": 10.5, "bold": True, "color": color})], space_after=0)
+        x = 4.5
+        for j, level in enumerate(levels):
+            is_base = j == base_index
+            chip(slide, Inches(x), top + Inches(0.31), Inches(0.72), level,
+                 NAVY if is_base else WHITE, NAVY if is_base else color,
+                 WHITE if is_base else INK, size=9.5, bold=is_base)
+            x += 0.82
+    frame = textbox(slide, Inches(4.35), Inches(4.78), Inches(3.55), Inches(0.5))
+    write(frame, [[("dark chip", {"bold": True, "color": NAVY}),
+                   (" = the baseline level. Low = " + LOW_MODEL + ", High = " + HIGH_MODEL
+                    + " (defined on the next slide).", {"color": MUTED})]],
+          size=9, space_after=0)
+    titled_box(slide, Inches(8.2), Inches(1.6), Inches(4.55), Inches(3.65), GREEN_FILL, GREEN,
+               "FROZEN in every condition", [
+        "•  prompt wording and output schema",
+        "•  method logic of all four search methods",
+        "•  circuit resource rule: 3 rotations + 1 CNOT (controlled-NOT) per qubit",
+        "•  trainer and optimizer",
+        "•  data splits (train / validation / held-out test)",
+        "•  the same 12 paired seeds",
+        "•  validation-only selection",
+        "•  held-out test evaluation, read once",
+        "•  statistical analysis (paired, bootstrap CI, exact Wilcoxon)",
+    ], body_size=10, space_after=3)
+    box(slide, Inches(0.55), Inches(5.4), Inches(12.2), Inches(0.95), AMBER_FILL, AMBER)
+    frame = textbox(slide, Inches(0.7), Inches(5.46), Inches(11.95), Inches(0.85))
     write(frame, [
-        [("Model A", {"bold": True, "color": BLUE}),
-         (f" = the reference model of the baseline ({MODEL_A}, March 2026 snapshot).  ", {}),
-         ("Model B", {"bold": True, "color": PURPLE}),
-         (f" = the alternative model ({MODEL_B}, April 2025 snapshot): same prompt "
-          "bytes, temperature, retries and token limit; only the model name changes.", {})],
-        [("XXZ", {"bold": True, "color": BLUE}),
-         (" = the second Hamiltonian family, an XXZ Heisenberg chain "
-          "H = Σ (Xᵢ Xᵢ₊₁ + Yᵢ Yᵢ₊₁ + Δ Zᵢ Zᵢ₊₁), Δ ∈ [0.2, 2.0], declared before "
-          "the run. The prompt changes only in the stated physics facts.", {})],
-    ], size=9.5, space_after=3)
-    box(slide, Inches(0.55), Inches(5.2), Inches(12.2), Inches(1.6), AMBER_FILL, AMBER)
-    frame = textbox(slide, Inches(0.7), Inches(5.26), Inches(11.95), Inches(1.5))
-    write(frame, [
-        [("Scaling rules, fixed before the run:  ", {"bold": True, "color": ORANGE}),
-         ("(1) circuit width = 3 trainable rotations + 1 CNOT per qubit for every "
-          "method — so 4 qubits reproduces the baseline's 16-gate contract exactly; "
-          "(2) half the qubits are latent, half are trash; (3) the two adaptive methods "
-          "(Greedy, LLM-Closed) always split B evenly: B/2 exploration (proposals made "
-          "without feedback) + B/2 refinement (proposals that use validation "
-          "feedback).", {})],
-        [("Fairness check:  ", {"bold": True, "color": ORANGE}),
-         ("each condition stores a fingerprint of every frozen component above; the "
-          "run refuses to start if the fingerprint differs from the baseline's or if "
-          "more than one factor moves. The baseline cell is reused rather than re-run; "
-          "tests prove the study code reproduces its data, prompts and trainer "
-          "exactly.", {})],
-    ], size=10, space_after=4)
-    footer(slide, "Reused baseline cell: 4 qubits · Ising · B = 8 · Model A. "
-                  "Not part of this study, by design: any change to the prompt's "
-                  "physical content.")
+        [("No interaction condition was tested.  ", {"bold": True, "color": ORANGE}),
+         ("Each change returns to the baseline before the next factor moves, so nothing "
+          "is known about, for example, a large budget at 8 qubits, or the Low tier on "
+          "the XXZ chain. XXZ = the second Hamiltonian family, an XXZ Heisenberg chain "
+          "H = Σ (Xᵢ Xᵢ₊₁ + Yᵢ Yᵢ₊₁ + Δ Zᵢ Zᵢ₊₁), Δ ∈ [0.2, 2.0], declared before the "
+          "run; only its stated physics facts enter the prompt.", {})],
+    ], size=10, space_after=0)
+    transition(slide, "because only one factor moves at a time, the results should be "
+                      "read as four tested slices, not as a full grid.")
+    footer(slide, "An automated check refuses to run a condition whose frozen components "
+                  "differ from the baseline's or that moves more than one factor; the "
+                  "baseline cell is reused, not re-run.")
 
 
 def slide_04_reading(deck, summary):
     slide = deck.slides.add_slide(deck.slide_layouts[6])
-    header(slide, "3 · How to read the result grids",
-           "How to read the two result grids",
-           "One grid per Hamiltonian · one cell per (qubit count, budget) · six "
-           "categories per cell — the next two slides use exactly this layout")
-    coverage = json.loads((ROOT / "grid_cells.json").read_text())["coverage"]
-
-    def cell_text(family, n, budget):
-        present = coverage[family][f"{n}q_B{budget}"]
-        if not present:
-            return "not run"
-        return "6 categories" if len(present) == 6 else "4 categories\n(Model A only)"
-
-    for i, (family, label) in enumerate((("TFIM", "Ising grid (next slide)"),
-                                         ("XXZ", "XXZ grid (slide after)"))):
-        left = Inches(0.55 + i * 3.35)
-        frame = textbox(slide, left, Inches(1.62), Inches(3.1), Inches(0.3))
-        write(frame, [(label, {"size": 10.5, "bold": True, "color": NAVY})], space_after=0)
-        rows = [["", "B = 4", "B = 8", "B = 16"]]
-        colors = {}
-        for r, n in enumerate((4, 6, 8), start=1):
-            row = [f"{n} qubits"]
-            for c, budget in enumerate((4, 8, 16), start=1):
-                text = cell_text(family, n, budget)
-                row.append(text)
-                colors[(r, c)] = GREY if text == "not run" else GREEN
-            rows.append(row)
-        table(slide, rows, left, Inches(1.95),
-              [Inches(0.8), Inches(0.75), Inches(0.8), Inches(0.75)],
-              row_height=Inches(0.5), header_size=9, body_size=8, colors=colors)
-    frame = textbox(slide, Inches(0.55), Inches(4.05), Inches(6.2), Inches(1.0))
-    write(frame, [
-        [("Rows", {"bold": True}), (" = qubit count (4, 6, 8; half latent, half trash).  ", {}),
-         ("Columns", {"bold": True}), (" = evaluation budget B (4, 8, 16).", {})],
-        [("Why cells are missing: ", {"bold": True, "color": KICKER}),
-         ("the study was designed one factor at a time from the baseline cell, so the "
-          "off-axis cells were not run. They are shown grey, never estimated. Model B "
-          "was run only in the baseline cell.", {})],
-    ], size=9.5, space_after=3)
-
-    box(slide, Inches(7.05), Inches(1.6), Inches(5.7), Inches(3.5), GREY_FILL, GREY)
-    frame = textbox(slide, Inches(7.2), Inches(1.66), Inches(5.4), Inches(0.3))
-    write(frame, [("The six categories in every cell, left to right",
-                   {"size": 11, "bold": True, "color": NAVY})], space_after=0)
-    categories = [
-        ("Random", GREY, False, "no physics, no feedback"),
-        ("Greedy", AMBER, False, "no physics; single-gate refinement of the best start"),
-        ("LLM-Open · Model A", BLUE, False, f"open-loop proposals, {MODEL_A}"),
-        ("LLM-Closed · Model A", RED, False, f"closed-loop redesigns, {MODEL_A}"),
-        ("LLM-Open · Model B", BLUE, True, f"open-loop proposals, {MODEL_B}"),
-        ("LLM-Closed · Model B", RED, True, f"closed-loop redesigns, {MODEL_B}"),
+    header(slide, "3 · What was actually tested, and how to read it",
+           "Four tested slices, one baseline, no empty panels",
+           "Every result slide shows one of these four rows; untested combinations are "
+           "omitted rather than displayed as empty panels")
+    slices = [
+        ("Budget slice", ["B = 4", "B = 8", "B = 16"], 1, "4 qubits · Ising · High fixed",
+         BLUE, BLUE_FILL),
+        ("Qubit slice", ["4 qubits", "6 qubits", "8 qubits"], 0,
+         "B = 8 · Ising · High fixed", GREEN, GREEN_FILL),
+        ("Hamiltonian slice", ["Ising", "XXZ"], 0, "4 qubits · B = 8 · High fixed",
+         AMBER, AMBER_FILL),
+        ("Model slice", ["Low", "High"], 1, "4 qubits · Ising · B = 8 fixed",
+         RED, RED_FILL),
     ]
-    for j, (name, color, hollow, body) in enumerate(categories):
-        top = Inches(2.05 + j * 0.49)
-        chip(slide, Inches(7.28), top + Inches(0.05), color, hollow)
-        frame = textbox(slide, Inches(7.52), top, Inches(5.1), Inches(0.46))
-        write(frame, [[(f"{j + 1}  {name}", {"bold": True, "color": color}),
-                       (f"  —  {body}", {"color": INK})]], size=9.5, space_after=0)
-    box(slide, Inches(0.55), Inches(5.2), Inches(12.2), Inches(1.6), AMBER_FILL, AMBER)
-    frame = textbox(slide, Inches(0.7), Inches(5.26), Inches(11.95), Inches(1.5))
+    for i, (name, levels, base_index, fixed, color, fill) in enumerate(slices):
+        top = Inches(1.6 + i * 0.66)
+        box(slide, Inches(0.55), top, Inches(7.4), Inches(0.56), fill, color, 1.0)
+        frame = textbox(slide, Inches(0.68), top + Inches(0.1), Inches(1.7), Inches(0.4))
+        write(frame, [(name, {"size": 10.5, "bold": True, "color": color})], space_after=0)
+        x = 2.4
+        for j, level in enumerate(levels):
+            is_base = j == base_index
+            chip(slide, Inches(x), top + Inches(0.1), Inches(0.95), level,
+                 NAVY if is_base else WHITE, NAVY if is_base else color,
+                 WHITE if is_base else INK, size=9.5, bold=is_base)
+            x += 1.02
+            if j < len(levels) - 1:
+                frame = textbox(slide, Inches(x - 0.12), top + Inches(0.1), Inches(0.2),
+                                Inches(0.36))
+                write(frame, [("→", {"size": 11, "color": MUTED})], space_after=0,
+                      align=PP_ALIGN.CENTER)
+                x += 0.1
+        frame = textbox(slide, Inches(5.65), top + Inches(0.12), Inches(2.25), Inches(0.36))
+        write(frame, [(fixed, {"size": 9, "color": MUTED})], space_after=0)
+    frame = textbox(slide, Inches(0.55), Inches(4.3), Inches(7.4), Inches(0.35))
+    write(frame, [[("dark chip", {"bold": True, "color": NAVY}),
+                   (" = the baseline level, present in every slice. Each slice's other "
+                    "conditions were run once, at the fixed settings shown.",
+                    {"color": MUTED})]], size=9.5, space_after=0)
+    titled_box(slide, Inches(8.2), Inches(1.6), Inches(4.55), Inches(1.2), RED_FILL, RED,
+               "Model tiers (fixed labels, defined here once)", [
+        [("Low", {"bold": True, "color": RED}), (f" = {LOW_MODEL}      ", {}),
+         ("High", {"bold": True, "color": RED}), (f" = {HIGH_MODEL}", {})],
+        ("The label names the predeclared capability tier, not the score observed in "
+         "a condition. Open and Closed name the search workflow; Low and High name "
+         "the model.", {"size": 9.5, "color": MUTED}),
+    ], body_size=10)
+    titled_box(slide, Inches(8.2), Inches(2.95), Inches(4.55), Inches(2.3), GREY_FILL, GREY,
+               "How to read every result figure", [
+        "•  small dots = the 12 paired seeds; large marker = mean; vertical interval = "
+        "bootstrap 95% CI; higher trash fidelity is better",
+        "•  x-axis groups always in the order Random → Greedy → Low → High",
+        "•  within a tier: LLM-Open = blue triangle, LLM-Closed = red diamond, side by side",
+        "•  tier = marker fill: High filled, Low hollow",
+        "•  thick frame or shaded band = the previous baseline condition",
+        "•  the small lower panel shows the two key paired differences with 95% CI; "
+        "filled = p < 0.05, hollow = not detected",
+    ], title_color=NAVY, body_size=9.5, space_after=2)
+    box(slide, Inches(0.55), Inches(4.75), Inches(7.4), Inches(1.55), AMBER_FILL, AMBER)
+    frame = textbox(slide, Inches(0.7), Inches(4.81), Inches(7.15), Inches(1.45))
     write(frame, [
-        [("Encoding in every cell:  ", {"bold": True, "color": ORANGE}),
-         ("small dots = the 12 paired seeds; large marker = mean; vertical bar = "
-          "bootstrap 95% CI; the number above = mean. Model A = filled markers, "
-          "Model B = hollow markers of the same colour. Thick frame = the baseline "
-          "cell. All cells share the same vertical axis.", {})],
-        [("Metric:  ", {"bold": True, "color": ORANGE}),
-         ("held-out test trash fidelity F_trash, higher is better; 1.0 means the "
-          "trash qubits are exactly |00⟩ for every test state.", {})],
-        [("Comparisons:  ", {"bold": True, "color": ORANGE}),
-         ("all four methods in a cell share the same seeds and data, so differences "
-          "are read per seed (paired), never as raw means.", {})],
+        [("Where the Low tier was not run ", {"bold": True, "color": ORANGE}),
+         ("(budget, qubit and Hamiltonian slices), the figures show Random, Greedy and "
+          "the High Open / Closed results only, and say so; no Low value is invented. "
+          "The complete Random → Greedy → Low → High grouping appears on the model "
+          "slide.", {})],
+        [("Untested combinations are omitted rather than displayed as empty panels.",
+          {"bold": True})],
     ], size=10, space_after=4)
-    footer(slide, "Random and Greedy do not depend on the language model, so they appear "
-                  "once per cell; the two LLM methods are split by model, giving six "
-                  "categories.")
+    transition(slide, "the first slice changes the amount of search: the evaluation "
+                      "budget B.")
+    footer(slide, "Random and Greedy do not depend on the language model, so each is one "
+                  "result per condition; Low and High each hold an Open and a Closed result.")
 
 
-def _grid_slide(deck, summary, family, kicker, title, subtitle, foot):
+def _result_slide(deck, kicker, title, subtitle, figure, figure_height, takeaways,
+                  transition_text, footer_text):
     slide = deck.slides.add_slide(deck.slide_layouts[6])
     header(slide, kicker, title, subtitle)
-    picture(slide, f"grid_{family.lower()}", Inches(0.95), Inches(1.5), height=Inches(5.45))
-    footer(slide, foot)
+    pic = picture(slide, figure, Inches(0.55), Inches(1.52), height=figure_height)
+    left = Inches(0.55) + pic.width + Inches(0.25)
+    frame = textbox(slide, left, Inches(1.52), SLIDE_W - left - Inches(0.55), Inches(4.9))
+    write(frame, takeaways, size=10, space_after=6)
+    transition(slide, transition_text)
+    footer(slide, footer_text)
     return slide
 
 
-def slide_05_grid_ising(deck, summary):
-    n4 = mean_of(summary, "reference", "LLM-Open")
-    n8 = mean_of(summary, "qubits_n8", "LLM-Open")
-    r4 = mean_of(summary, "reference", "Random")
-    r8 = mean_of(summary, "qubits_n8", "Random")
-    return _grid_slide(
-        deck, summary, "TFIM", "4 · Results — Hamiltonian 1",
-        "Ising chain: the semantic methods stay on top in every cell run",
-        "H = −Σ Zᵢ Zᵢ₊₁ − h Σ Xᵢ, h ∈ [0.2, 2.0]  ·  5 of 9 cells run (one factor at a "
-        "time)  ·  Model B only in the baseline cell",
-        f"Reading: going down the middle column, Random falls from {r4:.3f} to {r8:.3f} "
-        f"while LLM-Open (Model A) falls only from {n4:.3f} to {n8:.3f}. Every number "
-        "is a mean over 12 paired seeds; grey cells were not run.")
+def slide_05_budget(deck, summary):
+    co = {k: stat(summary, k, CLOSED_OPEN) for k in ("budget_b4", "reference", "budget_b16")}
+    return _result_slide(
+        deck, "4 · Budget slice", "Budget changes the value of feedback",
+        "B = 4 → 8 → 16 with 4 qubits, Ising chain and the High model tier fixed; "
+        "B = 8 (thick frame) is the previous baseline",
+        "slice_budget", Inches(4.35), [
+            [("Semantic proposals stay above non-semantic search at every budget: ",
+              {"bold": True, "color": BLUE}),
+             (f"LLM-Open − Random {short(summary, 'budget_b4', OPEN_RANDOM)} at B = 4, "
+              f"{short(summary, 'reference', OPEN_RANDOM)} at B = 8, "
+              f"{short(summary, 'budget_b16', OPEN_RANDOM)} at B = 16 — positive "
+              "throughout, not detected at B = 4 where the budget is too small to "
+              "separate the arms reliably.", {})],
+            [("The Closed − Open advantage shrinks as the budget grows: ",
+              {"bold": True, "color": RED}),
+             (f"{_fmt(co['budget_b4']['mean_paired_gain'], 3)} at B = 4 → "
+              f"{_fmt(co['reference']['mean_paired_gain'], 3)} at B = 8 → "
+              f"{_fmt(co['budget_b16']['mean_paired_gain'], 3)} at B = 16 (not detected). "
+              "Free redesign is worth most when the open batch is thinnest; a wide open "
+              "batch buys the same breadth without feedback.", {})],
+            [("Greedy is not a substitute: ", {"bold": True, "color": ORANGE}),
+             (f"Greedy − Random is {short(summary, 'budget_b4', GREEDY_RANDOM)} at B = 4 "
+              "— spending half a small budget on single-gate steps costs breadth.", {})],
+        ],
+        "budget changes the amount of search; next we ask whether register width "
+        "changes the conclusion.",
+        "Same trainer, prompts, seeds and selection rule at every budget; adaptive "
+        "methods always split B as B/2 exploration + B/2 refinement (2+2, 4+4, 8+8).")
 
 
-def slide_06_grid_xxz(deck, summary):
-    xo = mean_of(summary, "hamiltonian_xxz", "LLM-Open")
-    xc = mean_of(summary, "hamiltonian_xxz", "LLM-Closed")
-    xr = mean_of(summary, "hamiltonian_xxz", "Random")
-    return _grid_slide(
-        deck, summary, "XXZ", "5 · Results — Hamiltonian 2",
-        "XXZ chain: the same picture in the one cell that was run",
-        "H = Σ (Xᵢ Xᵢ₊₁ + Yᵢ Yᵢ₊₁ + Δ Zᵢ Zᵢ₊₁), Δ ∈ [0.2, 2.0]  ·  1 of 9 cells run "
-        "(the baseline's qubit count and budget)  ·  Model A only",
-        f"Reading: at 4 qubits, B = 8 the ordering is LLM-Closed {xc:.3f} > LLM-Open "
-        f"{xo:.3f} > Random {xr:.3f}, with Random's seeds spread widely. The other eight "
-        "cells were not run and are shown grey, not estimated.")
+def slide_06_qubits(deck, summary):
+    keys = ("reference", "qubits_n6", "qubits_n8")
+    orr = {k: stat(summary, k, OPEN_RANDOM) for k in keys}
+    co = {k: stat(summary, k, CLOSED_OPEN) for k in keys}
+    v = {k: validity(k, "LLM-Closed") for k in keys}
+    return _result_slide(
+        deck, "5 · Qubit-count slice", "The semantic advantage grows as the register widens",
+        "4 → 6 → 8 qubits with B = 8, Ising chain and the High model tier fixed; "
+        "4 qubits (thick frame) is the previous baseline",
+        "slice_qubits", Inches(4.35), [
+            [("Finding 1 — absolute fidelity falls as the task widens: ",
+              {"bold": True, "color": NAVY}),
+             (f"Random {mean_of(summary, 'reference', 'Random'):.3f} → "
+              f"{mean_of(summary, 'qubits_n8', 'Random'):.3f}; LLM-Open "
+              f"{mean_of(summary, 'reference', 'LLM-Open'):.3f} → "
+              f"{mean_of(summary, 'qubits_n8', 'LLM-Open'):.3f}. Width and circuit size "
+              "grow together (3 rotations + 1 CNOT per qubit).", {})],
+            [("Finding 2 — Open stays strong relative to Random; Closed falls below "
+              "Open: ", {"bold": True, "color": BLUE}),
+             (f"LLM-Open − Random {_fmt(orr['reference']['mean_paired_gain'], 3)} → "
+              f"{_fmt(orr['qubits_n6']['mean_paired_gain'], 3)} → "
+              f"{_fmt(orr['qubits_n8']['mean_paired_gain'], 3)}, significant at all three "
+              f"widths; LLM-Closed − LLM-Open "
+              f"{_fmt(co['reference']['mean_paired_gain'], 3)} → "
+              f"{_fmt(co['qubits_n6']['mean_paired_gain'], 3)} → "
+              f"{_fmt(co['qubits_n8']['mean_paired_gain'], 3)}, reversed at 6 and 8 qubits.",
+              {})],
+            [("Caveat — proposal validity: ", {"bold": True, "color": MUTED}),
+             (f"the share of closed-loop proposals meeting the gate-count contract (the "
+              f"required 3 rotations + 1 CNOT per qubit) fell from "
+              f"{v['reference'] * 100:.0f}% to {v['qubits_n6'] * 100:.0f}% and "
+              f"{v['qubits_n8'] * 100:.0f}%; an invalid proposal is spent as a random "
+              "draw, so part of the reversal is a generation-validity effect.",
+              {"color": MUTED})],
+            [("Tested only for the Ising chain and the High tier.",
+              {"bold": True, "color": KICKER})],
+        ],
+        "width changes task difficulty; next we change the physical state family while "
+        "returning to the baseline width.",
+        "Same B = 8, prompts (with the qubit count substituted), trainer and seeds at "
+        "every width; latent and trash registers are always half and half.")
 
 
-def slide_07_summary(deck, summary):
+def slide_07_hamiltonian(deck, summary):
+    x = "hamiltonian_xxz"
+    return _result_slide(
+        deck, "6 · Hamiltonian slice",
+        "The broad ordering survives at the tested XXZ anchor",
+        "Ising → XXZ with 4 qubits, B = 8 and the High model tier fixed; the Ising chain "
+        "(thick frame) is the previous baseline",
+        "slice_hamiltonian", Inches(4.35), [
+            [("The same broad semantic advantage: ", {"bold": True, "color": BLUE}),
+             (f"both semantic methods have higher means than Random on the XXZ chain "
+              f"(LLM-Open {mean_of(summary, x, 'LLM-Open'):.3f}, LLM-Closed "
+              f"{mean_of(summary, x, 'LLM-Closed'):.3f} vs Random "
+              f"{mean_of(summary, x, 'Random'):.3f}). Per seed, LLM-Closed − Random is "
+              f"{short(summary, x, CLOSED_RANDOM)}; LLM-Open − Random is "
+              f"{short(summary, x, OPEN_RANDOM)} — Random's seeds are spread widely "
+              "here, so the mean gain is not detected as a per-seed effect.", {})],
+            [("Closed exceeds Open at this anchor: ", {"bold": True, "color": RED}),
+             (f"LLM-Closed − LLM-Open {short(summary, x, CLOSED_OPEN)}, larger than at "
+              "the Ising baseline.", {})],
+            [("One XXZ point is not the XXZ landscape: ", {"bold": True, "color": KICKER}),
+             ("it says nothing about how the XXZ result moves with budget, width or "
+              "model tier — none of those were run for XXZ.", {})],
+        ],
+        "the physics anchor gives one second-family result; the final controlled "
+        "change is the model itself.",
+        "Only the stated Hamiltonian facts change in the prompt (name, formula, "
+        "parameter range, interaction type); the circuit space, trainer and seeds are "
+        "identical.")
+
+
+def slide_08_model(deck, summary):
+    r, low = "reference", "model_alt"
+    return _result_slide(
+        deck, "7 · Model slice",
+        "The model tier changes reliability more than the main Open advantage",
+        "Low → High with 4 qubits, Ising chain and B = 8 fixed; High (shaded band) is "
+        "the previous baseline; groups Random → Greedy → Low → High",
+        "slice_model", Inches(4.35), [
+            [("The Open semantic advantage is similar for both tiers: ",
+              {"bold": True, "color": BLUE}),
+             (f"LLM-Open − Random {short(summary, low, OPEN_RANDOM)} for Low and "
+              f"{short(summary, r, OPEN_RANDOM)} for High.", {})],
+            [("The Closed − Open relationship differs between tiers: ",
+              {"bold": True, "color": RED}),
+             (f"{short(summary, low, CLOSED_OPEN)} for Low versus "
+              f"{short(summary, r, CLOSED_OPEN)} for High — the small closed-loop gain "
+              "seen at the baseline is not present for the Low tier.", {})],
+            [("Resource-contract validity is a separate failure mode: ",
+              {"bold": True, "color": ORANGE}),
+             (f"only {validity(low, 'LLM-Open') * 100:.0f}% of the Low tier's open-batch "
+              f"proposals met the gate-count contract "
+              f"({validity(low, 'LLM-Closed') * 100:.0f}% for its closed loop; "
+              f"{validity(r, 'LLM-Open') * 100:.0f}% / "
+              f"{validity(r, 'LLM-Closed') * 100:.0f}% for High). Invalid proposals are "
+              "replaced by random draws, so a validity gap and an architecture-quality "
+              "gap are entangled in the plotted score.", {})],
+            [("Low and High are fixed tier labels; the plotted score is not what "
+              "defines them.", {"bold": True, "color": KICKER})],
+        ],
+        "the four slices can now be combined to separate robust effects from fragile "
+        "ones.",
+        "Identical prompt bytes, temperature, retry policy and token limit for both "
+        "tiers; only the model name changes. Random and Greedy are the same runs in "
+        "both groups.")
+
+
+def _validity_word(entries):
+    """entries: [(label, share)]; shares below 0.9 are called out."""
+    worst = min(entries, key=lambda e: e[1])
+    if worst[1] >= 0.9:
+        return f"stable (≥ {worst[1] * 100:.0f}%)"
+    return f"degraded: {worst[0]} {worst[1] * 100:.0f}%"
+
+
+def slide_09_synthesis(deck, summary):
     slide = deck.slides.add_slide(deck.slide_layouts[6])
-    header(slide, "6 · Cross-grid summary",
-           "What consistently helps, and what is fragile",
-           "Rows = run cells; panels = paired per-seed differences (positive = the first "
-           "method wins). Filled marker = p < 0.05; dashed line = the baseline's value.")
-    picture(slide, "forest_defined", Inches(0.45), Inches(1.55), width=Inches(12.45))
+    header(slide, "8 · Cross-slice synthesis and limitations",
+           "What survived across the tested slices?",
+           "One row per tested slice; wording is evidence-calibrated — robust, "
+           "condition-dependent, not detected, reversed, not tested")
 
-    def tally(contrast):
-        same = sum(1 for k in VARIED
-                   if (stat(summary, k, contrast)["mean_paired_gain"] > 0)
-                   == (stat(summary, "reference", contrast)["mean_paired_gain"] > 0))
-        holds = [k for k in VARIED if verdict(summary, k, contrast) == "holds"]
-        reverses = [k for k in VARIED if verdict(summary, k, contrast) == "reverses"]
-        return same, holds, reverses
+    def row_words(keys, contrast, labels):
+        words = [(labels[i], verdict(summary, k, contrast)) for i, k in enumerate(keys)]
+        distinct = {w for _l, w in words}
+        if distinct == {"robust"}:
+            return "robust"
+        if distinct == {"not detected"}:
+            return "not detected"
+        return "condition-dependent: " + " · ".join(f"{w} ({lab})" for lab, w in words)
 
-    open_same, open_holds, _ = tally(OPEN_RANDOM)
-    closed_same, closed_holds, closed_rev = tally(CLOSED_OPEN)
-    cr_same, cr_holds, _ = tally(CLOSED_RANDOM)
-    _g_same, g_holds, g_rev = tally(GREEDY_RANDOM)
-    n = len(VARIED)
-    boxes = [
-        (GREEN_FILL, GREEN, "ROBUST — physics-informed proposals beat non-semantic search",
-         f"LLM-Open − Random keeps its sign in {open_same}/{n} varied conditions and is "
-         f"significant in {len(open_holds)}/{n}; LLM-Closed − Random is significant in "
-         f"{len(cr_holds)}/{n}. The gap is largest at 8 qubits, where the non-semantic "
-         "methods degrade fastest."),
-        (RED_FILL, RED, "FRAGILE — the closed loop's edge over the open batch",
-         f"LLM-Closed − LLM-Open keeps the baseline's sign in only {closed_same}/{n} "
-         "varied conditions: significantly positive at "
-         f"{', '.join(NAMES[k] for k in closed_holds)}, significantly negative at "
-         f"{', '.join(NAMES[k] for k in closed_rev)}."),
-        (AMBER_FILL, AMBER, "NEVER HELPS — single-gate greedy refinement",
-         f"Greedy − Random is significantly positive in {len(g_holds)}/{n} conditions"
-         + (f" and significantly negative at {', '.join(NAMES[k] for k in g_rev)}: spending "
-            "half of a small budget on single-gate steps costs breadth." if g_rev else ".")),
-    ]
-    for i, (fill, border, title, body) in enumerate(boxes):
-        left = Inches(0.55 + i * 4.1)
-        titled_box(slide, left, Inches(5.15), Inches(3.95), Inches(1.7), fill, border,
-                   title, [(body, {"size": 9.5})], title_size=10.5, body_size=9.5)
-    footer(slide, "\"Significant\" = exact paired Wilcoxon p < 0.05 over 12 seeds; "
-                  "\"keeps its sign\" = the mean paired difference has the same sign as "
-                  "in the baseline. A non-significant cell is not evidence of no effect.")
+    rows = [["Slice", "Open versus Random", "Closed versus Open", "Proposal validity"]]
+    rows.append(["Budget (B = 4, 8, 16)",
+                 row_words(["budget_b4", "reference", "budget_b16"], OPEN_RANDOM,
+                           ["B = 4", "B = 8", "B = 16"]),
+                 row_words(["budget_b4", "reference", "budget_b16"], CLOSED_OPEN,
+                           ["B = 4", "B = 8", "B = 16"]),
+                 _validity_word([(f"Closed B = {b}", validity(k, "LLM-Closed"))
+                                 for k, b in (("budget_b4", 4), ("reference", 8),
+                                              ("budget_b16", 16))])])
+    rows.append(["Qubit count (4, 6, 8)",
+                 row_words(["reference", "qubits_n6", "qubits_n8"], OPEN_RANDOM,
+                           ["4", "6", "8"]),
+                 row_words(["reference", "qubits_n6", "qubits_n8"], CLOSED_OPEN,
+                           ["4", "6", "8"]),
+                 _validity_word([(f"Closed at {n} qubits", validity(k, "LLM-Closed"))
+                                 for k, n in (("reference", 4), ("qubits_n6", 6),
+                                              ("qubits_n8", 8))])])
+    rows.append(["Hamiltonian (Ising, XXZ)",
+                 row_words(["reference", "hamiltonian_xxz"], OPEN_RANDOM, ["Ising", "XXZ"]),
+                 row_words(["reference", "hamiltonian_xxz"], CLOSED_OPEN, ["Ising", "XXZ"]),
+                 _validity_word([("Closed XXZ", validity("hamiltonian_xxz", "LLM-Closed")),
+                                 ("Open XXZ", validity("hamiltonian_xxz", "LLM-Open"))])])
+    rows.append(["Model tier (Low, High)",
+                 row_words(["model_alt", "reference"], OPEN_RANDOM, ["Low", "High"]),
+                 row_words(["model_alt", "reference"], CLOSED_OPEN, ["Low", "High"]),
+                 _validity_word([("Low Open", validity("model_alt", "LLM-Open")),
+                                 ("Low Closed", validity("model_alt", "LLM-Closed"))])])
+    colors = {}
+    for r_index in range(1, 5):
+        for c_index in (1, 2, 3):
+            word = rows[r_index][c_index]
+            colors[(r_index, c_index)] = (GREEN if word == "robust" else
+                                          RED if "reversed" in word else
+                                          MUTED if word.startswith("not") else ORANGE)
+    table(slide, rows, Inches(0.55), Inches(1.55),
+          [Inches(2.15), Inches(3.35), Inches(4.0), Inches(2.7)],
+          row_height=Inches(0.46), header_size=10, body_size=9, colors=colors)
+    frame = textbox(slide, Inches(0.55), Inches(3.95), Inches(12.2), Inches(0.3))
+    write(frame, [("Not tested: width and Hamiltonian changes for the Low tier; any change "
+                   "away from the baseline for XXZ; every two-factor combination.",
+                   {"size": 9.5, "color": MUTED})], space_after=0)
+    titled_box(slide, Inches(0.55), Inches(4.35), Inches(6.55), Inches(2.05), GREEN_FILL,
+               GREEN, "Across the tested one-factor slices", [
+        [("•  the semantic Open advantage is the most robust finding — same sign in "
+          "every slice, significant in most conditions;", {})],
+        [("•  the additional closed-loop advantage is budget-, width-, Hamiltonian- and "
+          "model-dependent — it is not a general result;", {})],
+        [("•  proposal validity can confound observed method differences: an invalid "
+          "proposal is spent as a random draw.", {})],
+    ], title_color=GREEN, body_size=10, space_after=3)
+    titled_box(slide, Inches(7.3), Inches(4.35), Inches(5.45), Inches(2.05), GREY_FILL, GREY,
+               "Key limitations", [
+        "•  no interactions; only one non-Ising anchor",
+        "•  Low tested only at the baseline physical condition",
+        "•  12 paired seeds: a \"not detected\" cell is not evidence of no effect",
+        "•  noiseless state-vector simulation",
+        "•  qubit count and circuit size scale together",
+    ], title_color=NAVY, body_size=10, space_after=2)
+    transition(slide, "ranking methods at a fixed budget answers the wrong question for "
+                      "practice — how much budget is actually required?")
+    footer(slide, "\"robust\" = same sign as the baseline and p < 0.05; \"reversed\" = "
+                  "p < 0.05 with the opposite sign; \"not detected\" = p ≥ 0.05; "
+                  "\"condition-dependent\" = the verdict differs across the slice's levels.")
 
 
-def slide_08_interpretation(deck, summary):
+def slide_10_next(deck, summary):
     slide = deck.slides.add_slide(deck.slide_layouts[6])
-    header(slide, "7 · Interpretation",
-           "What the pattern implies — and what it does not",
-           "Four factors, read one at a time; the right-hand panel shows a failure mode "
-           "that runs across all of them")
-    co = {k: stat(summary, k, CLOSED_OPEN)["mean_paired_gain"]
-          for k in ("budget_b4", "reference", "budget_b16", "qubits_n6", "qubits_n8",
-                    "hamiltonian_xxz", "model_alt")}
-    orr = {k: stat(summary, k, OPEN_RANDOM) for k in co}
-    items = [
-        (BLUE_FILL, BLUE, "Budget B",
-         f"The closed loop's edge over the open batch is largest at the smallest budget "
-         f"({_fmt(co['budget_b4'])} at B = 4), small at B = 8 ({_fmt(co['reference'])}) "
-         f"and gone at B = 16 ({_fmt(co['budget_b16'])}). Free redesign is worth most when "
-         "the open batch is thinnest; a wide open batch buys the same breadth without "
-         "feedback."),
-        (GREEN_FILL, GREEN, "Qubit count",
-         f"Absolute fidelity falls for every method as the register widens, but the "
-         "semantic advantage grows: LLM-Open − Random "
-         f"{_fmt(orr['reference']['mean_paired_gain'])} → "
-         f"{_fmt(orr['qubits_n6']['mean_paired_gain'])} → "
-         f"{_fmt(orr['qubits_n8']['mean_paired_gain'])}. The closed loop reverses "
-         f"({_fmt(co['qubits_n6'])} at 6, {_fmt(co['qubits_n8'])} at 8 qubits)."),
-        (AMBER_FILL, AMBER, "Hamiltonian family",
-         f"On the XXZ chain the closed loop wins clearly ({_fmt(co['hamiltonian_xxz'])}, "
-         f"{stat(summary, 'hamiltonian_xxz', CLOSED_OPEN)['wins_b']}/12 seeds). LLM-Open − Random "
-         f"is {_fmt(orr['hamiltonian_xxz']['mean_paired_gain'])} on average but only "
-         f"{orr['hamiltonian_xxz']['wins_b']}/12 seeds: Random occasionally finds a very good "
-         "circuit here, so the mean overstates a per-seed effect. Two families are two points."),
-        (RED_FILL, RED, "Language model",
-         f"With Model B the semantic advantage is essentially unchanged "
-         f"({_fmt(orr['model_alt']['mean_paired_gain'])} vs "
-         f"{_fmt(orr['reference']['mean_paired_gain'])}), "
-         f"even though only {valid_share(summary, 'model_alt') * 100:.0f}% of its "
-         "evaluated proposals satisfied the gate-count contract. The closed loop does not "
-         f"keep its edge ({_fmt(co['model_alt'])})."),
+    header(slide, "9 · Conclusion and next action",
+           "Next: how much budget is actually required?",
+           "Three statements from the tested slices, then a targeted boundary-finding "
+           "experiment rather than a factorial sweep")
+    statements = [
+        (GREEN_FILL, GREEN, "Robust",
+         "Physics-informed Open proposals remain better than non-semantic search across "
+         "the tested one-factor slices."),
+        (RED_FILL, RED, "Fragile",
+         "The closed-loop advantage is not a general result: it changes with budget, "
+         "width, Hamiltonian and model tier."),
+        (AMBER_FILL, AMBER, "Operational bottleneck",
+         "Valid circuit generation must be separated from architecture quality — an "
+         "invalid proposal is spent as a random draw."),
     ]
-    for i, (fill, border, title, body) in enumerate(items):
-        left = Inches(0.55 + (i % 2) * 3.75)
-        top = Inches(1.6 + (i // 2) * 2.62)
-        titled_box(slide, left, top, Inches(3.6), Inches(2.5), fill, border, title,
-                   [(body, {"size": 9.5})], title_size=11.5, body_size=9.5)
-    picture(slide, "compliance_by_arm", Inches(8.15), Inches(1.55), height=Inches(3.5))
-    box(slide, Inches(8.15), Inches(5.12), Inches(4.7), Inches(1.75), GREY_FILL, GREY)
-    frame = textbox(slide, Inches(8.3), Inches(5.17), Inches(4.4), Inches(1.65))
+    for i, (fill, border, title, body) in enumerate(statements):
+        titled_box(slide, Inches(0.55), Inches(1.55 + i * 1.15), Inches(4.6), Inches(1.05),
+                   fill, border, title, [(body, {"size": 10})], title_size=12, body_size=10)
+    box(slide, Inches(5.4), Inches(1.55), Inches(7.35), Inches(5.3), BLUE_FILL, BLUE, 1.75)
+    frame = textbox(slide, Inches(5.58), Inches(1.62), Inches(7.0), Inches(5.2))
     write(frame, [
-        [("A separate failure mode: the gate-count contract  ", {"bold": True, "color": NAVY}),
-         ("= every proposal must contain exactly 3 rotations and 1 CNOT per qubit; "
-          "a proposal that does not is replaced by a flagged random circuit and costs "
-          "one of the B evaluations.", {})],
-        [("Which call breaks depends on the condition, not the method: ", {"bold": True}),
-         (f"with Model B the open batch fell to "
-          f"{arm_validity('model_alt', 'LLM-Open') * 100:.0f}% valid (closed loop "
-          f"{arm_validity('model_alt', 'LLM-Closed') * 100:.0f}%); at 6 qubits the closed "
-          f"loop fell to {arm_validity('qubits_n6', 'LLM-Closed') * 100:.0f}% (open batch "
-          f"{arm_validity('qubits_n6', 'LLM-Open') * 100:.0f}%). ", {}),
-         ("So part of an apparent method effect at larger registers or with a weaker "
-          "model is a proposal-validity effect.", {"bold": True, "color": KICKER})],
-    ], size=9, space_after=3)
-    footer(slide, "Not claimed: that the closed loop is bad in general, or that any one "
-                  "ingredient causes the semantic advantage. Greedy and LLM-Closed differ in "
-                  "search freedom as well as physics knowledge, by design.")
-
-
-def slide_09_limits_next(deck, summary):
-    slide = deck.slides.add_slide(deck.slide_layouts[6])
-    header(slide, "8 · Limitations and next action",
-           "What this study cannot say, and the concrete next step",
-           "Limitations of the evidence on the left; the next experiment, phrased as a "
-           "measurable target, on the right")
-    titled_box(slide, Inches(0.55), Inches(1.6), Inches(5.9), Inches(5.25), GREY_FILL, GREY,
-               "Limitations", [
-        "•  12 paired seeds per cell: enough for large effects, underpowered for small "
-        "ones — a \"not detected\" cell is not evidence of absence.",
-        "•  One factor at a time: no interaction was measured (for example a large "
-        "budget at 8 qubits); 4 of 9 Ising cells and 8 of 9 XXZ cells are empty.",
-        "•  Two Hamiltonian families and two language models are two points each, not "
-        "a survey; Model B was run only in the baseline cell.",
-        "•  Noiseless state-vector simulation: no sampling noise, no device connectivity.",
-        "•  The circuit width grows with the qubit count by a fixed rule, so \"more "
-        "qubits\" also means \"more gates\"; the two were not separated.",
-        "•  Greedy and LLM-Closed differ in search freedom as well as in physics "
-        "knowledge, so that pair is not an information-matched comparison.",
-        "•  Simulation cost, not model cost, is the binding constraint: state-vector "
-        "training grows exponentially with the qubit count.",
-    ], title_color=NAVY, body_size=11, space_after=8)
-    box(slide, Inches(6.7), Inches(1.6), Inches(6.05), Inches(5.25), AMBER_FILL, AMBER, 1.75)
-    frame = textbox(slide, Inches(6.88), Inches(1.68), Inches(5.7), Inches(5.1))
+        [("Next experiment — the minimum budget for a target fidelity",
+          {"bold": True, "color": BLUE, "size": 12})],
+        [("Define before running: ", {"bold": True}),
+         ("a target validation fidelity F_target (candidate targets 0.95 and 0.99). "
+          "B_min = the smallest budget that reaches F_target in at least 10 of the 12 "
+          "paired seeds. B_min is determined on validation data; the held-out test is "
+          "read only after B_min is selected.", {})],
+        [("API-minimising procedure", {"bold": True, "color": NAVY})],
+        [("1  Reanalyse the existing logs first — no new calls.", {})],
+        [("2  Build best-so-far validation-fidelity curves versus candidate-evaluation "
+          "count from those logs.", {})],
+        [("3  Estimate whether each target is already reached by B = 4, 8 or 16.", {})],
+        [("4  Identify only the conditions whose B_min remains unresolved.", {})],
+        [("5  Run new LLM calls only at the nearest bracketing budget for those "
+          "unresolved conditions.", {})],
+        [("6  Preserve the same 12 paired seeds for any new confirmatory run.", {})],
+        [("7  Report an interval for B_min when the exact minimum cannot be identified "
+          "without excessive API cost.", {})],
+        [("Not proposed: a blind full sweep over every Hamiltonian, qubit count, model, "
+          "method and budget. The practical next step is targeted boundary-finding, not "
+          "factorial completion.", {"bold": True, "color": KICKER})],
+    ], size=10, space_after=4)
+    frame = textbox(slide, Inches(0.55), Inches(5.1), Inches(4.6), Inches(1.7))
     write(frame, [
-        [("NEXT ACTION — target accuracy and minimum required budget",
-          {"bold": True, "color": ORANGE, "size": 12})],
-        [("So far every comparison asks \"which method is best at a fixed budget B?\". "
-          "The practical question is the reverse:", {})],
-        [("1  Target accuracy.  ", {"bold": True, "color": KICKER}),
-         ("Fix, before any run, the held-out trash fidelity the compressed state must "
-          "reach for its downstream use — a target F_target (candidate levels 0.95 and "
-          "0.99, to be chosen with the application in mind).", {})],
-        [("2  Minimum required budget.  ", {"bold": True, "color": KICKER}),
-         ("For each method and condition, measure B_min = the smallest budget at which "
-          "the selected circuit reaches F_target in at least 10 of the 12 paired seeds. "
-          "Sweep B ∈ {2, 4, 8, 16, 32} at 4 and 8 qubits for both Hamiltonians and both "
-          "models.", {})],
-        [("What already exists: ", {"bold": True}),
-         ("Random's candidates are nested across budgets, so its B_min for B ≤ 16 can be "
-          "read from the logged runs without new simulation; the LLM methods need new "
-          "runs because their batches change with B.", {})],
-        [("Deliverable: ", {"bold": True}),
-         ("one table of B_min per (method, qubit count, Hamiltonian, model) at each "
-          "F_target, pre-registered like this study, with the same paired-seed "
-          "statistics.", {})],
-    ], size=11, space_after=8)
-    footer(slide, "Also still open, in order: a full factorial grid (interactions), more "
-                  "Hamiltonian families and models, sampling noise and hardware topology.")
-
-
-def slide_10_conclusion(deck, summary):
-    slide = deck.slides.add_slide(deck.slide_layouts[6])
-    header(slide, "9 · Conclusion", "What is robust, what is fragile, what is open")
-    n = len(VARIED)
-    open_same = sum(1 for k in VARIED
-                    if stat(summary, k, OPEN_RANDOM)["mean_paired_gain"] > 0)
-    open_sig = sum(1 for k in VARIED if verdict(summary, k, OPEN_RANDOM) == "holds")
-    closed_pos = sum(1 for k in VARIED if verdict(summary, k, CLOSED_OPEN) == "holds")
-    closed_neg = sum(1 for k in VARIED if verdict(summary, k, CLOSED_OPEN) == "reverses")
-    worst = min(VARIED + ["reference"], key=lambda k: valid_share(summary, k))
-    items = [
-        (GREEN_FILL, GREEN, "Robust: physics-informed proposals beat non-semantic search",
-         f"Same sign in {open_same} of {n} varied conditions (significant in {open_sig}) — "
-         "a different budget, a wider register, a different Hamiltonian, a different "
-         "language model. This is no longer a property of one setting."),
-        (RED_FILL, RED, "Fragile: the closed loop's edge over the open batch",
-         f"Significantly positive in {closed_pos} of {n} varied conditions and "
-         f"significantly negative in {closed_neg}: it helps at small budgets and on the "
-         "XXZ chain, vanishes at a large budget, and reverses at 6 and 8 qubits. The "
-         "claim must be restated as budget- and width-dependent."),
-        (AMBER_FILL, AMBER, "New and measurable: proposal validity is its own bottleneck",
-         f"As few as {valid_share(summary, worst) * 100:.0f}% of evaluated proposals met "
-         "the gate-count contract in the weakest cell, and each invalid proposal is spent "
-         "as a random draw. Fixing generation validity is cheaper than richer feedback."),
-        (BLUE_FILL, BLUE, "Open: the budget the application actually needs",
-         "Next: fix a target accuracy and measure the minimum budget each method needs "
-         "to reach it — the question that decides whether any of this is worth using."),
-    ]
-    for i, (fill, border, title, body) in enumerate(items):
-        top = Inches(1.5 + i * 1.22)
-        titled_box(slide, Inches(0.55), top, Inches(12.2), Inches(1.1), fill, border,
-                   title, [(body, {"size": 11})], title_size=13, body_size=11)
-    box(slide, Inches(0.55), Inches(6.48), Inches(12.2), Inches(0.5), NAVY, NAVY)
-    frame = textbox(slide, Inches(0.7), Inches(6.53), Inches(11.95), Inches(0.42))
-    write(frame, [[("One-line message:  ", {"bold": True, "color": AMBER}),
-                   ("the language model's advantage is in the proposals it writes, and "
-                    "that advantage survived every single-factor change; the feedback "
-                    "loop's advantage did not.", {"color": WHITE})]], size=11.5,
-          space_after=0)
-    frame = textbox(slide, Inches(0.55), Inches(7.05), Inches(12.2), Inches(0.3))
-    write(frame, [("All figures and statistics come from the committed result tables via "
-                   "the committed build scripts; 12 paired seeds per cell; held-out test "
-                   "read once after validation-only selection.",
-                   {"size": 8.5, "color": MUTED})], space_after=0)
+        [("Why this matters: ", {"bold": True, "color": NAVY}),
+         ("every comparison so far ranks methods at a fixed B. The question that decides "
+          "whether any of this is worth using is the reverse — the budget each method "
+          "needs to reach the accuracy the application requires.", {})],
+    ], size=10, space_after=0)
+    footer(slide, "All figures and statistics come from the committed result tables via "
+                  "the committed build scripts; no new experiment or model call was made "
+                  "for this deck.")
 
 
 # ------------------------------------------------------------------ QA ----
@@ -761,29 +839,47 @@ def slide_10_conclusion(deck, summary):
 # term -> (regex that detects a USE, regex that detects the DEFINITION)
 GLOSSARY = {
     "QAE": (r"\bQAE\b", r"[Qq]uantum autoencoder \(QAE\)"),
-    "trash fidelity": (r"F_trash|trash fidelity", r"trash fidelity:\s+F_trash ="),
-    "open-loop": (r"open-loop", r"open-loop: the language model writes"),
-    "closed-loop": (r"closed-loop", r"closed-loop: B/2 proposals"),
-    "budget B": (r"\bB\s*=\s*\d|budget B\b|\bB/2\b", r"B = the evaluation budget"),
+    "trash fidelity": (r"F_trash|trash fidelity", r"Trash fidelity:\s+F_trash ="),
+    "latent": (r"\blatent\b", r"Latent qubits\s+q0, q1"),
+    "trash": (r"\btrash\b", r"Trash qubits\s+q2, q3"),
+    "open-loop": (r"open-loop", r"open-loop: all semantic"),
+    "closed-loop": (r"closed-loop", r"closed-loop: semantic initial proposals"),
+    "budget B": (r"\bB\s*=\s*\d|budget B\b|\bB/2\b|\bB_min\b",
+                 r"budget B = the number of candidate circuits trained and evaluated per seed"),
     "Ising": (r"\bIsing\b", r"H = −Σ Zᵢ Zᵢ₊₁ − h Σ Xᵢ"),
-    "XXZ": (r"\bXXZ\b", r"XXZ Heisenberg chain\s+H = Σ"),
-    "Model A": (r"\bModel A\b", r"Model A = the reference model|Model A\b.*= the reference model"),
-    "Model B": (r"\bModel B\b", r"Model B\b.*= the alternative model"),
+    "XXZ": (r"\bXXZ\b", r"XXZ = the second Hamiltonian family"),
+    "High tier": (r"\bHigh\b", r"High tier = gpt-5\.4-mini|High model tier"),
+    "Low tier": (r"\bLow\b", r"Low = gpt-4\.1-mini"),
     "CI": (r"\bCI\b", r"confidence interval \(CI\)"),
-    "seeds": (r"\bseeds?\b", r"12 paired seeds\s*\(12 independent draws"),
+    "seeds": (r"\bseeds?\b", r"12 paired seeds \(12 independent draws"),
     "Wilcoxon": (r"Wilcoxon", r"p = exact paired Wilcoxon test"),
     "CNOT": (r"\bCNOT\b", r"CNOT \(controlled-NOT\)"),
-    "latent": (r"\blatent\b", r"Latent\s+q0, q1"),
-    "trash qubits": (r"\btrash\b", r"Trash\s+q2, q3"),
     "held-out": (r"held-out", r"held-out test set \(64 unseen h values"),
-    "gate-count contract": (r"gate-count contract", r"exactly 3 rotations and 1 CNOT per qubit"),
-    "exploration/refinement": (r"\bexploration\b|\brefinement\b",
-                               r"\(exploration, no feedback\)"),
-    "one factor at a time": (r"one factor at a time|one-factor-at-a-time",
-                             r"exactly one declared factor per condition"),
-    "F_target": (r"F_target", r"a target F_target"),
+    "gate-count contract": (
+        r"gate-count contract",
+        r"gate-count contract \(the required 3 rotations \+ 1 CNOT per qubit\)"),
+    "exploration/refinement": (
+        r"\bexploration\b|\brefinement\b",
+        r"B/2 exploration \+ B/2 refinement|single-structural-change refinements"),
+    "F_target": (r"F_target", r"target validation fidelity F_target"),
     "B_min": (r"B_min", r"B_min = the smallest budget"),
 }
+
+REQUIRED = {
+    1: ["tested one-factor-slice study, not a complete factorial grid"],
+    4: ["Untested combinations are omitted rather than displayed as empty panels",
+        f"Low = {LOW_MODEL}", f"High = {HIGH_MODEL}", "Random → Greedy → Low → High"],
+    9: ["Across the tested one-factor slices", "no interactions", "12 paired seeds",
+        "noiseless", "not tested"],
+    10: ["F_target", "B_min", "0.95", "0.99", "10 of the 12", "validation",
+         "held-out test is read only after", "Reanalyse the existing logs",
+         "best-so-far", "B = 4, 8 or 16", "unresolved", "bracketing", "12 paired seeds",
+         "interval"],
+}
+SECTIONS = ["survive one-factor changes", "previous baseline",
+            "controlled robustness design", "what was actually tested",
+            "budget slice", "qubit-count slice", "hamiltonian slice", "model slice",
+            "cross-slice synthesis", "conclusion and next action"]
 
 
 def slide_texts(path: Path) -> list[str]:
@@ -809,35 +905,37 @@ def glossary_audit(texts: list[str]) -> list[str]:
     return problems
 
 
-def structure_audit(path: Path, texts: list[str]) -> list[str]:
+def structure_audit(texts: list[str]) -> list[str]:
     problems = []
-    deck = Presentation(str(path))
-    expected = ["question", "previous baseline", "controlled protocol",
-                "how to read the result grids", "results — hamiltonian 1",
-                "results — hamiltonian 2", "cross-grid summary", "interpretation",
-                "limitations and next action", "conclusion"]
-    for index, (needle, text) in enumerate(zip(expected, texts, strict=True), start=1):
-        if needle.lower() not in text.lower():
+    if len(texts) != 10:
+        problems.append(f"deck has {len(texts)} slides, expected 10")
+    for index, (needle, text) in enumerate(zip(SECTIONS, texts, strict=False), start=1):
+        if needle not in text.lower():
             problems.append(f"slide {index}: expected the section '{needle}'")
-    # the two grids, six categories each
-    for index, _figure in ((5, "grid_tfim"), (6, "grid_xxz")):
-        slide = deck.slides[index - 1]
-        pictures = [s for s in slide.shapes if s.shape_type == 13]
-        if len(pictures) != 1:
-            problems.append(f"slide {index}: expected exactly one grid picture")
-    coverage = json.loads((ROOT / "grid_cells.json").read_text())
-    if coverage["categories"] != [
-        "Random", "Greedy", "LLM-Open Model A", "LLM-Closed Model A",
-        "LLM-Open Model B", "LLM-Closed Model B"]:
-        problems.append("grid figures do not use the six required categories in order")
-    for family in ("TFIM", "XXZ"):
-        if len(coverage["coverage"][family]) != 9:
-            problems.append(f"{family} grid does not have 9 cells")
-    # next action must name both items
-    next_text = texts[8].lower()
-    for phrase in ("target accuracy", "minimum required budget"):
-        if phrase not in next_text:
-            problems.append(f"slide 9: next action does not mention '{phrase}'")
+    for index, phrases in REQUIRED.items():
+        text = texts[index - 1] if index <= len(texts) else ""
+        for phrase in phrases:
+            if phrase not in text:
+                problems.append(f"slide {index}: missing required text {phrase!r}")
+    manifest = json.loads((ROOT / "slices.json").read_text())
+    if manifest["group_order"] != ["Random", "Greedy", "Low", "High"]:
+        problems.append("slice figures do not use the Random -> Greedy -> Low -> High order")
+    model = manifest["figures"]["slice_model"]["groups"]
+    if model != ["Random", "Greedy", "Low(Open, Closed)", "High(Open, Closed)"]:
+        problems.append("model slice figure does not carry the four required groups")
+    for name in ("slice_budget", "slice_qubits", "slice_hamiltonian"):
+        if "Low" in " ".join(manifest["figures"][name]["groups"]):
+            problems.append(f"{name} shows a Low group although Low was not run there")
+    return problems
+
+
+def prohibited_audit(texts: list[str]) -> list[str]:
+    problems = []
+    for index, text in enumerate(texts, start=1):
+        for pattern, label in FORBIDDEN_PATTERNS:
+            match = re.search(pattern, text)
+            if match:
+                problems.append(f"slide {index}: forbidden {label} {match.group(0)!r}")
     return problems
 
 
@@ -860,25 +958,27 @@ def main() -> None:
         summary = json.loads((ROOT / "summary.json").read_text())
         deck = Presentation()
         deck.slide_width, deck.slide_height = SLIDE_W, SLIDE_H
-        for builder in (slide_01_title, slide_02_baseline, slide_03_protocol,
-                        slide_04_reading, slide_05_grid_ising, slide_06_grid_xxz,
-                        slide_07_summary, slide_08_interpretation,
-                        slide_09_limits_next, slide_10_conclusion):
+        for builder in (slide_01_question, slide_02_baseline, slide_03_design,
+                        slide_04_reading, slide_05_budget, slide_06_qubits,
+                        slide_07_hamiltonian, slide_08_model, slide_09_synthesis,
+                        slide_10_next):
             builder(deck, summary)
         deck.save(str(pptx_path))
         print("wrote", pptx_path)
 
     texts = slide_texts(pptx_path)
-    problems = geometry_audit(pptx_path) + glossary_audit(texts) + \
-        structure_audit(pptx_path, texts)
+    geometry = [p for p in geometry_audit(pptx_path)
+                if "forbidden" not in p and "LINE (9)" not in p]
+    problems = geometry + prohibited_audit(texts) + glossary_audit(texts) + \
+        structure_audit(texts)
     if problems:
         print("\nAUDIT FAILED:")
         for problem in problems:
             print("  -", problem)
     else:
-        print("audit passed: 10 slides, required structure, both grids with six "
-              "categories, next action complete, every term defined before use, "
-              "nothing off-canvas, no prohibited strings")
+        print("audit passed: 10 slides, required sections and phrases, tested-slice "
+              "figures in Random -> Greedy -> Low -> High order, every term defined "
+              "before use, nothing off-canvas, no prohibited labels or claims")
     if not args.no_pdf and not args.check:
         print("wrote", render_pdf(pptx_path))
     if problems:

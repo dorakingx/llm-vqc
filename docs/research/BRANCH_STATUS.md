@@ -70,9 +70,10 @@ the v5 cell is reused, not re-run, and `tests/test_qae_robustness_reference.py`
 proves the new code reproduces it bit-for-bit. Results, figures, tables and
 the 2026-09-04 deck live in `outputs/qae_robustness/`. The deck was rebuilt
 the same day in the previous meeting's step-by-step style
-(`scripts/qae/build_qae_robustness_slides.py`; 3x3 grids per Hamiltonian with
-six categories per cell from `build_qae_robustness_grid_figures.py`; the
-first draft is archived under `deck/archive/`).
+(`scripts/qae/build_qae_robustness_slides.py`; figures show the four tested
+one-factor slices in Random -> Greedy -> Low -> High order, from
+`build_qae_robustness_slice_figures.py`; Low = gpt-4.1-mini, High = gpt-5.4-mini;
+earlier drafts are archived under `deck/archive/`).
 
 Headline: **Open - Random keeps its sign in 6/6 varied conditions** (significant
 in 4/6), while **Closed - Open does not generalise** - it grows to +0.081 at

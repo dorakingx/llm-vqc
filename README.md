@@ -62,7 +62,7 @@ python scripts/qae/run_qae_robustness.py --estimate --conditions all
 LLM_API_BUDGET_USD=5.00 python scripts/qae/run_qae_robustness.py --conditions all
 python scripts/qae/build_qae_robustness_figures.py
 python scripts/qae/build_qae_robustness_report.py
-python scripts/qae/build_qae_robustness_grid_figures.py   # 3x3 grids, 6 categories
+python scripts/qae/build_qae_robustness_slice_figures.py  # tested one-factor slices
 python scripts/qae/build_qae_robustness_slides.py         # 10-slide deck + PDF (audited)
 ```
 
