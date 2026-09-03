@@ -124,5 +124,6 @@ python scripts/qae/run_qae_robustness.py --estimate --conditions all
 python scripts/qae/run_qae_robustness.py --conditions all   # resumable
 python scripts/qae/build_qae_robustness_figures.py
 python scripts/qae/build_qae_robustness_report.py
-python scripts/qae/build_qae_robustness_deck.py
+python scripts/qae/build_qae_robustness_grid_figures.py
+python scripts/qae/build_qae_robustness_slides.py
 ```

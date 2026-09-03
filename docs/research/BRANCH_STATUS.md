@@ -68,7 +68,11 @@ qubits `n in {4,6,8}`, TFIM vs a pre-declared XXZ chain, and
 `docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (commit 6933d3f) BEFORE the run;
 the v5 cell is reused, not re-run, and `tests/test_qae_robustness_reference.py`
 proves the new code reproduces it bit-for-bit. Results, figures, tables and
-the 2026-09-04 deck live in `outputs/qae_robustness/`.
+the 2026-09-04 deck live in `outputs/qae_robustness/`. The deck was rebuilt
+the same day in the previous meeting's step-by-step style
+(`scripts/qae/build_qae_robustness_slides.py`; 3x3 grids per Hamiltonian with
+six categories per cell from `build_qae_robustness_grid_figures.py`; the
+first draft is archived under `deck/archive/`).
 
 Headline: **Open - Random keeps its sign in 6/6 varied conditions** (significant
 in 4/6), while **Closed - Open does not generalise** - it grows to +0.081 at
