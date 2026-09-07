@@ -29,6 +29,22 @@ jobs:
           --root outputs/qae_robustness
           --out validation_audit
           --source-sha e846c27fc21d06aa20e026590fcc06429f8bcfb4
+      - name: Record availability only; do not expose or use a credential
+        env:
+          LLM_CREDENTIAL_CONFIGURED: ${{ secrets.OPENAI_API_KEY != '' }}
+        run: |
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          result = {
+              'environment': 'GitHub Actions on analysis/qae-budget-target-20260908',
+              'openai_api_key_secret_configured': os.environ.get('LLM_CREDENTIAL_CONFIGURED') == 'true',
+              'credential_value_read_or_exported': False,
+              'api_calls_made': 0,
+          }
+          Path('validation_audit/execution_capability.json').write_text(json.dumps(result, indent=2) + '\n')
+          print(json.dumps(result))
+          PY
       - name: Store validation-only results and reproducible analysis
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7, verified 2026-09-08
         with:
