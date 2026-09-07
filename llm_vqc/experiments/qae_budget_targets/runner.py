@@ -126,7 +126,11 @@ def cost_record(destination: Path, condition: Condition) -> dict:
         for path in sorted(calls_dir.glob("*.json")):
             record = json.loads(path.read_text())
             calls += 1
-            if "repair" in path.name or int(record.get("call_index") or 0) > 0:
+            # Two distinct kinds of extra call, both counted here: a bounded
+            # CAPACITY repair (its proposal id carries a `_repairN` suffix)
+            # and a JSON re-ask of the same prompt (call_index > 0).
+            if ("repair" in str(record.get("proposal_id") or "")
+                    or int(record.get("call_index") or 0) > 0):
                 repairs += 1
             input_tokens += int(record.get("input_tokens") or 0)
             output_tokens += int(record.get("output_tokens") or 0)
