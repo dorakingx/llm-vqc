@@ -1,0 +1,38 @@
+name: QAE validation budget audit (no model calls)
+
+on:
+  push:
+    branches: [analysis/qae-budget-target-20260908]
+    paths:
+      - scripts/qae/analyze_budget_targets.py
+      - .github/workflows/qae-budget-audit-20260908.yml
+
+permissions:
+  contents: read
+
+jobs:
+  validation-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the isolated analysis branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7, verified 2026-09-08
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/qae/analyze_budget_targets.py
+            outputs/qae_robustness
+          sparse-checkout-cone-mode: false
+      - name: Reanalyse all committed validation trajectories
+        run: >-
+          python3 scripts/qae/analyze_budget_targets.py
+          --root outputs/qae_robustness
+          --out validation_audit
+          --source-sha e846c27fc21d06aa20e026590fcc06429f8bcfb4
+      - name: Store validation-only results and reproducible analysis
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7, verified 2026-09-08
+        with:
+          name: qae-validation-budget-audit-20260908
+          path: validation_audit/
+          if-no-files-found: error
+          retention-days: 14
