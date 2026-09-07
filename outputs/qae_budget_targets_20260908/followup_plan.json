@@ -1,0 +1,56 @@
+{
+  "status": "planned_not_executed",
+  "blocking_condition": "OPENAI_API_KEY is not configured in the checked GitHub Actions environment or local runtime.",
+  "source_meeting": "20260904_GSoC, final slide",
+  "source_data_commit": "e846c27fc21d06aa20e026590fcc06429f8bcfb4",
+  "scope_note": "This is a proposed targeted budget study, not an extension silently admitted by the old one-factor validator.",
+  "selection_metric": "val_fid",
+  "targets": [0.95, 0.99],
+  "success_rule": "at least 10 of fixed paired seeds 0..11",
+  "never_use_for_selection": ["test_fid", "test_loss", "anytime_mean.csv best_so_far_test_fid"],
+  "guardrails": [
+    "Keep gates, trainer, data streams, model snapshots, repair policy and token limits fixed relative to the local condition anchor.",
+    "Do not infer an independent smaller-budget result from a larger configured run's prefix.",
+    "Record B_eval, proposal batch sizes, actual API calls, repairs, token counts and spend separately.",
+    "Do not infer monotone success probability from the B=4,8,16 endpoints; define the admissible budget grid explicitly.",
+    "Do not reuse a generated pool with different requested batch size as though it were a fresh exact-budget call.",
+    "Reuse Random/Greedy controls when the model name is the only change; do not count reused controls as independent evidence.",
+    "No paid run without configured credentials and an explicit hard spend cap; API failure is a blocked run, never synthetic success.",
+    "Freeze the chosen budget using validation before any new test evaluation; distinguish historical descriptive test results from a new untouched confirmation set."
+  ],
+  "stages": [
+    {
+      "priority": 1,
+      "anchor": "reference",
+      "proposed_budget": 6,
+      "methods": ["LLM-Open", "LLM-Closed"],
+      "seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "explore_refine": [3, 3],
+      "targets": [0.95, 0.99],
+      "reason": "Nearest intermediate even budget between observed B4 failure and B8 success at .95; this is not a monotonicity-certified bracket.",
+      "minimum_api_calls_without_repairs": 49,
+      "exact_minimum_caveat": "A successful B6 does not certify a global minimum without checking all admissible lower budgets or proving monotonicity."
+    },
+    {
+      "priority": 2,
+      "anchor": "hamiltonian_xxz",
+      "proposed_budget": 10,
+      "methods": ["LLM-Closed"],
+      "seeds": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11],
+      "explore_refine": [5, 5],
+      "targets": [0.95, 0.99],
+      "reason": "At the XXZ anchor, 9/12 seeds meet .95 at B8; probe the nearest larger even budget rather than a full factorial grid.",
+      "minimum_api_calls_without_repairs": 72,
+      "protocol_change": "Declare this as varying budget relative to the XXZ anchor, not as a valid one-factor change relative to the original TFIM/B8 baseline."
+    },
+    {
+      "priority": 3,
+      "anchors": ["qubits_n6", "qubits_n8", "model_alt"],
+      "status": "unresolved; no blind paid sweep",
+      "reason": "Recorded B8 .95 attainment remains below 10/12. Diagnose generation validity and optimization/capacity separately without changing the primary target after inspecting results."
+    }
+  ],
+  "additional_calls_executed": 0,
+  "prices_or_dollar_costs": "not inferred from historical token counts",
+  "runner_status": "Arbitrary B6/B10 execution is not implemented or verified by this audit."
+}
