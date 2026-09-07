@@ -7,8 +7,8 @@
 
 指標は **validation trash fidelity** であり、reconstruction fidelityでも
 test fidelityでもない。seed `s`、候補index `k` に対し
-`F_best(s,k) = max_{{i<=k}} F_val(s,i)` を、**予算Bとして設定された**runの中で計算する。
-`F_target ∈ {{0.95, 0.99}}` 以上に達したseedが、同じ12 paired seeds(0〜11)中
+`F_best(s,k) = max_{i<=k} F_val(s,i)` を、**予算Bとして設定された**runの中で計算する。
+`F_target ∈ {0.95, 0.99}` 以上に達したseedが、同じ12 paired seeds(0〜11)中
 **10以上**なら合格。等号は到達とみなす。平均値による代用は不可。全12 seedを報告し、
 seedの除外・引き直し・置換は行わない。
 
@@ -64,7 +64,8 @@ frozen blockは基準とbyte一致する。
 
 ## 4. 結果 — 目標0.95の到達seed数
 
-**P** は10/12規則を満たすセル。
+**P** は10/12規則を満たすセル。表中の "TFIM" は横磁場Ising鎖(slideでは Ising chain と表記)。
+"not run" はそのセルでその手法を実行していないという意味であり、到達0件とは異なる。
 
 {table_095}
 
@@ -72,7 +73,39 @@ frozen blockは基準とbyte一致する。
 
 {table_099}
 
-## 6. run内の初到達index(新規セル)
+## 6. 新規2セルが示したこと
+
+**Ising鎖では、open loopの方がclosed loopより少ない予算で足りる。**
+B=6でOpenは {b6_open}/12 で合格、Closedは {b6_closed}/12 で不合格。同じ予算・同じseedで
+非意味的探索は遠く及ばない(Random {b6_random}/12、Greedy {b6_greedy}/12)。
+実際に実行した予算の中では、**最小検証済み合格予算はOpenが6、Closedが8**。B=4は両者とも
+検証済みの失敗である。
+
+最も素直な解釈は構造的なものである。B=6のClosedは予算の半分をわずか3件の意味的初期探索に、残り半分を
+3回のfeedback再設計に費やすのに対し、Openは6件すべてを1回の意味的batchに使う。予算が
+小さいとき、二分割による損失がfeedbackの利得を上回っているように見える。ただし本研究で
+変えたのは予算のみであり、これは観測された分割構造の解釈であって、原因を単離した結果ではない。B=6の到達曲線はこれを直接示しており、
+Closedは改善phaseで5/12→8/12まで上がるが、合格線には届かない。
+
+**予算を増やしてもXXZセルは救済されず、到達seed数はむしろ減った。**
+XXZのClosedはB=8で {x8_closed}/12(規則にseed 1つ足りない)、B=10で {x10_closed}/12。
+これは実測値としてそのまま報告する。ただしfidelityの崩壊ではない。最終best-so-far
+validationの平均は {x8_mean} → {x10_mean}({x_mean_shift})しか動いていない。XXZでは
+分布全体が目標の数千分の1以内に密集しており(2 run合計 {x_total_seeds} seed結果のうち
+{x_near_target} 件が0.95から0.01以内)、到達seed数は極めて敏感な統計量になっている。
+per-seed marginの図を参照。
+
+**到達seed数は予算に対して単調ではない(実測)。**
+Ising ladderの目標0.95で、Openは {b4_open}, {b6_open}, {b8_open}, {b16_open}、
+Closedは {b4_closed}, {b6_closed}, {b8_closed}, {b16_closed}。XXZ anchorのClosedは
+{x8_closed} → {x10_closed}。いずれも別policyの独立実行であり、run間の確率的変動は実在する。
+これが、補間した最小値や挟み込み区間ではなく「検証済み合格 / 検証済み失敗 / 未検証」で
+報告する具体的な理由である。データは、そうした主張が必要とする単調性を支持しない。
+
+**新規2セルとも目標0.99は動かさない。** どちらも0/12で、既存の全条件と同じである。
+その目標において探索・学習長・回路容量のどれが律速かは、ここからは特定できない。
+
+## 7. run内の初到達index(新規セル)
 
 {table_prefix}
 
@@ -86,7 +119,7 @@ Closedのrun前半は score を見ない意味的初期探索であり、feedbac
 またOpenのpoolはseed間で共有されているため、12 seedの成功は「1つのpoolに対する
 12 seed」であって「12回の独立生成の成功率」ではない。
 
-## 7. 生成妥当性
+## 8. 生成妥当性
 
 invalid / repaired / fallback は区別して記録している。ゲート契約に反する提案は
 有限回の修復を試み、それでも失敗した場合はflag付きのrandom fallbackに置換される。
@@ -96,7 +129,7 @@ fallback除外列は非因果的な補助診断にすぎない(既存ログのfi
 
 {table_validity}
 
-## 8. 費用・呼出し・時間
+## 9. 費用・呼出し・時間
 
 {table_cost}
 
@@ -104,8 +137,10 @@ fallback除外列は非因果的な補助診断にすぎない(既存ログのfi
 `https://developers.openai.com/api/docs/pricing` で確認)、token数は保存済みの
 call recordから集計。今回の追加使用は **USD {total_usd}**、model呼出し
 {total_calls}回(うち修復・再試行 {total_repairs}回)、input {total_input} tokens、
-output {total_output} tokens、学習・評価した候補回路 {total_evaluations}件、
-実行時間 {total_minutes} 分。
+output {total_output} tokens、学習・評価した候補回路 {total_evaluations}件。
+実行時間は単一の数値ではなく `run_timeline.json` にsegment別に記録している。B=6は中断・再開を
+経ており、両セルとも後に保存artefactから再生成しているため、どの1回の実行も「両セルのcold run」を
+測っていない。唯一きれいなcold測定はXXZセルで、81 callsを227秒。
 
 費用管理: `LLM_API_BUDGET_USD` に明示的な非ゼロ上限が設定されていない限り有料呼出しは
 拒否され、各requestの**前**に残額を検査する。今回はユーザーが承認した上限 USD 2.00 の下で
@@ -114,7 +149,7 @@ output {total_output} tokens、学習・評価した候補回路 {total_evaluati
 保存済みの10 seedとpoolをdiskから読み直し、これらについて新規呼出しは発生していない
 (設定予算・model・prompt・seed・初期化・dataが完全一致する結果のみ再利用)。
 
-## 9. testの保護
+## 10. testの保護
 
 本研究では**どの候補もtest setで評価していない**。runnerは凍結trainerに空のtest配列を
 渡すため、学習済み回路がtest状態と縮約されることが構造的に起こらない。記録されたtest量が
@@ -125,11 +160,11 @@ column allowlistで書かれる。予算・回路・解析方針はvalidationの
 確認集合ではない。本報告では一切報告していない。将来確認評価を行う場合は、別途事前登録し、
 全選択を凍結した後にのみ参照し、結果を見て探索へ戻らないこと。
 
-## 10. 検証済み / 失敗 / 未検証
+## 11. 検証済み / 失敗 / 未検証
 
 {verdict_section}
 
-## 11. 限界
+## 12. 限界
 
 12 paired seeds、ノイズなし状態ベクトルsimulation、回路容量規則は1つ
 (qubitあたり3 rotation + 1 CNOT)、新規セルのmodel snapshotは1つ、XXZ anchorは1点。
@@ -139,6 +174,6 @@ Openのpoolはseed間で共有。random fallbackは運用スコアに含まれ�
 容量不足のいずれが律速かは本研究では分離できておらず、特に0.99の未到達については
 どれが原因かの証拠を与えない。
 
-## 12. 再現手順
+## 13. 再現手順
 
 英語版REPORTの Section 12 を参照。

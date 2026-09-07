@@ -90,6 +90,9 @@ manifest whose frozen block is byte-identical to the reference's.
 
 Seeds (of 12) whose best-so-far validation fidelity reaches the target by the
 end of the configured budget. **P** marks a cell meeting the 10-of-12 rule.
+"TFIM" is the transverse-field Ising chain; the slides call it the Ising
+chain. "not run" means the method was never executed at that cell, which is
+not the same as reaching zero seeds.
 
 {table_095}
 
@@ -97,7 +100,50 @@ end of the configured budget. **P** marks a cell meeting the 10-of-12 rule.
 
 {table_099}
 
-## 6. Within-run first-hit indices for the new cells
+## 6. What the two new cells show
+
+**The open loop needs less budget than the closed loop on the Ising (TFIM) chain.**
+At B = 6 the open loop reaches {b6_open}/12 and passes; the closed loop
+reaches {b6_closed}/12 and does not. Non-semantic search is nowhere near:
+Random {b6_random}/12, Greedy {b6_greedy}/12 at the same budget and on the
+same seeds. Among the budgets actually run on this ladder, the smallest
+verified passing budget is therefore **6 for the open loop** and **8 for the
+closed loop**. B = 4 is a verified failure for both.
+
+The most likely reading is structural rather than mysterious: at B = 6 the closed loop
+spends half its budget on only three semantic warm starts and the other half
+on three feedback-driven redesigns, while the open loop spends all six on one
+semantic batch. When the budget is small, splitting it in two appears to hurt more than
+feedback helps. This study varied only the budget, so that reading is an
+interpretation of the observed split, not an isolated cause. The B = 6 attainment curve shows this directly -- the closed
+loop climbs from 5/12 to 8/12 only across the refinement half, and still ends
+below the pass line.
+
+**Raising the budget did not rescue the XXZ cell; it made the count worse.**
+The XXZ closed loop was {x8_closed}/12 at B = 8, one seed short of the rule.
+At B = 10 it is {x10_closed}/12. This is reported as measured. It is not a
+collapse in fidelity: the mean final best-so-far validation moved by only
+{x_mean_shift} ({x8_mean} to {x10_mean}). The whole XXZ distribution sits
+within a few thousandths of the target -- {x_near_target} of the
+{x_total_seeds} seed results across the two runs are within 0.01 of 0.95 --
+so the pass count is a knife-edge statistic there and a tiny shift flips
+several seeds at once. See the per-seed margin figure.
+
+**Attainment counts are not monotone in the budget, as measured.** On the
+TFIM ladder the open loop goes {b4_open}, {b6_open}, {b8_open}, {b16_open}
+and the closed loop {b4_closed}, {b6_closed}, {b8_closed}, {b16_closed} at
+target 0.95. On the XXZ anchor the closed loop goes {x8_closed} then
+{x10_closed}. Each of these is an independently executed run of a different
+policy, and stochastic variation between them is real. This is the concrete
+reason the study reports verified passes, verified failures and unverified
+budgets rather than an interpolated minimum or a bracketing interval: the
+data do not support the monotonicity such a claim would require.
+
+**Neither new cell moves the 0.99 target.** Both are 0/12, as is every
+earlier condition. Nothing here identifies whether search, training length or
+circuit capacity is the binding constraint at that target.
+
+## 7. Within-run first-hit indices for the new cells
 
 The first candidate index at which at least 10 of 12 seeds have reached 0.95,
 *within* the run configured at that budget.
@@ -117,7 +163,7 @@ reached before that boundary cannot be attributed to the feedback loop. The
 open-loop pool is shared across the data/training seeds, so 12 successes mean
 12 seeds evaluated on one pool, not 12 independent generations.
 
-## 7. Generation validity
+## 8. Generation validity
 
 Invalid proposals, repaired proposals and random fallbacks are recorded
 distinctly. A proposal that fails the exact gate contract is first repaired
@@ -129,7 +175,7 @@ regenerate an adaptive search history.
 
 {table_validity}
 
-## 8. Cost, calls and time
+## 9. Cost, calls and time
 
 {table_cost}
 
@@ -138,9 +184,12 @@ reference model snapshot, read on 2026-09-08 from
 `https://developers.openai.com/api/docs/pricing`; token counts come from the
 stored per-call records. Total new spend was **USD {total_usd}** across
 {total_calls} model calls ({total_repairs} of them repair or retry calls),
-{total_input} input and {total_output} output tokens, {total_evaluations}
-candidate circuits trained and evaluated, and {total_minutes} minutes of wall
-clock.
+{total_input} input and {total_output} output tokens, and {total_evaluations}
+candidate circuits trained and evaluated. Wall-clock timings are recorded per
+execution segment in `run_timeline.json` rather than as a single number: the
+B = 6 cell was interrupted and resumed, and both cells were later regenerated
+from stored artefacts, so no invocation measures a full cold run of both.
+The one clean cold measurement is the XXZ cell: 81 calls in 227 seconds.
 
 Spending control: paid calls are refused outright unless `LLM_API_BUDGET_USD`
 is set to an explicit nonzero cap, and the remaining cap is checked *before*
@@ -152,7 +201,7 @@ stored seeds and the stored pool from disk and made no new call for them --
 results are reused only when the configured budget, model snapshot, prompt,
 seed, initialisation and data all match exactly.
 
-## 9. Test-set protection
+## 10. Test-set protection
 
 No candidate was evaluated on the test set anywhere in this study. The runner
 hands the frozen trainer an empty test array, so no test state is ever
@@ -166,11 +215,11 @@ results, not a fresh untouched confirmation set, and none is reported here.
 Any future confirmatory evaluation must be pre-registered separately, frozen
 before it is looked at, and never fed back into search.
 
-## 10. What is verified, what failed, what is unverified
+## 11. What is verified, what failed, what is unverified
 
 {verdict_section}
 
-## 11. Limitations
+## 12. Limitations
 
 Twelve paired seeds; noiseless state-vector simulation; one circuit-capacity
 rule (3 rotations + 1 CNOT per qubit); one model snapshot for the new cells;
@@ -182,7 +231,7 @@ here separates insufficient search from insufficient training or insufficient
 circuit capacity; the 0.99 result in particular is not evidence about which of
 those binds.
 
-## 12. Reproduction
+## 13. Reproduction
 
 ```bash
 # 1. Re-run the validation-only audit over the historical logs and the two

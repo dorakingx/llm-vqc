@@ -96,7 +96,7 @@ def totals(data: dict) -> dict:
         out["output"] += usage["output_tokens"]
         out["usd"] += usage["estimated_cost_usd_at_list_price"]
         out["evaluations"] += record["evaluated_candidates_total"]
-        out["seconds"] += record["wall_clock_seconds"]
+        out["seconds"] += record["wall_clock_seconds_this_invocation"]
         for entry in record["generation_validity"].values():
             if isinstance(entry, dict):
                 out["fallbacks"] += entry.get("flagged_random_fallbacks", 0)
@@ -529,10 +529,6 @@ def slide_09_cost(deck, data):
     rows.append(["Cost at list price (USD)"]
                 + [f"{v:.3f}" if isinstance(v, float) else v for v in usd]
                 + [f"{t['usd']:.3f}"])
-    seconds = [get(k, ["wall_clock_seconds"]) for k in keys]
-    rows.append(["Wall clock (minutes)"]
-                + [f"{v / 60:.0f}" if isinstance(v, (int, float)) else v
-                   for v in seconds] + [f"{t['seconds'] / 60:.0f}"])
     simple_table(slide, rows, Inches(0.6), Inches(1.72), Inches(7.1),
                  [Inches(2.9), Inches(1.45), Inches(1.45), Inches(1.3)],
                  header_size=10, body_size=10, row_height=Inches(0.335))

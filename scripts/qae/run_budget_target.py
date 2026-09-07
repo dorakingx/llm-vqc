@@ -115,6 +115,10 @@ def main() -> None:
     parser.add_argument("--status", action="store_true")
     parser.add_argument("--no-api", action="store_true",
                         help="non-API arms only; fails on a cell needing the API")
+    parser.add_argument("--reuse-only", action="store_true",
+                        help=("rebuild the tables and record from artefacts "
+                              "already on disk; refuses to start if any paid "
+                              "artefact is missing, and cannot call the API"))
     args = parser.parse_args()
 
     keys = [c.key for c in TARGET_CELLS] if args.cells == ["all"] else args.cells
@@ -128,7 +132,7 @@ def main() -> None:
     if not keys:
         return
 
-    if not args.no_api:
+    if not args.no_api and not args.reuse_only:
         if not os.environ.get("OPENAI_API_KEY"):
             raise SystemExit("OPENAI_API_KEY is not set; paid arms are blocked")
         if LLMApiBudget.from_env() is None:
@@ -139,7 +143,7 @@ def main() -> None:
     seeds = tuple(args.seeds) if args.seeds else VERIFY_SEEDS
     for key in keys:
         run_cell(TARGET_CELLS_BY_KEY[key], with_api=not args.no_api,
-                 seeds=seeds, root=args.root)
+                 reuse_only=args.reuse_only, seeds=seeds, root=args.root)
 
 
 if __name__ == "__main__":

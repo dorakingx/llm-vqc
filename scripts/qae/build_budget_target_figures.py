@@ -19,6 +19,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 
+DECK_RC = {
+    "font.size": 13, "axes.titlesize": 14, "axes.labelsize": 13,
+    "xtick.labelsize": 12.5, "ytick.labelsize": 12.5, "legend.fontsize": 11.5,
+}
+
 METHOD_ORDER = ["Random", "Greedy", "LLM-Open", "LLM-Closed"]
 COLORS = {"Random": "#9aa0a6", "Greedy": "#f9ab00",
           "LLM-Open": "#1a73e8", "LLM-Closed": "#d93025"}
@@ -167,7 +172,8 @@ def ladder_figure(endpoints: list[dict], ladder: list[tuple[str, int]],
     lookup = {(r["condition"], r["method"]): r for r in endpoints
               if float(r["target"]) == 0.95}
     methods = methods or METHOD_ORDER
-    fig, ax = plt.subplots(figsize=(7.0, 4.6))
+    plt.rcParams.update(DECK_RC)
+    fig, ax = plt.subplots(figsize=(9.2, 4.3))
     for method in methods:
         xs, ys, provs = [], [], []
         for key, budget in ladder:
@@ -188,25 +194,77 @@ def ladder_figure(endpoints: list[dict], ladder: list[tuple[str, int]],
                 markeredgecolor="black", markeredgewidth=0.6, label=LEGEND[method])
     ax.axhline(REQUIRED, color="black", lw=1.2, ls="--")
     ax.text(ax.get_xlim()[0], REQUIRED + 0.3, f"pass line {REQUIRED}/{N_SEEDS}",
-            ha="left", fontsize=8.4, fontweight="bold")
+            ha="left", fontsize=12.5, fontweight="bold")
     for budget in unverified:
         ax.axvline(budget, color="#bbbbbb", lw=8, alpha=0.35, zorder=0)
-        ax.text(budget, N_SEEDS + 0.35, "not run", ha="center", fontsize=7.4,
+        ax.text(budget, N_SEEDS + 0.35, "not run", ha="center", fontsize=11,
                 color="#666")
     ax.set_xticks([b for _, b in ladder] + list(unverified))
     ax.set_ylim(-0.5, N_SEEDS + 1.1)
     ax.set_yticks(range(0, N_SEEDS + 1, 2))
-    ax.set_xlabel("Configured budget B (candidates trained and evaluated per seed)\n"
-                  "each point is a separate run; thick outline = measured in this study",
-                  fontsize=9)
-    ax.set_ylabel(f"Seeds reaching $F_{{val}} \\geq 0.95$ (of {N_SEEDS})", fontsize=9.5)
-    ax.set_title(title, fontsize=11)
+    ax.set_xlabel("Configured budget B (candidates per seed)\n"
+                  "each point is a separate run; thick outline = measured now",
+                  fontsize=13)
+    ax.set_ylabel(f"Seeds reaching $F_{{val}} \\geq 0.95$\n(of {N_SEEDS})",
+                  fontsize=13)
     ax.grid(alpha=0.25)
-    ax.legend(fontsize=7.6, loc="upper center", bbox_to_anchor=(0.5, -0.24),
+    ax.legend(fontsize=11.5, loc="upper center", bbox_to_anchor=(0.5, -0.27),
               ncol=2, edgecolor="#dddddd", frameon=True)
     fig.tight_layout()
     _finish(fig, ax, out / name,
             FOOTER + " Runs at different B are separate policies and are never concatenated.")
+
+
+def margin_figure(audit: Path, pairs: list[tuple[str, int, str]], name: str,
+                  title: str, method: str, out: Path) -> None:
+    """Per-seed final best validation against the target, for one method at
+    two budgets.
+
+    A count of seeds above a threshold says nothing about how far above it
+    they are. When a whole distribution sits within a few thousandths of the
+    target, the count is a knife-edge statistic and a tiny shift flips
+    several seeds; this panel makes that visible instead of hiding it behind
+    the count.
+    """
+    plt.rcParams.update(DECK_RC)
+    series = []
+    for key, budget, label in pairs:
+        path = audit / "data" / key / "candidate_results.csv"
+        if not path.exists():
+            continue
+        best: dict[int, float] = {}
+        for row in read_rows(path):
+            if row["method"] != method:
+                continue
+            seed = int(row["seed"])
+            best[seed] = max(best.get(seed, 0.0), float(row["val_fid"]))
+        series.append((label, budget, [best[s] for s in sorted(best)],
+                       key in NEW_CELLS))
+    if len(series) < 2:
+        return
+    fig, ax = plt.subplots(figsize=(9.2, 4.3))
+    width = 0.36
+    for i, (label, budget, values, is_new) in enumerate(series):
+        xs = [s + (i - 0.5) * width for s in range(len(values))]
+        ax.bar(xs, values, width=width * 0.9, color=COLORS[method],
+               alpha=1.0 if is_new else 0.42, edgecolor="black",
+               linewidth=1.3 if is_new else 0.5,
+               label=f"{label} ({'measured now' if is_new else 'earlier run'})")
+    ax.axhline(0.95, color="black", lw=1.4, ls="--")
+    ax.text(-0.55, 0.9505, "target 0.95", fontsize=12.5, fontweight="bold",
+            va="bottom")
+    low = min(min(v) for _, _, v, _ in series)
+    ax.set_ylim(min(0.93, low - 0.005), 0.985)
+    ax.set_xticks(range(len(series[0][2])))
+    ax.set_xlabel("Seed", fontsize=13)
+    ax.set_ylabel("Final best-so-far\nvalidation trash fidelity", fontsize=9.5)
+    ax.set_title(title, fontsize=10.5)
+    ax.grid(alpha=0.25, axis="y")
+    ax.legend(fontsize=8.2, loc="lower right", edgecolor="#dddddd", ncol=2)
+    fig.tight_layout()
+    _finish(fig, ax, out / name,
+            "Every seed of both runs lies within a few thousandths of the "
+            "target, so the pass count is highly sensitive to small shifts.")
 
 
 def per_seed_figure(hits: list[dict], key: str, out: Path) -> None:
@@ -271,6 +329,18 @@ def main() -> None:
         endpoints, [c for c in TFIM_LADDER if c[0] in budgets], "ladder_tfim",
         "Ising chain: seeds reaching $F_{val} \\geq 0.95$ at each configured budget",
         out, unverified=[12, 14])
+    margin_figure(
+        args.audit,
+        [("hamiltonian_xxz", 8, "B = 8"), ("target_xxz_b10", 10, "B = 10")],
+        "margin_xxz",
+        "XXZ chain, closed loop: how far each seed lands from the target",
+        "LLM-Closed", out)
+    margin_figure(
+        args.audit,
+        [("reference", 8, "B = 8"), ("target_tfim_b6", 6, "B = 6")],
+        "margin_tfim_open",
+        "Ising chain, open loop: how far each seed lands from the target",
+        "LLM-Open", out)
     ladder_figure(
         endpoints, [c for c in XXZ_LADDER if c[0] in budgets], "ladder_xxz",
         "XXZ chain: closed-loop boundary probe (the only method run at B = 10)",

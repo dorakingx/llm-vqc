@@ -10,6 +10,7 @@ import argparse
 import csv
 import hashlib
 import json
+import re
 from pathlib import Path
 
 TARGETS = (0.95, 0.99)
@@ -71,8 +72,8 @@ def prefix_table(prefixes: list[dict], keys: list[str]) -> str:
 
 def cost_table(records: dict[str, dict]) -> tuple[str, dict]:
     lines = ["| Cell | Candidate evaluations | API calls | Repair/retry calls | "
-             "Input tokens | Output tokens | Cost at list price (USD) | Wall clock (s) |",
-             "|---|---:|---:|---:|---:|---:|---:|---:|"]
+             "Input tokens | Output tokens | Cost at list price (USD) |",
+             "|---|---:|---:|---:|---:|---:|---:|"]
     totals = {"calls": 0, "repairs": 0, "input": 0, "output": 0, "usd": 0.0,
               "evaluations": 0, "seconds": 0.0}
     for key, record in records.items():
@@ -81,19 +82,18 @@ def cost_table(records: dict[str, dict]) -> tuple[str, dict]:
             f"| {key} | {record['evaluated_candidates_total']} | "
             f"{usage['n_calls']} | {usage['n_repair_or_retry_calls']} | "
             f"{usage['input_tokens']} | {usage['output_tokens']} | "
-            f"{usage['estimated_cost_usd_at_list_price']:.4f} | "
-            f"{record['wall_clock_seconds']:.0f} |")
+            f"{usage['estimated_cost_usd_at_list_price']:.4f} |")
         totals["calls"] += usage["n_calls"]
         totals["repairs"] += usage["n_repair_or_retry_calls"]
         totals["input"] += usage["input_tokens"]
         totals["output"] += usage["output_tokens"]
         totals["usd"] += usage["estimated_cost_usd_at_list_price"]
         totals["evaluations"] += record["evaluated_candidates_total"]
-        totals["seconds"] += record["wall_clock_seconds"]
+        totals["seconds"] += record["wall_clock_seconds_this_invocation"]
     lines.append(
         f"| **total** | **{totals['evaluations']}** | **{totals['calls']}** | "
         f"**{totals['repairs']}** | **{totals['input']}** | **{totals['output']}** | "
-        f"**{totals['usd']:.4f}** | **{totals['seconds']:.0f}** |")
+        f"**{totals['usd']:.4f}** |")
     return "\n".join(lines), totals
 
 
@@ -157,6 +157,64 @@ def verdict_section(endpoints: list[dict]) -> str:
     return "\n\n".join(blocks) + "\n" + tail
 
 
+def render(template: str, values: dict) -> str:
+    """Substitute only the known keys.
+
+    `str.format` is deliberately avoided: the prose contains real braces
+    (`max_{i <= k}`, the admissible budget grid) that are not placeholders,
+    and escaping them by hand is exactly the kind of thing that silently
+    rots. An unknown `{...}` is left untouched; a placeholder that never got
+    substituted is reported rather than swallowed.
+    """
+    for key, value in values.items():
+        template = template.replace("{" + key + "}", str(value))
+    leftover = sorted(set(re.findall(r"\{(" + "|".join(values) + r")\}", template)))
+    if leftover:
+        raise SystemExit(f"unsubstituted placeholders: {leftover}")
+    return template
+
+
+def key_numbers(audit: Path, endpoints: list[dict]) -> dict:
+    """Every number quoted in the prose, computed from the tables."""
+    def count(key, method, target=0.95):
+        row = next((r for r in endpoints if r["condition"] == key
+                    and r["method"] == method
+                    and abs(float(r["target"]) - target) < 1e-12), None)
+        return None if row is None else int(row["successes"])
+
+    def finals(key, method):
+        path = audit / "data" / key / "candidate_results.csv"
+        best: dict[int, float] = {}
+        for row in read_rows(path):
+            if row["method"] == method:
+                seed = int(row["seed"])
+                best[seed] = max(best.get(seed, 0.0), float(row["val_fid"]))
+        return [best[s] for s in sorted(best)]
+
+    x8, x10 = finals("hamiltonian_xxz", "LLM-Closed"), \
+        finals("target_xxz_b10", "LLM-Closed")
+    near = sum(1 for v in x8 + x10 if abs(v - 0.95) <= 0.01)
+    return {
+        "b6_random": count("target_tfim_b6", "Random"),
+        "b6_greedy": count("target_tfim_b6", "Greedy"),
+        "b6_open": count("target_tfim_b6", "LLM-Open"),
+        "b6_closed": count("target_tfim_b6", "LLM-Closed"),
+        "b4_open": count("budget_b4", "LLM-Open"),
+        "b4_closed": count("budget_b4", "LLM-Closed"),
+        "b8_open": count("reference", "LLM-Open"),
+        "b8_closed": count("reference", "LLM-Closed"),
+        "b16_open": count("budget_b16", "LLM-Open"),
+        "b16_closed": count("budget_b16", "LLM-Closed"),
+        "x8_closed": count("hamiltonian_xxz", "LLM-Closed"),
+        "x10_closed": count("target_xxz_b10", "LLM-Closed"),
+        "x8_mean": f"{sum(x8) / len(x8):.4f}",
+        "x10_mean": f"{sum(x10) / len(x10):.4f}",
+        "x_mean_shift": f"{(sum(x10) / len(x10)) - (sum(x8) / len(x8)):+.4f}",
+        "x_near_target": near,
+        "x_total_seeds": len(x8) + len(x10),
+    }
+
+
 def hash_tree(root: Path) -> dict:
     out = {}
     for path in sorted(root.rglob("*")):
@@ -185,13 +243,14 @@ def main() -> None:
             records[key] = json.loads(path.read_text())
 
     costs, totals = cost_table(records)
-    text = args.body.read_text(encoding="utf-8").format(
+    text = render(args.body.read_text(encoding="utf-8"), dict(
         table_095=attainment_table(endpoints, 0.95),
         table_099=attainment_table(endpoints, 0.99),
         table_prefix=prefix_table(prefixes, sorted(NEW_CELLS)),
         table_cost=costs,
         table_validity=validity_table(records),
         verdict_section=verdict_section(endpoints),
+        **key_numbers(args.audit, endpoints),
         total_calls=totals["calls"],
         total_repairs=totals["repairs"],
         total_input=totals["input"],
@@ -199,7 +258,7 @@ def main() -> None:
         total_usd=f"{totals['usd']:.4f}",
         total_evaluations=totals["evaluations"],
         total_minutes=f"{totals['seconds'] / 60:.1f}",
-    )
+    ))
     args.out.write_text(text, encoding="utf-8")
     print(f"wrote {args.out} ({len(text)} bytes)")
 

@@ -209,10 +209,33 @@ def completed_seeds(cell: TargetCell, root: Path = STUDY_ROOT) -> list[int]:
             if (destination / f"llm_closed_seed{s}.json").exists()]
 
 
+def missing_artifacts(cell: TargetCell, seeds: tuple[int, ...],
+                      root: Path) -> list[str]:
+    """Paid artefacts this cell would have to buy if run right now."""
+    destination = root / cell.key
+    missing = []
+    if cell.runs_open and not (destination / "llm_open_pool.json").exists():
+        missing.append("llm_open_pool.json")
+    if cell.runs_closed:
+        missing += [f"llm_closed_seed{s}.json" for s in seeds
+                    if not (destination / f"llm_closed_seed{s}.json").exists()]
+    return missing
+
+
+class _NoApi:
+    """Stand-in provider that makes a paid call structurally impossible."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        raise RuntimeError(
+            "reuse-only mode attempted an API call; this is a bug, because "
+            "every paid artefact was checked to be on disk beforehand")
+
+
 def run_cell(
     cell: TargetCell,
     *,
     with_api: bool = True,
+    reuse_only: bool = False,
     seeds: tuple[int, ...] = VERIFY_SEEDS,
     root: Path = STUDY_ROOT,
 ) -> Path:
@@ -227,6 +250,16 @@ def run_cell(
     destination = root / cell.key
     destination.mkdir(parents=True, exist_ok=True)
     started = time.time()
+
+    if reuse_only:
+        # Regenerate the tables and the record from artefacts already paid
+        # for, without the possibility of buying anything new.
+        missing = missing_artifacts(cell, seeds, root)
+        if missing:
+            raise RuntimeError(
+                f"{cell.key}: reuse-only mode needs these paid artefacts on "
+                f"disk, and they are absent: {missing}")
+        arms.build_provider = _NoApi
 
     violations = M.verify(condition, cell.anchor)
     (destination / "manifest.json").write_text(json.dumps({
@@ -285,7 +318,13 @@ def run_cell(
         "seeds": list(seeds),
         "evaluated_candidates_total": len(candidates),
         "evaluated_candidates_per_seed": condition.budget,
-        "wall_clock_seconds": round(time.time() - started, 1),
+        "wall_clock_seconds_this_invocation": round(time.time() - started, 1),
+        "wall_clock_note": (
+            "Time for THIS invocation only. A cell that was interrupted and "
+            "resumed, or regenerated in reuse-only mode, reloads its stored "
+            "seeds from disk, so this figure is an operational number and not "
+            "a benchmark of a full cold run."),
+        "reuse_only_regeneration": reuse_only,
         "api_usage": costs,
         "generation_validity": validity_record(candidates, destination, cell),
         "output_sha256": hashes,
