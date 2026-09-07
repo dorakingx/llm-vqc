@@ -30,7 +30,7 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
    the 2026-08-04 historical synthetic-task artifacts:
    `outputs/mini5_ctx_20260804/`.)
 
-4. **Controlled robustness study (current)** — the previous QAE result
+4. **Controlled robustness study** — the previous QAE result
    stress-tested by changing exactly one factor at a time: candidate budget
    `B in {4, 8, 16}`, qubit count `n in {4, 6, 8}`, Hamiltonian family
    (TFIM vs XXZ) and the underlying LLM model. Every other component —
@@ -39,7 +39,24 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
    and machine-verified per condition:
    `outputs/qae_robustness/REPORT.md`, deck in `outputs/qae_robustness/deck/`.
 
+5. **Minimum budget to a target fidelity (current)** — instead of ranking
+   methods at one fixed budget, fix a target *validation* trash fidelity and
+   ask for the smallest candidate budget that reaches it in at least 10 of the
+   same 12 paired seeds. Seven earlier conditions are re-analysed with no model
+   calls; two pre-registered boundary cells were newly executed. Measured at
+   target 0.95: the open loop passes at `B = 6` (12/12) where the closed loop
+   does not (8/12), and the XXZ closed-loop cell fell from 9/12 at `B = 8` to
+   5/12 at `B = 10`. Attainment counts are **not** monotone in budget, so the
+   report gives smallest verified passing budget / verified failing budgets /
+   unverified budgets rather than an interval. No candidate is evaluated on the
+   test set anywhere in this study:
+   `outputs/qae_budget_targets_v2_20260908/REPORT.md`
+   (Japanese summary: `SUMMARY_JA.md`; deck in
+   `outputs/qae_budget_targets_v2_20260908/deck/`).
+
 Key documents: `docs/research/RESEARCH_ROADMAP_QAE.md` (story),
+`docs/research-log.md` (phase status, decisions and gates),
+`docs/research/QAE_BUDGET_TARGET_PROTOCOL.md` (pre-registered budget-target protocol),
 `docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (pre-registered robustness protocol),
 `docs/research/QAE_PROTOCOL_V5.md` (pre-registered primary protocol),
 `docs/research/QAE_PROTOCOL_V4.md` / `QAE_PROTOCOL_V3.md` (archived),
@@ -64,6 +81,20 @@ python scripts/qae/build_qae_robustness_figures.py
 python scripts/qae/build_qae_robustness_report.py
 python scripts/qae/build_qae_robustness_slice_figures.py  # tested one-factor slices
 python scripts/qae/build_qae_robustness_slides.py         # 10-slide deck + PDF (audited)
+```
+
+Reproduce the budget-target study (validation only; no test evaluation):
+
+```bash
+python scripts/qae/run_budget_target.py --list --estimate --status
+LLM_API_BUDGET_USD=2.00 python scripts/qae/run_budget_target.py --cells all
+python scripts/qae/run_budget_target.py --cells all --reuse-only   # no key, no cap
+python scripts/qae/analyze_budget_targets.py \
+  --root outputs/qae_robustness --out outputs/qae_budget_targets_v2_20260908/audit \
+  --extra-condition target_tfim_b6:6:all:outputs/qae_budget_targets_v2_20260908 \
+  --extra-condition target_xxz_b10:10:LLM-Closed:outputs/qae_budget_targets_v2_20260908
+python scripts/qae/build_budget_target_figures.py \
+  --audit outputs/qae_budget_targets_v2_20260908/audit
 ```
 
 ---
