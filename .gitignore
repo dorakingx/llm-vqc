@@ -48,3 +48,5 @@ paper/main.pdf
 !outputs/qae_tfim_neutral_v5/**
 !outputs/qae_robustness/
 !outputs/qae_robustness/**
+!outputs/qae_budget_targets_v2_20260908/
+!outputs/qae_budget_targets_v2_20260908/**
