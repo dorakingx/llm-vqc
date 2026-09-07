@@ -101,10 +101,20 @@ CONDITIONS: tuple[Condition, ...] = (
 CONDITIONS_BY_KEY = {c.key: c for c in CONDITIONS}
 
 
-def changed_factors(condition: Condition) -> list[str]:
-    """Names of the factors that differ from the reference condition."""
-    reference = REFERENCE.factors
-    return sorted(k for k, v in condition.factors.items() if reference[k] != v)
+def changed_factors(
+    condition: Condition, anchor: Condition | None = None
+) -> list[str]:
+    """Names of the factors that differ from `anchor` (default: the study
+    reference condition).
+
+    An explicit anchor is what makes a *second* protocol expressible without
+    weakening the original one-factor rule: a budget probe anchored at the
+    XXZ cell is one factor away from XXZ even though it is two factors away
+    from the TFIM reference. The default argument keeps every existing
+    caller and every existing test on the reference anchor.
+    """
+    base = (anchor or REFERENCE).factors
+    return sorted(k for k, v in condition.factors.items() if base[k] != v)
 
 
 # ----------------------------------------------------------------- space ---

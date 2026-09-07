@@ -72,7 +72,12 @@ def read_validation(path: Path, provenance: list[dict]) -> list[dict]:
     return rows
 
 
-def audit_condition(key: str, budget: int, candidates: list[dict], selected: list[dict]):
+def audit_condition(key: str, budget: int, candidates: list[dict], selected: list[dict],
+                    methods: tuple[str, ...] = METHODS):
+    """`methods` is explicit so a boundary probe that deliberately ran a
+    single method is audited against what it actually executed, instead of
+    being reported as incomplete. Default is the full four-method set, so
+    every historical condition is audited exactly as before."""
     groups = defaultdict(list)
     chosen = {}
     for row in candidates:
@@ -82,11 +87,15 @@ def audit_condition(key: str, budget: int, candidates: list[dict], selected: lis
         if identifier in chosen:
             raise ValueError(f"Duplicate selected row: {key}/{identifier}")
         chosen[identifier] = row
-    expected = {(method, seed) for method in METHODS for seed in SEEDS}
+    expected = {(method, seed) for method in methods for seed in SEEDS}
     if set(groups) != expected or set(chosen) != expected:
-        raise ValueError(f"Incomplete or unexpected method/seed set: {key}")
+        missing = sorted(expected - set(groups))
+        extra = sorted(set(groups) - expected)
+        raise ValueError(
+            f"Incomplete or unexpected method/seed set: {key}; "
+            f"missing={missing} unexpected={extra}")
     curves, endpoints, hits, prefix_summary, validity = [], [], [], [], []
-    for method in METHODS:
+    for method in methods:
         traces, valid_maxima, records = [], [], []
         for seed in sorted(SEEDS):
             rows = sorted(groups[(method, seed)], key=lambda row: int(row["order"]))
@@ -173,24 +182,38 @@ def main() -> None:
     parser.add_argument("--root", type=Path, default=Path("outputs/qae_robustness"))
     parser.add_argument("--out", type=Path, default=Path("outputs/qae_budget_targets_20260908"))
     parser.add_argument("--source-sha", default="e846c27fc21d06aa20e026590fcc06429f8bcfb4")
+    parser.add_argument(
+        "--extra-condition", action="append", default=[], metavar="KEY:B:METHODS:ROOT",
+        help=("Audit an additional condition that lives outside --root, e.g. "
+              "'target_xxz_b10:10:LLM-Closed:outputs/qae_budget_targets_v2_20260908'. "
+              "METHODS is '|'-separated or 'all'. Historical conditions are "
+              "unaffected, so the default invocation stays byte-identical."))
     args = parser.parse_args()
     self_test()
     out = args.out
     if out.resolve() == args.root.resolve() or args.root.resolve() in out.resolve().parents:
         raise SystemExit("Output must be separate from the historical source directory")
     out.mkdir(parents=True, exist_ok=True)
+    plan = [(key, budget, METHODS, args.root) for key, budget in CONDITIONS.items()]
+    for spec in args.extra_condition:
+        key, budget, methods, root = spec.split(":", 3)
+        plan.append((key, int(budget),
+                     METHODS if methods == "all" else tuple(methods.split("|")),
+                     Path(root)))
     provenance, all_curves, all_endpoints, all_hits, all_prefix, all_validity = [], [], [], [], [], []
-    for key, budget in CONDITIONS.items():
+    for key, budget, methods, root in plan:
         inputs = {}
         for name in ("candidate_results.csv", "selected_results.csv"):
-            rows = read_validation(args.root / key / name, provenance)
+            rows = read_validation(root / key / name, provenance)
             write_csv(out / "data" / key / name, rows, SAFE_COLUMNS)
             inputs[name] = rows
-        results = audit_condition(key, budget, inputs["candidate_results.csv"], inputs["selected_results.csv"])
+        results = audit_condition(key, budget, inputs["candidate_results.csv"],
+                                  inputs["selected_results.csv"], methods)
         for destination, rows in zip((all_curves, all_endpoints, all_hits, all_prefix, all_validity), results):
             destination.extend(rows)
-        for name in ("manifest.json", "api_usage.json", "proposal_quality.json"):
-            source = args.root / key / name
+        for name in ("manifest.json", "api_usage.json", "proposal_quality.json",
+                     "run_record.json"):
+            source = root / key / name
             if source.exists():
                 shutil.copyfile(source, out / "data" / key / name)
     for name, rows in (("validation_curves.csv", all_curves), ("endpoint_attainment.csv", all_endpoints),

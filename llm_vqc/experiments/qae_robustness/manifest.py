@@ -205,12 +205,25 @@ def derive(factors: dict) -> dict:
     }
 
 
-def condition_manifest(condition: C.Condition) -> dict:
+def condition_manifest(
+    condition: C.Condition, anchor: C.Condition | None = None
+) -> dict:
+    """Manifest of `condition` relative to `anchor` (default: the reference).
+
+    `anchor_key` and `changed_factors` are the only anchor-dependent
+    entries; `frozen` and `derived` are anchor-independent by construction,
+    so a manifest written against a second anchor is still directly
+    comparable with every reference-anchored manifest.
+    """
+    anchor = anchor or C.REFERENCE
     return {
         "key": condition.key,
         "factor": condition.factor,
         "label": condition.label,
-        "changed_factors": C.changed_factors(condition),
+        "anchor_key": anchor.key,
+        "anchor_factors": anchor.factors,
+        "anchor_changed_factors_vs_study_reference": C.changed_factors(anchor),
+        "changed_factors": C.changed_factors(condition, anchor),
         "factors": condition.factors,
         "frozen": frozen_fingerprint(),
         "derived": derive(condition.factors),
@@ -218,11 +231,31 @@ def condition_manifest(condition: C.Condition) -> dict:
     }
 
 
-def verify(condition: C.Condition) -> list[str]:
-    """Return the list of violations (empty means the condition is clean)."""
+def verify(condition: C.Condition, anchor: C.Condition | None = None) -> list[str]:
+    """Return the list of violations (empty means the condition is clean).
+
+    The rule is unchanged and is NOT relaxed by the `anchor` argument: a
+    condition must still differ from its declared anchor in exactly one
+    declared factor, and its frozen block must still be byte-identical to
+    the study reference's. Passing a non-default anchor declares a second
+    protocol (e.g. a budget probe anchored at XXZ); it does not permit two
+    factors to move at once.
+    """
     problems: list[str] = []
-    manifest = condition_manifest(condition)
+    anchor = anchor or C.REFERENCE
+    manifest = condition_manifest(condition, anchor)
     reference = condition_manifest(C.REFERENCE)
+    if anchor.key != C.REFERENCE.key:
+        # A second anchor is only admissible if it is ITSELF a clean
+        # one-factor condition of the reference study. That keeps the chain
+        # back to the reference explicit and auditable instead of letting an
+        # arbitrary two-factor cell be declared as its own baseline.
+        anchor_problems = verify(anchor)
+        if anchor_problems:
+            problems.extend(
+                f"anchor '{anchor.key}' is not itself a clean condition: {p}"
+                for p in anchor_problems
+            )
 
     if C.canonical_json(manifest["frozen"]) != C.canonical_json(reference["frozen"]):
         for key in reference["frozen"]:
@@ -236,7 +269,10 @@ def verify(condition: C.Condition) -> list[str]:
         if changed:
             problems.append(f"reference condition varies {changed}")
     elif len(changed) != 1:
-        problems.append(f"{condition.key} varies {len(changed)} factors: {changed}")
+        problems.append(
+            f"{condition.key} varies {len(changed)} factors: {changed} "
+            f"(anchor '{anchor.key}')"
+        )
     elif not changed[0].startswith(_FACTOR_TO_FIELD[condition.factor]):
         problems.append(
             f"{condition.key} declares factor '{condition.factor}' but varies "
