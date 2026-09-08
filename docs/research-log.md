@@ -58,7 +58,7 @@ newest entry last. English.
   `analysis/qae-budget-target-20260908`.
 - **Manuscript**: not updated this run; the manuscript covers the earlier
   robustness study and this checkpoint's decisions are still open.
-- **Deck**: `My Drive/Progress/llm-vqc/20260908_llm-vqc`
+- **Deck**: `My Drive/Progress/llm-vqc/20260908_llm-vqc` (https://docs.google.com/presentation/d/1vAIwMlvsQusalNrKdYEGFGt8ts4Id2osqez_n0maFuc/edit). Rebuilt 2026-09-08 after review feedback that the type was too small, the whitespace unbalanced and the figures unreadable; the house template was changed rather than this project's deck alone. The first native file was superseded and trashed, so its URL no longer resolves.
 - **Open questions**: whether the budget-6 pass survives a repeat with fresh
   generation seeds; whether the 0.99 ceiling is search, training length or
   circuit capacity; the 6-qubit, 8-qubit and alternative-model boundaries,
