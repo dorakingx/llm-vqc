@@ -83,21 +83,28 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
             "lede": ("Answering last checkpoint's action item: two boundary "
                      "runs, decided on validation only."),
             "highlights": [
-                {"label": "Known before:",
-                 "text": ("physics-informed proposals beat random and greedy "
-                          "circuit search in all seven tested conditions; the "
-                          "closed-loop bonus was not general.")},
-                {"label": "Measured now:",
-                 "text": (f"on the Ising chain the open loop meets the rule at "
-                          f"budget 6 ({cell(b['LLM-Open'])}) while the closed "
-                          f"loop does not ({cell(b['LLM-Closed'])}); raising "
-                          f"the XXZ budget from 8 to 10 moved the closed loop "
-                          f"from {cell(hit('hamiltonian_xxz', 'LLM-Closed'))} "
-                          f"to {cell(hit('target_xxz_b10', 'LLM-Closed'))}.")},
+                {"label": "Background:",
+                 "text": ("the previous checkpoint showed semantic proposals "
+                          "beat random and greedy search, but ranked methods "
+                          "at one fixed budget.")},
+                {"label": "Question:",
+                 "text": ("what is the smallest candidate budget that reaches "
+                          "a target validation fidelity in 10 of 12 seeds?")},
+                {"label": "Method:",
+                 "text": ("re-analysed 7 earlier conditions with no model "
+                          "calls, then ran 2 pre-registered boundary cells; "
+                          "judged on validation only.")},
+                {"label": "Result:",
+                 "text": (f"the open loop passes at budget 6 "
+                          f"({cell(b['LLM-Open'])}) where the closed loop "
+                          f"fails ({cell(b['LLM-Closed'])}); more budget did "
+                          f"not rescue the XXZ cell "
+                          f"({cell(hit('hamiltonian_xxz', 'LLM-Closed'))} to "
+                          f"{cell(hit('target_xxz_b10', 'LLM-Closed'))}).")},
                 {"label": "Not claimed:",
-                 "text": ("no single minimum budget, no interval, and nothing "
-                          "about the held-out test set, which was never "
-                          "evaluated in this work.")},
+                 "text": ("no single minimum budget and no interval - the "
+                          "counts are not monotone; the test set was never "
+                          "evaluated.")},
             ],
             "meta": [
                 "Project: llm-vqc",
@@ -113,8 +120,8 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "statement",
-            "section": "Question and claim",
-            "title": "What budget reaches a required accuracy, not which method wins",
+            "section": "WHY THIS, AND WHAT IS BEING VERIFIED",
+            "title": "What budget a required accuracy needs, not who wins",
             "lede": ("Every earlier comparison ranked methods at one fixed "
                      "budget; that is not the operational question."),
             "text": ("For a target validation trash fidelity, what is the "
@@ -144,37 +151,36 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "cards",
-            "section": "Prior work and gap",
-            "title": "Settled: semantics helps. Unsettled: how much search it needs",
+            "section": "BACKGROUND: WHAT WAS ALREADY KNOWN",
+            "title": "Settled: semantics helps. Open: how much search",
             "lede": ("Position relative to the immediately preceding "
                      "checkpoint of this project."),
             "cards": [
-                {"tone": "green", "heading": "Settled (CONFIRMED, measured)",
+                {"tone": "green", "heading": "Settled (measured)",
                  "bullets": [
-                     "Physics-informed proposals beat non-semantic search in "
-                     "all seven previously tested conditions.",
-                     "The result survives changes of budget, width, "
-                     "Hamiltonian and model.",
+                     "Beat non-semantic search in all seven tested "
+                     "conditions.",
+                     "Survives changes of budget, width, Hamiltonian "
+                     "and model.",
                  ]},
-                {"tone": "gray", "heading": "Already shown fragile (measured)",
+                {"tone": "gray", "heading": "Shown fragile (measured)",
                  "bullets": [
-                     "The extra gain from a closed feedback loop is not "
-                     "general; it changes with every factor tested.",
-                     "Invalid proposals become random draws, entangling "
-                     "validity with architecture quality.",
+                     "The closed-loop bonus is not general; it moves "
+                     "with every factor tested.",
+                     "Invalid proposals become random draws.",
                  ]},
                 {"tone": "blue", "heading": "The gap this run addresses",
                  "bullets": [
                      "No budget between 4 and 8 had ever been run.",
-                     "One cell sat exactly one seed short of the rule and had "
-                     "never been retried at a larger budget.",
+                     "One cell sat one seed short and was never "
+                     "retried at a larger budget.",
                  ]},
                 {"tone": "amber", "heading": "Novelty: recombined",
                  "bullets": [
-                     "The methods, prompts, trainer and seeds are unchanged; "
+                     "Methods, prompts, trainer and seeds unchanged; "
                      "only the budget moves.",
-                     "Closest prior work is this project's own previous "
-                     "checkpoint, reused here as controls.",
+                     "Closest prior work: our own last checkpoint, "
+                     "reused as controls.",
                  ]},
             ],
             "next": "Every term the rest of the deck uses.",
@@ -183,7 +189,7 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "chain",
-            "section": "Definitions",
+            "section": "WHAT THE TERMS MEAN",
             "title": "From a ground state to a single pass-or-fail count",
             "lede": ("Each arrow is a fixed rule, written down before the runs; "
                      "nothing below was chosen after seeing a result."),
@@ -216,8 +222,8 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "table",
-            "section": "Approach",
-            "title": "The judging rules were frozen and committed before any run",
+            "section": "METHOD: HOW THE EVIDENCE IS JUDGED",
+            "title": "The judging rules were frozen before any run",
             "lede": ("Fixed in the repository before the first new candidate "
                      "circuit was generated."),
             "columns": ["Rule", "Fixed as"],
@@ -250,16 +256,16 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "cards",
-            "section": "Execution and reproducibility",
-            "title": "Two new runs, seven reused conditions, no test evaluation",
+            "section": "METHOD: WHAT WAS ACTUALLY RUN",
+            "title": "Two new runs, seven reused, no test evaluation",
             "lede": ("Existing logs were re-analysed first; new calls were made "
                      "only at the two unresolved boundaries."),
             "cards": [
                 {"tone": "navy", "heading": "Reused (no model calls)",
                  "bullets": [
                      "Seven earlier conditions, 2,880 candidate records.",
-                     "Re-analysis reproduces the earlier audit byte for "
-                     "byte (CONFIRMED by directory comparison).",
+                     "Reproduces the earlier audit byte for byte "
+                     "(CONFIRMED).",
                  ]},
                 {"tone": "blue", "heading": "Run now",
                  "bullets": [
@@ -270,17 +276,16 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
                 {"tone": "green", "heading": "Checks that passed",
                  "bullets": [
                      "Seed completeness, candidate order, finite "
-                     "fidelity, selection equals validation max.",
-                     "A machine check refuses any cell that moves more than "
-                     "the budget away from its declared anchor.",
+                     "fidelity.",
+                     "A machine check refuses any two-factor cell.",
                      f"{n_tests} automated tests pass, 46 of them new.",
                  ]},
                 {"tone": "amber", "heading": "Not verified",
                  "bullets": [
                      "No confirmatory evaluation on any held-out set exists, "
                      "by design.",
-                     "One run was interrupted by a network failure; "
-                     "the resume paid nothing for stored seeds.",
+                     "One run was interrupted; the resume paid "
+                     "nothing for stored seeds.",
                  ]},
             ],
             "footnote": ("Runner, analysis, figures, report and this deck are "
@@ -293,40 +298,31 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "figure",
-            "section": "Main result",
-            "title": "The open loop clears the bar at a budget the closed loop cannot",
+            "section": "RESULT",
+            "title": "Open clears the bar at a budget closed cannot",
             "lede": ("Ising chain, target 0.95, four independently executed "
                      "budgets, the same 12 paired seeds."),
             "image": str(figures / "ladder_tfim.png"),
             "caption": (
-                "x: configured budget B, candidate circuits per seed. "
-                "y: how many of the 12 paired seeds finished at or above "
-                "validation fidelity 0.95. Dashed line: the 10-of-12 rule. "
-                "Thick outline: measured here. Grey bands: budgets not run. "
-                "Grey random, amber greedy, blue open loop, red closed loop."),
+                "x: budget B. y: seeds (of 12) reaching validation fidelity "
+                "0.95. Dashed: the 10-of-12 rule. Thick outline: measured "
+                "here; grey band: not run."),
             "not_shown": (
-                "No error bars - the quantity is a count over a fixed seed "
-                "set, not an average. Nothing about budgets 12 or 14, the "
-                "second target, other widths, or held-out test performance."),
+                "A count, not an average, so no error bars. Nothing about "
+                "budgets 12 or 14, other widths, or the test set."),
             "side_cards": [
                 {"tone": "blue", "heading": "Measured",
                  "bullets": [
-                     f"Budget 6: open {cell(b['LLM-Open'])} passes, "
+                     f"Open {cell(b['LLM-Open'])} passes, "
                      f"closed {cell(b['LLM-Closed'])} fails.",
-                     f"Same budget and seeds: random {cell(b['Random'])}, "
-                     f"greedy {cell(b['Greedy'])}.",
+                     f"Random {cell(b['Random'])}, greedy "
+                     f"{cell(b['Greedy'])}, same seeds.",
                  ]},
                 {"tone": "red", "heading": "Counts are not monotone",
                  "bullets": [
-                     "Open over budgets 4, 6, 8, 16: "
+                     "Open at B=4,6,8,16: "
                      + ", ".join(str(v) for v in ladder_open) + ".",
-                     "Closed over the same budgets: "
-                     + ", ".join(str(v) for v in ladder_closed) + ".",
-                 ]},
-                {"tone": "gray", "heading": "Null result",
-                 "bullets": [
-                     "Target 0.99: 0 of 12 in both new runs.",
-                     "Not evidence that it is unreachable.",
+                     "Closed: " + ", ".join(str(v) for v in ladder_closed) + ".",
                  ]},
             ],
             "footnote": ("Generated from the committed validation-only result "
@@ -337,39 +333,32 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "figure",
-            "section": "Interpretation",
+            "section": "WHAT THE RESULT MEANS",
             "title": "The XXZ count halved while the fidelities barely moved",
             "lede": ("Closed loop at the XXZ anchor, budget 8 against budget "
                      "10, per seed, same 12 paired seeds."),
             "image": str(figures / "margin_xxz.png"),
             "caption": (
-                "x: seed. y: the final best-so-far validation trash fidelity "
-                "that seed reached - pale for the earlier budget-8 run, solid "
-                "for the budget-10 run measured here. Dashed line: the 0.95 "
-                "target. Bars are single measured values, not averages."),
+                "x: seed. y: that seed's final best validation fidelity - "
+                "pale for budget 8, solid for the budget 10 measured here. "
+                "Dashed line: the 0.95 target. Single values, not averages."),
             "not_shown": (
-                "Not the trajectory within a run, not the rejected candidates, "
-                "and not whether a third run would land the same way."),
+                "Not the path within a run, the rejected candidates, or "
+                "whether a third run lands the same way."),
             "side_cards": [
                 {"tone": "blue", "heading": "Observed (measured)",
                  "bullets": [
-                     f"Seeds at the target: "
+                     f"Seeds at target: "
                      f"{hit('hamiltonian_xxz', 'LLM-Closed')} to "
                      f"{hit('target_xxz_b10', 'LLM-Closed')} of {N_SEEDS}.",
-                     f"Mean fidelity moved only "
-                     f"{x10_mean - x8_mean:+.4f}; {near} of "
-                     f"{len(x8) + len(x10)} results sit within 0.01 of it.",
+                     f"Mean moved only {x10_mean - x8_mean:+.4f}; {near} of "
+                     f"{len(x8) + len(x10)} within 0.01.",
                  ]},
                 {"tone": "amber", "heading": "Interpretation (inferred)",
                  "bullets": [
-                     "Near a threshold inside the distribution, the count "
-                     "is a knife-edge statistic.",
-                     "Only the budget was varied, so no cause is isolated.",
-                 ]},
-                {"tone": "gray", "heading": "Not supported",
-                 "bullets": [
-                     "That more budget harms the closed loop.",
-                     "That the closed loop is generally worse.",
+                     "A threshold inside the distribution makes the "
+                     "count knife-edge.",
+                     "Only the budget varied: no cause isolated.",
                  ]},
             ],
             "takeaway": ("Supports: the budget boundary is real and the count "
@@ -382,35 +371,34 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "cards",
-            "section": "Limits and open questions",
-            "title": "What bounds this result, and what is recorded but unresolved",
+            "section": "LIMITS AND OPEN QUESTIONS",
+            "title": "What bounds this, and what stays unresolved",
             "lede": "Stated before any of it is used to argue for a next step.",
             "cards": [
                 {"tone": "red", "heading": "What would overturn it",
                  "bullets": [
-                     "A repeat landing on the other side of the "
-                     "threshold; margins are thousandths wide.",
+                     "A repeat landing the other side of the line - "
+                     "margins are thousandths.",
                      "A different target, which would reshuffle every count.",
                  ]},
                 {"tone": "amber", "heading": "Validity range",
                  "bullets": [
-                     "4 qubits, noiseless simulation, one circuit-capacity "
-                     "rule, one model snapshot, one XXZ anchor.",
-                     "12 paired seeds; one open-loop pool shared across "
-                     "them, so 12 successes are not 12 generations.",
+                     "4 qubits, noiseless, one capacity rule, one "
+                     "model, one XXZ anchor.",
+                     "One open-loop pool shared across the 12 seeds, "
+                     "not 12 generations.",
                  ]},
-                {"tone": "gray", "heading": "Negative and null results kept",
+                {"tone": "gray", "heading": "Negative results kept",
                  "bullets": [
                      "The closed loop fails the rule at budget 6.",
                      "The XXZ boundary probe did not rescue the cell.",
                      "Target 0.99: 0 of 12 everywhere, unresolved.",
                  ]},
-                {"tone": "amber", "heading": "Left unresolved on purpose",
+                {"tone": "amber", "heading": "Left open on purpose",
                  "bullets": [
-                     "6 and 8 qubits and the alternative model were not "
-                     "probed; every method sits at 0-3 of 12 there.",
-                     "A blind sweep cannot separate invalid generation "
-                     "from too little search or capacity.",
+                     "6 and 8 qubits and the other model: every "
+                     "method sits at 0-3 of 12.",
+                     "A blind sweep cannot separate the causes.",
                      f"Random fallbacks stay in the score: {fallbacks} of "
                      f"{evals} evaluated candidates.",
                  ]},
@@ -424,8 +412,8 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
         },
         {
             "type": "decisions",
-            "section": "Decisions and next step",
-            "title": "Spend more on resolution, or diagnose why 0.99 is out of reach",
+            "section": "DECISIONS AND NEXT STEP",
+            "title": "Sharpen the boundary, or diagnose the 0.99 ceiling",
             "lede": ("Both new cells are complete; the next move needs a "
                      "decision, not more of the same."),
             "conclusions": [
@@ -441,36 +429,30 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
                 f"prices, under a USD 2.00 cap.",
             ],
             "decisions": [
-                {"text": "D1  Is the budget boundary worth more spend?",
-                 "bold": True},
-                {"text": "(a) repeat both cells with fresh generation seeds - "
-                         "turns a knife-edge count into a distribution",
+                {"text": "D1  Sharpen the budget boundary?", "bold": True},
+                {"text": "(a) repeat both cells with fresh generation seeds",
                  "level": 1},
-                {"text": "(b) stop refining; treat budget 6 open-loop as the "
-                         "working answer - free, but rests on one run",
+                {"text": "(b) accept budget 6 open-loop as the answer",
                  "level": 1},
-                {"text": "Recommended (a), Ising cell only; moderate "
-                         "confidence.", "level": 1},
-                {"text": "D2  What to do about the 0.99 target", "bold": True},
-                {"text": "(a) diagnose circuit capacity and training length "
-                         "instead of search", "level": 1},
+                {"text": "Recommend (a), Ising only; moderate.", "level": 1},
+                {"text": "D2  What to do about 0.99", "bold": True},
+                {"text": "(a) diagnose capacity and training length",
+                 "level": 1},
                 {"text": "(b) record 0.99 as out of scope", "level": 1},
-                {"text": "Recommended (a), moderate confidence; a budget "
-                         "sweep cannot separate the causes.", "level": 1},
-                {"text": "D3  Any confirmatory read of held-out data",
-                 "bold": True},
-                {"text": "Recommended: not yet, high confidence.", "level": 1},
+                {"text": "Recommend (a); a sweep cannot separate the "
+                         "causes.", "level": 1},
+                {"text": "D3  Read held-out data yet? Recommend not "
+                         "yet; high confidence.", "bold": True},
             ],
             "next_steps": [
-                {"text": "On D1(a): repeat the Ising budget-6 cell with fresh "
-                         "generation seeds; report both runs together.",
-                 "bold": True},
-                {"text": "On D2(a): write the capacity-versus-search protocol "
-                         "and its cost cap, then stop for review."},
-                {"text": "A yes to either commits to a new protocol document "
-                         "and a new cost cap before anything runs."},
-                {"text": "Already committed: report, raw logs with hashes, "
-                         "and the reproduction commands."},
+                {"text": "On D1(a): repeat the Ising budget-6 cell with "
+                         "fresh generation seeds.", "bold": True},
+                {"text": "On D2(a): write the capacity-versus-search "
+                         "protocol and its cap, then stop."},
+                {"text": "Either yes commits to a new protocol and cap "
+                         "before anything runs."},
+                {"text": "Already committed: report, hashed logs, "
+                         "reproduction commands."},
             ],
             "footnote": ("Recommendation and decision are recorded separately "
                          "in the research log; nothing above is approved."),
