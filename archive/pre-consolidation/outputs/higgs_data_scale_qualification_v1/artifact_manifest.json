@@ -1,0 +1,37 @@
+{
+  "figures": [
+    "fig01_learning_curves.png",
+    "fig02_improvement_over_prior.png",
+    "fig03_auroc_by_size.png",
+    "fig04_representation_comparison.png",
+    "fig05_classical_vs_vqc.png",
+    "fig06_product_vs_entangled.png",
+    "fig07_frozen_vs_trainable.png",
+    "fig08_val_vs_test.png",
+    "fig09_calibration.png",
+    "fig10_runtime_scaling.png",
+    "fig11_hardware_two_qubit.png",
+    "fig12_capacity_verification.png"
+  ],
+  "tables": [
+    "block_summary.csv",
+    "capacity_summary.csv",
+    "hardware_summary.csv",
+    "qualification_results.csv",
+    "training_protocol_search.csv"
+  ],
+  "analyses": [
+    "dataset_manifest.json",
+    "decision_gate_result.json",
+    "protocol.json",
+    "statistical_analysis.json",
+    "training_protocol_selection.json"
+  ],
+  "documents": [
+    "DATA_SPEC.md",
+    "DECISION_GATES.md",
+    "HIGGS_V1_REVIEW.md",
+    "MODEL_SPEC.md",
+    "PROTOCOL.md"
+  ]
+}

@@ -1,0 +1,16 @@
+task,n_qubits,arm,replicate,transpiled_2q_line,test_rmse
+gauss_peak,4,evolutionary_structure,0,84,0.020214347329295442
+gauss_peak,4,evolutionary_structure,1,57,0.0216150045659726
+gauss_peak,4,evolutionary_structure,2,23,0.023710934631287213
+gauss_peak,4,evolutionary_structure,3,30,0.022162853081441107
+gauss_peak,4,evolutionary_structure,4,37,0.035853708761179846
+gauss_peak,4,random_structure,0,64,0.024938760482320133
+gauss_peak,4,random_structure,1,55,0.023106879102082336
+gauss_peak,4,random_structure,2,32,0.024846671246870757
+gauss_peak,4,random_structure,3,16,0.024499632589419944
+gauss_peak,4,random_structure,4,51,0.021670166457784225
+gauss_peak,4,ref_strongent_d2,0,22,0.02782222388703037
+gauss_peak,4,ref_strongent_d2,1,22,0.025586686413388706
+gauss_peak,4,ref_strongent_d2,2,22,0.04750254936859761
+gauss_peak,4,ref_strongent_d2,3,22,0.02843285783252291
+gauss_peak,4,ref_strongent_d2,4,22,0.02383105552309762

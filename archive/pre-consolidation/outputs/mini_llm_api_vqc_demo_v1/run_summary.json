@@ -1,0 +1,55 @@
+{
+  "run_status": "corrected",
+  "seed": 0,
+  "budget_per_arm": 2,
+  "epochs_per_candidate": 5,
+  "elapsed_seconds": 7.611143957823515,
+  "arms": [
+    {
+      "arm": "random",
+      "num_proposed": 2,
+      "num_valid": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "num_unique": 2,
+      "consumed_budget": 2,
+      "unique_trainings": 2,
+      "stop_reason": null,
+      "selected_structural_hash": "daed189af4fcc545c7013b33f4397d94f68bc0463efe0125686208d167072e60",
+      "selected_val_rmse": 0.04031617904075958,
+      "protected_test_rmse": 0.03910483366420193
+    },
+    {
+      "arm": "llm_open_loop",
+      "num_proposed": 2,
+      "num_valid": 1,
+      "num_invalid": 0,
+      "num_duplicate": 1,
+      "num_failed": 0,
+      "num_unique": 1,
+      "consumed_budget": 2,
+      "unique_trainings": 1,
+      "stop_reason": null,
+      "selected_structural_hash": "ab736ece2bc31773e8a83fc3c93be3e24fae483be0e800b2c03cae81da7d3274",
+      "selected_val_rmse": 0.08837053035768204,
+      "protected_test_rmse": 0.09418272281989812
+    },
+    {
+      "arm": "llm_closed_loop",
+      "num_proposed": 2,
+      "num_valid": 2,
+      "num_invalid": 0,
+      "num_duplicate": 0,
+      "num_failed": 0,
+      "num_unique": 2,
+      "consumed_budget": 2,
+      "unique_trainings": 2,
+      "stop_reason": null,
+      "selected_structural_hash": "ca567c70e8601dfca898e4157ecdd133c08d00eec606377426f71688cf1d20d4",
+      "selected_val_rmse": 0.06801982882274116,
+      "protected_test_rmse": 0.07306891036127414
+    }
+  ],
+  "note": "End-to-end integration demonstration with n=1 seed; does not establish that any search arm is superior."
+}

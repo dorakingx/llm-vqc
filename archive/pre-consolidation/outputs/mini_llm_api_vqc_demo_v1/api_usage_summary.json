@@ -1,0 +1,66 @@
+{
+  "provider": "OpenAI (real)",
+  "model": "gpt-5.4-mini",
+  "max_real_llm_calls": 4,
+  "real_calls_made": 4,
+  "successful_logical_calls": 4,
+  "failed_logical_calls": 0,
+  "outbound_request_attempts": 4,
+  "total_input_tokens": 1760,
+  "total_output_tokens": 151,
+  "total_tokens": 1911,
+  "latency_seconds_per_successful_call": [
+    2.5404693339951336,
+    1.3045554999262094,
+    0.9082262921147048,
+    1.4230630830861628
+  ],
+  "total_successful_call_latency_seconds": 6.176314209122211,
+  "mean_latency_seconds": 1.5440785522805527,
+  "calls": [
+    {
+      "arm": "llm_open_loop",
+      "proposal_id": "llm_open_loop:0",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 412,
+      "output_tokens": 38,
+      "total_tokens": 450,
+      "latency_seconds": 2.5404693339951336,
+      "validation_errors": [],
+      "created_at": "2026-07-23T15:01:15.040988+00:00"
+    },
+    {
+      "arm": "llm_open_loop",
+      "proposal_id": "llm_open_loop:1",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 412,
+      "output_tokens": 38,
+      "total_tokens": 450,
+      "latency_seconds": 1.3045554999262094,
+      "validation_errors": [],
+      "created_at": "2026-07-23T15:01:16.470660+00:00"
+    },
+    {
+      "arm": "llm_closed_loop",
+      "proposal_id": "llm_closed_loop:0",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 418,
+      "output_tokens": 38,
+      "total_tokens": 456,
+      "latency_seconds": 0.9082262921147048,
+      "validation_errors": [],
+      "created_at": "2026-07-23T15:01:17.384082+00:00"
+    },
+    {
+      "arm": "llm_closed_loop",
+      "proposal_id": "llm_closed_loop:1",
+      "model": "gpt-5.4-mini-2026-03-17",
+      "input_tokens": 518,
+      "output_tokens": 37,
+      "total_tokens": 555,
+      "latency_seconds": 1.4230630830861628,
+      "validation_errors": [],
+      "created_at": "2026-07-23T15:01:18.928467+00:00"
+    }
+  ]
+}

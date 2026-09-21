@@ -1,0 +1,524 @@
+[
+  {
+    "arm": "random",
+    "task_namespace": "T1_mini_demo::random",
+    "selected_structural_hash": "daed189af4fcc545c7013b33f4397d94f68bc0463efe0125686208d167072e60",
+    "selected_val_rmse": 0.04031617904075958,
+    "protected_test_rmse": 0.03910483366420193,
+    "train_seed": 3792530457,
+    "compact_architecture": {
+      "layer_1_gate": "RX",
+      "entangler": "CNOT",
+      "entangler_direction": "0_to_1",
+      "layer_2_gate": "RX"
+    },
+    "initial_quantum_angles": [
+      1.6254625995786387,
+      1.510457586085455,
+      -3.085430834013358,
+      2.306071070697773
+    ],
+    "learned_quantum_angles": [
+      2.0882191939574613,
+      1.056407831690203,
+      -2.044100686348626,
+      1.852001426209064
+    ],
+    "quantum_angles_changed": true,
+    "classical_summary_initial": {
+      "embed.weight": {
+        "shape": [
+          42
+        ],
+        "count": 42,
+        "mean": -0.04914448076009841,
+        "std": 0.2961018221091053,
+        "min": -0.5066276214470492,
+        "max": 0.49351867818333056,
+        "l2_norm": 1.9452099372333829
+      },
+      "embed.bias": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "l2_norm": 0.0
+      },
+      "head.weight": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": 1.1989278859865888,
+        "std": 0.08636334739025842,
+        "min": 1.1125645385963303,
+        "max": 1.2852912333768471,
+        "l2_norm": 1.6999333537340344
+      },
+      "head.bias": {
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "l2_norm": 0.0
+      }
+    },
+    "classical_summary_learned": {
+      "embed.weight": {
+        "shape": [
+          42
+        ],
+        "count": 42,
+        "mean": -0.3524982211415704,
+        "std": 0.7629248144673593,
+        "min": -1.463253956067908,
+        "max": 1.4180889798828717,
+        "l2_norm": 5.446557561836383
+      },
+      "embed.bias": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": -0.3474006337967381,
+        "std": 0.31804634297586587,
+        "min": -0.6654469767726039,
+        "max": -0.029354290820872212,
+        "l2_norm": 0.6660941024250213
+      },
+      "head.weight": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": 1.6658048619468628,
+        "std": 0.6492129777223857,
+        "min": 1.016591884224477,
+        "max": 2.3150178396692485,
+        "l2_norm": 2.5283921090404364
+      },
+      "head.bias": {
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "mean": -0.05999506054928215,
+        "std": 0.0,
+        "min": -0.05999506054928215,
+        "max": -0.05999506054928215,
+        "l2_norm": 0.05999506054928215
+      }
+    },
+    "param_provenance": [
+      {
+        "name": "embed.weight",
+        "shape": [
+          2,
+          21
+        ],
+        "count": 42,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "embed.bias",
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "q_layer.weights",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "head.weight",
+        "shape": [
+          1,
+          2
+        ],
+        "count": 2,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "head.bias",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      }
+    ],
+    "total_trainable_parameters": 51
+  },
+  {
+    "arm": "llm_open_loop",
+    "task_namespace": "T1_mini_demo::llm_open_loop",
+    "selected_structural_hash": "ab736ece2bc31773e8a83fc3c93be3e24fae483be0e800b2c03cae81da7d3274",
+    "selected_val_rmse": 0.08837053035768204,
+    "protected_test_rmse": 0.09418272281989812,
+    "train_seed": 1167702441,
+    "compact_architecture": {
+      "layer_1_gate": "RY",
+      "entangler": "CNOT",
+      "entangler_direction": "0_to_1",
+      "layer_2_gate": "RY"
+    },
+    "initial_quantum_angles": [
+      2.0778760400977525,
+      -2.4493455478649335,
+      3.065048809140318,
+      -0.7241855446897076
+    ],
+    "learned_quantum_angles": [
+      2.2923809728587305,
+      -3.0279453119061883,
+      3.5120079923135523,
+      -0.11823460202430668
+    ],
+    "quantum_angles_changed": true,
+    "classical_summary_initial": {
+      "embed.weight": {
+        "shape": [
+          42
+        ],
+        "count": 42,
+        "mean": 0.023713416445818362,
+        "std": 0.29406425581889484,
+        "min": -0.47480219747181723,
+        "max": 0.5106334449591171,
+        "l2_norm": 1.9119405671029202
+      },
+      "embed.bias": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "l2_norm": 0.0
+      },
+      "head.weight": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": -0.803355660581831,
+        "std": 0.4416407186483698,
+        "min": -1.2449963792302008,
+        "max": -0.3617149419334612,
+        "l2_norm": 1.2964774134223231
+      },
+      "head.bias": {
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "l2_norm": 0.0
+      }
+    },
+    "classical_summary_learned": {
+      "embed.weight": {
+        "shape": [
+          42
+        ],
+        "count": 42,
+        "mean": 0.019983511033723592,
+        "std": 0.7837965041649404,
+        "min": -1.4421712538387645,
+        "max": 1.3022698131863233,
+        "l2_norm": 5.0812325893906385
+      },
+      "embed.bias": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": -0.22204448973789936,
+        "std": 0.049960864523354284,
+        "min": -0.27200535426125366,
+        "max": -0.1720836252145451,
+        "l2_norm": 0.32186905227711804
+      },
+      "head.weight": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": -1.025042215889207,
+        "std": 0.7913751643464932,
+        "min": -1.8164173802357002,
+        "max": -0.23366705154271367,
+        "l2_norm": 1.8313853745727549
+      },
+      "head.bias": {
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "mean": 0.031865805114104466,
+        "std": 0.0,
+        "min": 0.031865805114104466,
+        "max": 0.031865805114104466,
+        "l2_norm": 0.031865805114104466
+      }
+    },
+    "param_provenance": [
+      {
+        "name": "embed.weight",
+        "shape": [
+          2,
+          21
+        ],
+        "count": 42,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "embed.bias",
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "q_layer.weights",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "head.weight",
+        "shape": [
+          1,
+          2
+        ],
+        "count": 2,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "head.bias",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      }
+    ],
+    "total_trainable_parameters": 51
+  },
+  {
+    "arm": "llm_closed_loop",
+    "task_namespace": "T1_mini_demo::llm_closed_loop",
+    "selected_structural_hash": "ca567c70e8601dfca898e4157ecdd133c08d00eec606377426f71688cf1d20d4",
+    "selected_val_rmse": 0.06801982882274116,
+    "protected_test_rmse": 0.07306891036127414,
+    "train_seed": 1119564362,
+    "compact_architecture": {
+      "layer_1_gate": "RY",
+      "entangler": "CZ",
+      "entangler_direction": "0_to_1",
+      "layer_2_gate": "RX"
+    },
+    "initial_quantum_angles": [
+      1.427052622025039,
+      2.8491482187589274,
+      0.7447054748272718,
+      -2.9109236512950147
+    ],
+    "learned_quantum_angles": [
+      2.2601572320745396,
+      3.019291918016654,
+      0.5853837381633193,
+      -3.3661132425611786
+    ],
+    "quantum_angles_changed": true,
+    "classical_summary_initial": {
+      "embed.weight": {
+        "shape": [
+          42
+        ],
+        "count": 42,
+        "mean": 0.02493119463985633,
+        "std": 0.2984943674411824,
+        "min": -0.5102698679404261,
+        "max": 0.5063501329914055,
+        "l2_norm": 1.9412003961806323
+      },
+      "embed.bias": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "l2_norm": 0.0
+      },
+      "head.weight": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": -0.5482497076933212,
+        "std": 0.5675538416236402,
+        "min": -1.1158035493169614,
+        "max": 0.019304133930319038,
+        "l2_norm": 1.1159705239185882
+      },
+      "head.bias": {
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "mean": 0.0,
+        "std": 0.0,
+        "min": 0.0,
+        "max": 0.0,
+        "l2_norm": 0.0
+      }
+    },
+    "classical_summary_learned": {
+      "embed.weight": {
+        "shape": [
+          42
+        ],
+        "count": 42,
+        "mean": 0.2624838847815617,
+        "std": 0.7794353870098621,
+        "min": -1.4357419618315814,
+        "max": 1.5107133295669186,
+        "l2_norm": 5.330058828598031
+      },
+      "embed.bias": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": 0.40126845024065316,
+        "std": 0.24896023581427687,
+        "min": 0.1523082144263763,
+        "max": 0.65022868605493,
+        "l2_norm": 0.6678286729023184
+      },
+      "head.weight": {
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "mean": -1.0425062562881946,
+        "std": 0.6606887975101939,
+        "min": -1.7031950537983886,
+        "max": -0.3818174587780007,
+        "l2_norm": 1.7454678350261819
+      },
+      "head.bias": {
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "mean": 0.056740758776658226,
+        "std": 0.0,
+        "min": 0.056740758776658226,
+        "max": 0.056740758776658226,
+        "l2_norm": 0.056740758776658226
+      }
+    },
+    "param_provenance": [
+      {
+        "name": "embed.weight",
+        "shape": [
+          2,
+          21
+        ],
+        "count": 42,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "embed.bias",
+        "shape": [
+          2
+        ],
+        "count": 2,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "q_layer.weights",
+        "shape": [
+          4
+        ],
+        "count": 4,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "head.weight",
+        "shape": [
+          1,
+          2
+        ],
+        "count": 2,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      },
+      {
+        "name": "head.bias",
+        "shape": [
+          1
+        ],
+        "count": 1,
+        "dtype": "torch.float64",
+        "device": "cpu",
+        "requires_grad": true
+      }
+    ],
+    "total_trainable_parameters": 51
+  }
+]

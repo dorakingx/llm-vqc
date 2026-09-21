@@ -16,7 +16,7 @@ import importlib.util
 import json
 from pathlib import Path
 
-from pptx.util import Emu, Inches, Pt
+from pptx.util import Emu, Inches
 
 _SPEC = importlib.util.spec_from_file_location(
     "qae_deck", Path(__file__).with_name("build_qae_robustness_deck.py"))

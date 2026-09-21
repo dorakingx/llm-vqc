@@ -1,0 +1,13 @@
+arm,outcome,count
+evolutionary_structure,num_valid,640
+random_structure,num_valid,640
+ref_strongent_d2,num_valid,40
+evolutionary_structure,num_invalid,0
+random_structure,num_invalid,0
+ref_strongent_d2,num_invalid,0
+evolutionary_structure,num_duplicate,73
+random_structure,num_duplicate,0
+ref_strongent_d2,num_duplicate,0
+evolutionary_structure,num_failed,0
+random_structure,num_failed,0
+ref_strongent_d2,num_failed,0

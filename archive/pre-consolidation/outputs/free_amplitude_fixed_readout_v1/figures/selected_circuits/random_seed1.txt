@@ -1,0 +1,8 @@
+# Random seed1
+amplitude encoding on all wires (state preparation), then:
+  CRY(1, 2) theta=0.0546
+  H(1)
+  CRY(2, 1) theta=1.8158
+  CRX(0, 2) theta=0.8613
+  RY(0) theta=1.3490
+measure Z on qubit 0; mu_hat = (1 - <Z>) / 2

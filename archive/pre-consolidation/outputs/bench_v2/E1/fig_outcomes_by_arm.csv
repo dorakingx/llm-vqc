@@ -1,0 +1,9 @@
+arm,outcome,count
+evolutionary_joint,num_valid,480
+random_joint,num_valid,480
+evolutionary_joint,num_invalid,0
+random_joint,num_invalid,0
+evolutionary_joint,num_duplicate,97
+random_joint,num_duplicate,0
+evolutionary_joint,num_failed,0
+random_joint,num_failed,0

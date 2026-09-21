@@ -10,7 +10,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-from collections import defaultdict
 from pathlib import Path
 
 import matplotlib
@@ -91,7 +90,7 @@ def curve_figure(curves: list[dict], key: str, n_warm: int, out: Path) -> None:
     for ax, (field, label, target) in zip(axes, [
         ("success_095", f"Seeds reaching $F_{{val}} \\geq 0.95$ (of {N_SEEDS})", 0.95),
         ("success_099", f"Seeds reaching $F_{{val}} \\geq 0.99$ (of {N_SEEDS})", 0.99),
-    ]):
+    ], strict=True):
         for method in methods:
             series = sorted((r for r in rows if r["method"] == method),
                             key=lambda r: int(r["candidates_used"]))
@@ -144,7 +143,7 @@ def mean_curve_figure(curves: list[dict], key: str, n_warm: int, out: Path) -> N
         ax.fill_between(xs, [float(r["min_best_validation"]) for r in series],
                         [float(r["max_best_validation"]) for r in series],
                         color=COLORS[method], alpha=0.10, lw=0)
-    for target, style in zip(TARGETS, ("--", ":")):
+    for target, style in zip(TARGETS, ("--", ":"), strict=False):
         ax.axhline(target, color="black", lw=1.0, ls=style)
         ax.text(budget, target + 0.002, f"target {target}", ha="right", fontsize=8)
     ax.axvline(n_warm + 0.5, color="#666", lw=1.0, ls=":")
@@ -186,7 +185,7 @@ def ladder_figure(endpoints: list[dict], ladder: list[tuple[str, int]],
         if not xs:
             continue
         ax.plot(xs, ys, color=COLORS[method], lw=1.8, alpha=0.75, zorder=2)
-        for x, y, is_new in zip(xs, ys, provs):
+        for x, y, is_new in zip(xs, ys, provs, strict=False):
             ax.plot([x], [y], marker=MARKERS[method], markersize=11 if is_new else 8,
                     color=COLORS[method], markeredgecolor="black",
                     markeredgewidth=1.6 if is_new else 0.6, zorder=3)
@@ -244,7 +243,7 @@ def margin_figure(audit: Path, pairs: list[tuple[str, int, str]], name: str,
         return
     fig, ax = plt.subplots(figsize=(9.2, 4.3))
     width = 0.36
-    for i, (label, budget, values, is_new) in enumerate(series):
+    for i, (label, _budget, values, is_new) in enumerate(series):
         xs = [s + (i - 0.5) * width for s in range(len(values))]
         ax.bar(xs, values, width=width * 0.9, color=COLORS[method],
                alpha=1.0 if is_new else 0.42, edgecolor="black",

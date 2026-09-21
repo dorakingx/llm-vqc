@@ -1,0 +1,35 @@
+{
+  "run_label": "REAL-LLM JOINT-SEARCH RUN (OpenAI)",
+  "experiment_name": "free_amplitude_fixed_readout_v1",
+  "mode": "main_joint_search",
+  "scientific_status": "integration/smoke demonstration only; not a statistically powered result",
+  "n_qubits": 3,
+  "feature_count": 8,
+  "readout_qubit": 0,
+  "max_gates": 5,
+  "budget_per_arm": 4,
+  "seeds": 2,
+  "encoding": "amplitude",
+  "prediction_formula": "mu_hat = (1 - <Z_readout>) / 2",
+  "classical_parameter_count": 0,
+  "optimizer": "none (LLM/sampler supplies theta; evaluated verbatim)",
+  "dataset_profile": "amplitude_n3_smoke_v1",
+  "sigma_min": 0.08,
+  "sigma_max": 0.2,
+  "search_arms": [
+    "random",
+    "llm_open_loop",
+    "llm_closed_loop"
+  ],
+  "generated_at_utc": "2026-07-23T20:57:11.508402+00:00",
+  "execution_code_sha": "712dbe461cb1fc0532d987464a24dbecca0721ad",
+  "execution_git_dirty": false,
+  "python_version": "3.14.4",
+  "library_versions": {
+    "torch": "2.13.0",
+    "pennylane": "0.45.1",
+    "openai": "2.41.1",
+    "numpy": "2.4.6",
+    "qiskit": "2.4.1"
+  }
+}

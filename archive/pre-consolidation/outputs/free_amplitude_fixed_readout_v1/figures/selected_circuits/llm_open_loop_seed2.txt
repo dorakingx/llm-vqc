@@ -1,0 +1,7 @@
+# LLM Open-loop seed2
+amplitude encoding on all wires (state preparation), then:
+  RX(2) theta=2.7883
+  RZ(0) theta=1.4564
+  CRX(0, 1) theta=-1.8719
+  CRZ(0, 2) theta=-2.3509
+measure Z on qubit 0; mu_hat = (1 - <Z>) / 2

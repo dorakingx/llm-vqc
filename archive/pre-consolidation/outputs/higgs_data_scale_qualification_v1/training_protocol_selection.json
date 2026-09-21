@@ -1,0 +1,44 @@
+{
+  "selected_protocol": {
+    "lr": 0.005,
+    "epochs": 50,
+    "weight_decay": 0.001,
+    "early_stopping": true,
+    "batch_size": 16
+  },
+  "label": "lr0.005_ep50_wd0.001_es8",
+  "mean_val_logloss": 0.6812046460035066,
+  "selection_rule": "lowest mean validation log-loss across the predeclared audit architectures",
+  "audit_setup": {
+    "block": "development block (index 5, disjoint from all qualification blocks)",
+    "representation": "R2_pca8",
+    "train_size": 2000,
+    "arch_seeds": [
+      5000,
+      5001
+    ]
+  },
+  "test_labels_used": false,
+  "ranking_top5": [
+    {
+      "protocol": "lr0.005_ep50_wd0.001_es8",
+      "mean_val_logloss": 0.6812046460035066
+    },
+    {
+      "protocol": "lr0.01_ep50_wd1e-05_es8",
+      "mean_val_logloss": 0.6841039959911843
+    },
+    {
+      "protocol": "lr0.005_ep50_wd0.001_noes",
+      "mean_val_logloss": 0.6850028530776238
+    },
+    {
+      "protocol": "lr0.005_ep50_wd1e-05_es8",
+      "mean_val_logloss": 0.6853852233467201
+    },
+    {
+      "protocol": "lr0.01_ep20_wd0.001_noes",
+      "mean_val_logloss": 0.685857471833479
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "space": "HIGGS_capacity_controlled_v1",
+  "total_trainable_params": 53,
+  "blocks": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "seeds": [
+    0,
+    1,
+    2
+  ],
+  "budget": 25,
+  "arms": [
+    "controlled_random",
+    "controlled_evolutionary",
+    "controlled_greedy"
+  ],
+  "selection_metric": "logloss",
+  "primary_test_metric": "logloss",
+  "equivalence_margin": 0.01,
+  "git_sha": "f5f6b0fdbf0666e74b1078058ede4b1a7834840c"
+}

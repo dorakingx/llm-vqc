@@ -1,0 +1,4 @@
+arm,num_proposed,num_valid,num_invalid,num_duplicate,num_failed,num_unique,consumed_budget,unique_trainings,stop_reason,selected_structural_hash,selected_val_rmse,protected_test_rmse
+random,2,2,0,0,0,2,2,2,,daed189af4fcc545c7013b33f4397d94f68bc0463efe0125686208d167072e60,0.04031617904075958,0.03910483366420193
+llm_open_loop,2,1,0,1,0,1,2,1,,ab736ece2bc31773e8a83fc3c93be3e24fae483be0e800b2c03cae81da7d3274,0.08837053035768204,0.09418272281989812
+llm_closed_loop,2,2,0,0,0,2,2,2,,ca567c70e8601dfca898e4157ecdd133c08d00eec606377426f71688cf1d20d4,0.06801982882274116,0.07306891036127414

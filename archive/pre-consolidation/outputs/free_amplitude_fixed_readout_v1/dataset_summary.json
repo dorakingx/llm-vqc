@@ -1,0 +1,56 @@
+{
+  "0": {
+    "train_val": {
+      "pre_normalization_l2_norm": {
+        "train_mean": 3.7243875617435167,
+        "train_min": 1.7427353958740428,
+        "train_max": 7.280827683149644,
+        "val_mean": 3.863100470831879,
+        "val_min": 1.7315406876010497,
+        "val_max": 7.03436933414879
+      },
+      "resolution": {
+        "feature_count": 8,
+        "grid_spacing": 0.14285714285714285,
+        "sigma_min": 0.08,
+        "sigma_min_over_grid_spacing": 0.56,
+        "warning": true,
+        "message": "sigma_min=0.08 is only 0.56x the grid spacing (0.1429); narrow peaks may not be resolvable on this grid."
+      }
+    },
+    "test": {
+      "pre_normalization_l2_norm": {
+        "test_mean": 3.8512128460686927,
+        "test_min": 1.4123693405868576,
+        "test_max": 7.541837768870614
+      }
+    }
+  },
+  "1": {
+    "train_val": {
+      "pre_normalization_l2_norm": {
+        "train_mean": 3.808382069095228,
+        "train_min": 1.5053130580418521,
+        "train_max": 7.549204637843105,
+        "val_mean": 3.7844180099492615,
+        "val_min": 1.6636528883721382,
+        "val_max": 7.282571769772147
+      },
+      "resolution": {
+        "feature_count": 8,
+        "grid_spacing": 0.14285714285714285,
+        "sigma_min": 0.08,
+        "sigma_min_over_grid_spacing": 0.56,
+        "warning": true,
+        "message": "sigma_min=0.08 is only 0.56x the grid spacing (0.1429); narrow peaks may not be resolvable on this grid."
+      }
+    },
+    "test": {
+      "pre_normalization_l2_norm": {
+        "test_mean": 3.8249430858682434,
+        "test_min": 1.394528519953399,
+        "test_max": 7.48175129088877
+      }
+    }
+  }
+}

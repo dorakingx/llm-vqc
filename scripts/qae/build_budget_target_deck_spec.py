@@ -51,8 +51,10 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
     records = {k: json.loads((runs / k / "run_record.json").read_text())
                for k in NEW_CELLS}
     calls = sum(r["api_usage"]["n_calls"] for r in records.values())
-    repairs = sum(r["api_usage"]["n_repair_or_retry_calls"]
-                  for r in records.values())
+    # Computed for completeness alongside the other usage totals; the deck reports
+    # total calls, and the repair/retry split is reported in REPORT.md instead.
+    _repairs = sum(r["api_usage"]["n_repair_or_retry_calls"]
+                   for r in records.values())
     usd = sum(r["api_usage"]["estimated_cost_usd_at_list_price"]
               for r in records.values())
     evals = sum(r["evaluated_candidates_total"] for r in records.values())
@@ -207,7 +209,7 @@ def build(audit: Path, runs: Path, figures: Path, date: str,
                  "lines": ["highest F among the first k candidates",
                            "of a run configured at budget B"]},
                 {"tone": "red", "heading": "Pass or fail",
-                 "lines": [f"count seeds with F >= target",
+                 "lines": ["count seeds with F >= target",
                            f"pass iff at least {REQUIRED} of {N_SEEDS}"]},
             ],
             "band": {"tone": "blue", "label": "Budget B",

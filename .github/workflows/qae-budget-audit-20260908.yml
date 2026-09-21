@@ -1,8 +1,12 @@
 name: QAE validation budget audit (no model calls)
 
+# Originally pinned to the isolated branch `analysis/qae-budget-target-20260908`,
+# which was consolidated into `main` and then deleted. Retargeted at `main` so the
+# audit stays runnable; it still makes no model calls.
 on:
+  workflow_dispatch:
   push:
-    branches: [analysis/qae-budget-target-20260908]
+    branches: [main]
     paths:
       - scripts/qae/analyze_budget_targets.py
       - .github/workflows/qae-budget-audit-20260908.yml
@@ -15,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Check out the isolated analysis branch
+      - name: Check out the analysis inputs
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7, verified 2026-09-08
         with:
           persist-credentials: false
@@ -37,7 +41,7 @@ jobs:
           import json, os
           from pathlib import Path
           result = {
-              'environment': 'GitHub Actions on analysis/qae-budget-target-20260908',
+              'environment': 'GitHub Actions on main (originally analysis/qae-budget-target-20260908)',
               'openai_api_key_secret_configured': os.environ.get('LLM_CREDENTIAL_CONFIGURED') == 'true',
               'credential_value_read_or_exported': False,
               'api_calls_made': 0,

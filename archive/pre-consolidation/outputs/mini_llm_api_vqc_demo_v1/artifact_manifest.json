@@ -1,0 +1,96 @@
+{
+  "schema_version": 2,
+  "publication_status": "sanitized_for_publication",
+  "run_status": "corrected",
+  "generated_at_utc": "2026-07-23T15:01:19.338200+00:00",
+  "source_result_store_relative_path": "runs/mini_llm_api_vqc_demo_v1/results.sqlite",
+  "seed": 0,
+  "budget_per_arm": 2,
+  "epochs_per_candidate": 5,
+  "elapsed_seconds": 7.611143957823515,
+  "execution_code_sha": "b57a84c4ef42155c100857eea7513c0843a5dc86",
+  "execution_git_dirty": true,
+  "python_version": "3.14.4",
+  "library_versions": {
+    "torch": "2.13.0",
+    "pennylane": "0.45.1",
+    "openai": "2.41.1",
+    "numpy": "2.4.6",
+    "qiskit": "2.4.1"
+  },
+  "arms": [
+    {
+      "arm": "random",
+      "task_namespace": "T1_mini_demo::random",
+      "stop_reason": null,
+      "ledger_summary": {
+        "num_proposed": 2,
+        "num_valid": 2,
+        "num_invalid": 0,
+        "num_duplicate": 0,
+        "num_failed": 0,
+        "num_unique": 2,
+        "consumed_budget": 2
+      },
+      "selected_structural_hash": "daed189af4fcc545c7013b33f4397d94f68bc0463efe0125686208d167072e60"
+    },
+    {
+      "arm": "llm_open_loop",
+      "task_namespace": "T1_mini_demo::llm_open_loop",
+      "stop_reason": null,
+      "ledger_summary": {
+        "num_proposed": 2,
+        "num_valid": 1,
+        "num_invalid": 0,
+        "num_duplicate": 1,
+        "num_failed": 0,
+        "num_unique": 1,
+        "consumed_budget": 2
+      },
+      "selected_structural_hash": "ab736ece2bc31773e8a83fc3c93be3e24fae483be0e800b2c03cae81da7d3274"
+    },
+    {
+      "arm": "llm_closed_loop",
+      "task_namespace": "T1_mini_demo::llm_closed_loop",
+      "stop_reason": null,
+      "ledger_summary": {
+        "num_proposed": 2,
+        "num_valid": 2,
+        "num_invalid": 0,
+        "num_duplicate": 0,
+        "num_failed": 0,
+        "num_unique": 2,
+        "consumed_budget": 2
+      },
+      "selected_structural_hash": "ca567c70e8601dfca898e4157ecdd133c08d00eec606377426f71688cf1d20d4"
+    }
+  ],
+  "files": [
+    "EXPERIMENT_CONFIG.json",
+    "LEARNED_PARAMETERS.md",
+    "METRICS.md",
+    "PROVISIONAL_NOTICE.md",
+    "README.md",
+    "api_usage_summary.json",
+    "artifact_manifest.json",
+    "candidate_results.csv",
+    "compact_architecture_schema.json",
+    "figures/training_curves.png",
+    "figures/training_curves.svg",
+    "figures/validation_rmse_by_arm.png",
+    "figures/validation_rmse_by_arm.svg",
+    "report.md",
+    "run_summary.csv",
+    "run_summary.json",
+    "selected_circuits.json"
+  ],
+  "excludes_by_policy": [
+    "raw API prompts",
+    "raw API responses",
+    "API keys/headers",
+    "hidden reasoning",
+    "SQLite databases",
+    "model checkpoints",
+    "full weight arrays"
+  ]
+}

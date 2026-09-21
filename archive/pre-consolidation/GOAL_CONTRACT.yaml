@@ -1,0 +1,92 @@
+# Machine-checkable completion contract for the bench_v2 goal.
+# scripts/check_goal_completion.py refuses completion (exit != 0) unless
+# every mandatory criterion below verifies against durable stores and
+# committed artifacts. Editing this file to weaken a criterion after
+# protected-test inspection is a protocol violation.
+contract_version: bench_v2_contract_1
+protocol: configs/bench_v2/protocol_v2.yaml
+
+criteria:
+  - id: C01_preflight_audit
+    check: file_exists_nonempty
+    path: docs/research/CURRENT_STATE_AUDIT.md
+  - id: C02_literature_and_protocol
+    check: files_exist_and_hashes_recorded
+    paths:
+      - docs/research/LITERATURE_REVIEW_QAS.md
+      - docs/research/BENCHMARK_V2_PROTOCOL.md
+      - configs/bench_v2/protocol_v2.yaml
+    hash_record: outputs/bench_v2/protocol_hashes.json
+  - id: C03_tasks_t1_t4
+    check: signal_suite_complete
+    tasks: [gauss_peak, sin_freq, change_point, peak_count]
+    forbidden_imports: [sklearn.datasets, torchvision, "load_digits", "mnist", "MNIST"]
+    scope: llm_vqc/tasks/signal_suite
+  - id: C04_both_tracks
+    check: modules_exist
+    modules:
+      - llm_vqc.bench_v2.track_a_evaluator
+      - llm_vqc.bench_v2.track_b_evaluator
+  - id: C05_all_mandatory_arms
+    check: arms_registered
+    track_a: [random_structure, evolutionary_structure, greedy_growth,
+              llm_open_structure, llm_archive_closed_structure,
+              ref_realamp_d1, ref_realamp_d2, ref_strongent_d1, ref_strongent_d2]
+    track_b: [random_joint, evolutionary_joint, llm_open_joint, llm_closed_joint]
+  - id: C06_n8_actually_simulated
+    check: store_cells_exist
+    experiment: E3
+    require_n_qubits: 8
+    min_replicates: 5
+  - id: C07_replicates_and_budgets
+    check: matrix_complete
+    experiments: [E1, E2, E3]
+  - id: C08_real_llm_cells
+    check: llm_cells_real_provider
+    experiments: [E1, E2, E3]
+    mock_allowed_only_in_tests: true
+  - id: C09_test_gate_once_after_selection
+    check: test_gate_discipline
+    experiments: [E1, E2, E3]
+  - id: C10_per_seed_records_and_plots
+    check: artifacts_exist
+    patterns:
+      - outputs/bench_v2/E2/per_seed_*.csv
+      - outputs/bench_v2/E2/fig_per_seed_*.png
+  - id: C11_resource_metrics
+    check: resource_metrics_present
+    require: [logical_gate_count, logical_depth, two_qubit_count,
+              transpiled_depth_line, transpiled_depth_ring, transpiled_2q_line]
+  - id: C12_shots_noise_eval
+    check: artifacts_exist
+    patterns:
+      - outputs/bench_v2/E4/shot_sensitivity_*.csv
+      - outputs/bench_v2/E4/noise_profile_result_*.csv
+  - id: C13_stats_tables
+    check: artifacts_exist
+    patterns:
+      - outputs/bench_v2/E2/stats_paired_tests.csv
+      - outputs/bench_v2/E2/stats_effect_sizes.csv
+  - id: C14_figures_have_sources
+    check: figures_have_source_data
+    outputs_root: outputs/bench_v2
+  # Lint scope decision (DECISIONS.md 2026-07-29): the preserved
+  # experiment lineage carries ~965 pre-existing ruff findings introduced
+  # by ruff version drift; those frozen-provenance files are not
+  # reformatted. The gate requires the FULL test suite plus a clean
+  # bench_v2 lint surface via scripts/check_bench_v2.sh.
+  - id: C15_tests_lint_pass
+    check: commands_succeed
+    commands:
+      - "bash scripts/check_bench_v2.sh"
+  - id: C16_report_discipline
+    check: report_contains
+    path: docs/research/FINAL_RESEARCH_REPORT.md
+    must_contain:
+      - "validation-selected protected-test"
+      - "no quantum-advantage claim"
+      - "Limitations"
+    must_not_claim: quantum_advantage
+  - id: C17_no_interrupted_cells
+    check: no_incomplete_cells
+    experiments: [E0, E1, E2, E3, E4, E5]

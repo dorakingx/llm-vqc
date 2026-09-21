@@ -1,0 +1,43 @@
+{
+  "type": "object",
+  "properties": {
+    "layer_1_gate": {
+      "type": "string",
+      "enum": [
+        "RX",
+        "RY",
+        "RZ"
+      ]
+    },
+    "entangler": {
+      "type": "string",
+      "enum": [
+        "CNOT",
+        "CZ",
+        "NONE"
+      ]
+    },
+    "entangler_direction": {
+      "type": "string",
+      "enum": [
+        "0_to_1",
+        "1_to_0"
+      ]
+    },
+    "layer_2_gate": {
+      "type": "string",
+      "enum": [
+        "RX",
+        "RY",
+        "RZ"
+      ]
+    }
+  },
+  "required": [
+    "layer_1_gate",
+    "entangler",
+    "entangler_direction",
+    "layer_2_gate"
+  ],
+  "additionalProperties": false
+}

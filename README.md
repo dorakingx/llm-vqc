@@ -1,8 +1,37 @@
-# LLM-VQC: Autonomous Agent Framework for Variational Quantum Circuit Exploration
+# LLM-VQC — when does language-model reasoning actually help quantum circuit architecture search?
 
-An advanced autonomous agent framework that couples large language models (GPT-5 series) with a high-performance quantum circuit search engine to explore, classify, and visualize equivalence classes of Clifford circuits built from standard gate sets.
+> ## GSoC 2026 Final Work Product
+>
+> See **[GSoC2026_FINAL_REPORT.md](./GSoC2026_FINAL_REPORT.md)**
+> for the final project summary, contributions, results, and reproduction instructions.
+>
+> **`main` is the canonical branch** — it is the only development branch, and it contains
+> everything needed to understand and reproduce the final work. Superseded research lines
+> are preserved read-only under [`archive/`](./archive).
+>
+> **Primary final experiment:** the controlled one-factor-at-a-time **QAE robustness study**
+> — protocol [`docs/research/QAE_ROBUSTNESS_PROTOCOL.md`](./docs/research/QAE_ROBUSTNESS_PROTOCOL.md),
+> results [`outputs/qae_robustness/REPORT.md`](./outputs/qae_robustness/REPORT.md).
+>
+> Immutable final snapshot: tag **`gsoc-2026-final`**.
 
-The system uses **OpenAI Function Calling** for reasoning and orchestration, and **Qiskit** for Clifford/Stabilizer simulation, rigorous statevector equivalence hashing, and publication-quality visualization.
+This repository contains a **budget-matched, capacity-controlled, pre-registered evaluation**
+of large language models as a quantum architecture search (QAS) strategy for variational
+quantum circuits, benchmarked against Random, Greedy and Evolutionary search on a quantum
+autoencoder task.
+
+**Headline result.** The LLM's *score-free semantic prior* is a robust advantage — LLM-Open
+beats Random in **6/6** varied conditions (up to **+0.284**, `dz = 5.55`, at 8 qubits). Its
+*iterative feedback loop* is **not** — LLM-Closed beats LLM-Open in only **2/6** conditions and
+significantly **reverses** at 6 and 8 qubits. No claim of quantum advantage or of general LLM
+superiority is made; see the
+[final report](./GSoC2026_FINAL_REPORT.md#5-main-results) for the full statistics, negative
+results and limitations.
+
+The project **began** as an autonomous agent that explores equivalence classes of Clifford
+circuits (OpenAI function calling + Qiskit stabilizer simulation + statevector equivalence
+hashing). That tooling is retained and documented below under
+[Project Overview](#project-overview), but it is **not** the final scientific contribution.
 
 ---
 
@@ -19,18 +48,21 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
 3. **Semantic QAE benchmark** — a quantum-autoencoder task in a neutral
    capacity-controlled space (free ordering of 12 rotations + 4 CNOTs),
    comparing Random / Greedy / LLM-Open / LLM-Closed with a version-pinned
-   API model. **v5 (primary)**: pre-registered incumbent-based free-form
+   API model. **v5**: pre-registered incumbent-based free-form
    redesign — the LLM-Closed refinement step receives only the current best
    architecture + validation score and may redesign freely within capacity;
    first detected closed-loop advantage over the open-loop batch:
-   `outputs/qae_tfim_neutral_v5/REPORT.md`. **v4** (multi-start, archived):
+   `outputs/qae_tfim_neutral_v5/REPORT.md`. **v5 is the reference cell of the
+   primary study (4) below, reused bit-for-bit — its closed-loop finding was
+   subsequently shown NOT to generalise, so it is no longer the headline
+   result.** **v4** (multi-start, archived):
    `outputs/qae_tfim_neutral_v4/REPORT.md`. **v3** (single-start
    diagnostic, archived): `outputs/qae_tfim_neutral_v3/REPORT.md`.
    (Earlier rigid-layout verification: `outputs/qae_tfim_api_v2/REPORT.md`;
    the 2026-08-04 historical synthetic-task artifacts:
    `outputs/mini5_ctx_20260804/`.)
 
-4. **Controlled robustness study** — the previous QAE result
+4. **Controlled robustness study — PRIMARY RESULT** — the previous QAE result
    stress-tested by changing exactly one factor at a time: candidate budget
    `B in {4, 8, 16}`, qubit count `n in {4, 6, 8}`, Hamiltonian family
    (TFIM vs XXZ) and the underlying LLM model. Every other component —
@@ -38,8 +70,14 @@ The system uses **OpenAI Function Calling** for reasoning and orchestration, and
    gate set, method logic, RNG streams and analysis conventions — is frozen
    and machine-verified per condition:
    `outputs/qae_robustness/REPORT.md`, deck in `outputs/qae_robustness/deck/`.
+   **Findings:** LLM-Open − Random keeps its sign in **6/6** varied conditions
+   (significant in 4/6), and Closed − Random in 6/6 (significant 6/6); but
+   **Closed − Open holds in only 2/6 and significantly reverses at 6 and 8
+   qubits**, so iterative feedback does not generalise. Greedy − Random is
+   significant in **0/6**. A further negative finding: LLM resource-contract
+   compliance falls to **65.1%** with the weaker model.
 
-5. **Minimum budget to a target fidelity (current)** — instead of ranking
+5. **Minimum budget to a target fidelity (most recent, supporting)** — instead of ranking
    methods at one fixed budget, fix a target *validation* trash fidelity and
    ask for the smallest candidate budget that reaches it in at least 10 of the
    same 12 paired seeds. Seven earlier conditions are re-analysed with no model
@@ -308,7 +346,16 @@ print(result["gate_distribution"])
 
 ```
 llm-vqc/
+├── GSoC2026_FINAL_REPORT.md  # ★ GSoC 2026 Final Work Product (start here)
+├── archive/                  # read-only copies of superseded, disconnected research
+│   ├── README.md             #   provenance: source branch tips, why superseded
+│   └── pre-consolidation/    #   HIGGS, bench_v2 (blocked), free-amplitude, mini-demo
 ├── llm_vqc/
+│   ├── experiments/
+│   │   ├── qae_robustness/   # ★ PRIMARY experiment (arms, prompts, manifest, study)
+│   │   ├── qae_budget_targets/  # supporting minimum-budget study
+│   │   ├── qae_tfim/         # QAE v2 → v5 lineage
+│   │   └── capacity_controlled/ # T1/T2 capacity-controlled benchmarks
 │   ├── agent.py              # LLM orchestrator (OpenAI Function Calling) — Phase 0 legacy
 │   ├── circuit_explorer.py   # Discrete Clifford BFS engine + equivalence hashing
 │   ├── visualization.py      # Matplotlib / Qiskit analytics — Phase 0 legacy
@@ -396,4 +443,20 @@ bash scripts/check.sh
 
 ## License
 
-See repository for license details.
+> **⚠ Licensing is currently UNRESOLVED.**
+>
+> This repository has **no `LICENSE` file**, and GitHub detects no licence. Under default
+> copyright that means **no reuse rights are granted**, which is very likely not the intent
+> for a GSoC work product.
+>
+> A licence has deliberately **not** been chosen here, because ML4SCI or the mentors may
+> already require a specific one. **Action required:** confirm the organization's required
+> licence and add the corresponding `LICENSE` file.
+
+**Data and dependencies.** All datasets behind the final results are **generated locally**
+(TFIM and XXZ ground states by exact diagonalisation); no external dataset is redistributed.
+[`DECISIONS.md`](./DECISIONS.md) records the provenance diligence on the ML4SCI
+electron-photon ECAL dataset, including the decision *not* to use an unofficial re-upload of
+unclear licence. Third-party dependencies (Qiskit, PennyLane, PyTorch, scikit-learn, pandas,
+SciPy, matplotlib, openai, pydantic, python-pptx) are used unmodified from their public
+distributions under their own permissive licences; none is vendored here.

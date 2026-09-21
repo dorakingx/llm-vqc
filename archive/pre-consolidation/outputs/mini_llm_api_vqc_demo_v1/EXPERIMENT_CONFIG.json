@@ -1,0 +1,56 @@
+{
+  "experiment_name": "mini_llm_api_vqc_demo_v1",
+  "run_status": "corrected",
+  "scientific_status": "integration demonstration only; not a statistically powered result",
+  "task": "T1_gaussian_peak",
+  "qubits": 2,
+  "quantum_parameters": 4,
+  "total_trainable_parameters": 51,
+  "encoding": {
+    "type": "angle",
+    "gate": "RY",
+    "wires": [
+      0,
+      1
+    ]
+  },
+  "measurement": {
+    "observable": "Z",
+    "wires": [
+      0,
+      1
+    ]
+  },
+  "search_arms": [
+    "random",
+    "llm_open_loop",
+    "llm_closed_loop"
+  ],
+  "budget_per_arm": 2,
+  "seeds": 1,
+  "seed_value": 0,
+  "epochs_per_candidate": 5,
+  "batch_size": 16,
+  "optimizer": "adamw",
+  "initialization_policy": "mini_demo_init_v1",
+  "differentiation_method": "backprop",
+  "dtype": "float64",
+  "device": "cpu",
+  "duplicate_detection_scope": "arm_local",
+  "max_real_llm_calls": 4,
+  "max_candidate_trainings": 6,
+  "provider": "openai",
+  "model": "gpt-5.4-mini",
+  "prompt_version": "mini_demo_v2",
+  "generated_at_utc": "2026-07-23T15:01:19.061143+00:00",
+  "execution_code_sha": "b57a84c4ef42155c100857eea7513c0843a5dc86",
+  "execution_git_dirty": true,
+  "python_version": "3.14.4",
+  "library_versions": {
+    "torch": "2.13.0",
+    "pennylane": "0.45.1",
+    "openai": "2.41.1",
+    "numpy": "2.4.6",
+    "qiskit": "2.4.1"
+  }
+}

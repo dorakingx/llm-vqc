@@ -1,0 +1,17 @@
+{
+  "manifest_version": "bench_v2_prices_2026-07-31",
+  "recorded_at": "2026-07-31",
+  "currency": "USD",
+  "unit": "per 1,000,000 tokens",
+  "source": "Published OpenAI API pricing, checked 2026-07-31 (developers.openai.com/api/docs/models/gpt-5-nano and corroborating price trackers).",
+  "note": "Costs charged to the global ledger are computed from the token counts the provider returns, never from a flat per-call figure. Cached-input discounts are deliberately NOT assumed: pricing every input token at the full rate makes the ledger conservative.",
+  "models": {
+    "gpt-5-nano-2025-08-07": {
+      "input_per_1m": 0.05,
+      "output_per_1m": 0.40,
+      "cached_input_per_1m": 0.005,
+      "pinned_for": "bench_v2 real-LLM matrix (E1, E2, E3)"
+    }
+  },
+  "fallback_policy": "A model absent from this manifest cannot be priced, so the provider refuses to run rather than silently charging an invented rate."
+}
