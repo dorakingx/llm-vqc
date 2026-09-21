@@ -68,7 +68,7 @@ fidelity 0.9700) beats Random (+0.0518, 11/12 seeds), the RY-only control
 reference (+0.0811, 12/12). Closed-loop feedback added no measurable value over
 open-loop priors at this budget (23/96 proposals were duplicates).
 
-## Step 6 — Neutral-space 2×2 (v3, primary experiment, completed)
+## Step 6 — Neutral-space 2×2 (v3, completed; now a DIAGNOSTIC)
 
 v3 (`docs/research/QAE_PROTOCOL_V3.md`, pre-registered) removed the rigid
 layer layout (free ordering of 12 rotations + 4 CNOTs) and reduced the
@@ -83,7 +83,7 @@ no additional closed-loop benefit over open-loop was detected (p=0.68,
 26/96 duplicate/invalid proposals). v3 is preserved unchanged as the
 single-start diagnostic.
 
-## Step 7 — Multi-start 4+4 follow-up (v4, primary experiment, completed)
+## Step 7 — Multi-start 4+4 follow-up (v4, completed; now a DIAGNOSTIC)
 
 Motivated by the v3 diagnosis and pre-registered before running
 (`docs/research/QAE_PROTOCOL_V4.md`, commit 69f8335): Greedy and
@@ -97,7 +97,7 @@ vs Random, dz=3.5); LLM-Closed's duplicates drop 26/96 → 8/96 and its
 refinement gain is small but positive (+0.0185), yet **no detectable
 closed-loop benefit over the open-loop batch** (−0.0085, p=0.13).
 
-## Step 8 — Incumbent-based free-form redesign (v5, primary, completed)
+## Step 8 — Incumbent-based free-form redesign (v5, completed; now the REFERENCE CELL of Step 9)
 
 Pre-registered before running (`docs/research/QAE_PROTOCOL_V5.md`, commit
 33740dc): the LLM-Closed refinement step now receives ONLY the current
@@ -112,6 +112,45 @@ proposals (8 capacity-invalid → flagged fallbacks); Greedy again at
 Random-parity (p=0.52). Framing: Greedy vs LLM-Closed differ in search
 expressivity as well as semantics — deliberate, and reported as such.
 
+## Step 9 — Controlled one-factor robustness study (2026-09-04) — ★ PRIMARY EXPERIMENT
+
+Pre-registered at `docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (commit `6933d3f`),
+frozen before any robustness result existed. The v5 cell of Step 8 is **reused,
+not re-run**, and `tests/test_qae_robustness_reference.py` proves the new code
+reproduces it bit-for-bit. Four factors varied one at a time: budget
+`B ∈ {4,8,16}`, qubits `n ∈ {4,6,8}`, Hamiltonian (TFIM vs XXZ), and the LLM
+snapshot. Everything else is frozen and machine-verified per condition by a
+manifest fingerprint. Result: `outputs/qae_robustness/REPORT.md`.
+
+**This step changed the headline, deliberately.**
+
+- **Open − Random keeps its sign in 6/6 varied conditions** (significant in 4/6),
+  and is *largest where search is hardest*: +0.197 at 6 qubits, **+0.284 at 8
+  qubits** (dz = 5.55). Closed − Random holds 6/6, significant 6/6.
+- **Closed − Open holds in only 2/6 and significantly REVERSES at 6 and 8
+  qubits** (0/12 and 1/12 seeds). Step 8's "first closed-loop advantage" is real
+  *at its own operating point* and does **not** generalise. It is therefore no
+  longer the headline — keeping it would have been an overclaim.
+- Greedy − Random is significant in **0/6**, so the gain is attributable to the
+  semantic prior, not merely to refining a good candidate.
+- New failure mode quantified: LLM resource-contract compliance falls to
+  **65.1%** with the weaker model, and fallbacks stay inside the score.
+
+## Step 10 — Minimum budget to a target fidelity (2026-09-08, supporting)
+
+Pre-registered at `docs/research/QAE_BUDGET_TARGET_PROTOCOL.md` (commit
+`f9a8d81`). Stops ranking methods at one budget and instead asks for the smallest
+budget reaching a target *validation* fidelity in ≥10 of 12 paired seeds. Seven
+earlier conditions re-analysed with **zero** model calls (reproducing the prior
+audit byte-for-byte); two boundary cells newly executed (USD 0.2902).
+Result: `outputs/qae_budget_targets_v2_20260908/REPORT.md`.
+
+Smallest **verified** passing budget at target 0.95 on the 4-qubit Ising ladder:
+**B = 6 for LLM-Open** (12/12) and **B = 8 for LLM-Closed**; Random and Greedy
+pass at no budget tested. This independently reproduces Step 9's direction. No
+method reaches 0.99 anywhere, and attainment counts are **not monotone** in
+budget, so no minimum-budget interval is claimed.
+
 ## Paper story
 
 The paper is no longer "LLM beats random at VQC design."
@@ -123,3 +162,8 @@ The stronger story is:
 3. A QAE benchmark exposes meaningful physical structure to the proposer.
 4. Under exact capacity control, a task-aware language-model proposal pool becomes more sample-efficient than random controls.
 5. The boundary of the claim is explicit: the benefit is **conditional on useful semantic priors**.
+6. **The useful component is the score-free semantic prior, not the agent loop.** The
+   open-loop pool — which never sees a score — is what survives every varied
+   condition. Iterative feedback helps only when the budget is tight and
+   *reverses* as the space grows. This is the project's central, and partly
+   negative, finding.
