@@ -510,6 +510,14 @@ commands. The count is **603 passed**, measured on the final commit — earlier
 figures quoted in this project's history (445, 557, …) are superseded and are
 not reused here.
 
+**Independently reproduced in CI.** The same `./scripts/check.sh` runs on every
+push to `main` and every pull request via
+[`.github/workflows/ci.yml`](./.github/workflows/ci.yml), on **Ubuntu with
+Python 3.12** — a different OS and Python version from the local run — installing
+the project from scratch exactly as §7.1 describes. It reports the identical
+**`All checks passed!` / `603 passed`**, so the fresh-clone setup path is verified
+on two independent platforms and is not an artifact of one machine.
+
 Two genuine regressions were found and fixed while verifying this, rather than
 worked around:
 
