@@ -15,7 +15,7 @@
 >
 > Immutable final snapshot: tag **`gsoc-2026-final`**.
 
-This repository contains a **budget-matched, capacity-controlled, pre-registered evaluation**
+This repository contains a **budget-matched, capacity-controlled, protocol-frozen evaluation**
 of large language models as a quantum architecture search (QAS) strategy for variational
 quantum circuits, benchmarked against Random, Greedy and Evolutionary search on a quantum
 autoencoder task.
@@ -48,7 +48,7 @@ hashing). That tooling is retained and documented below under
 3. **Semantic QAE benchmark** — a quantum-autoencoder task in a neutral
    capacity-controlled space (free ordering of 12 rotations + 4 CNOTs),
    comparing Random / Greedy / LLM-Open / LLM-Closed with a version-pinned
-   API model. **v5**: pre-registered incumbent-based free-form
+   API model. **v5**: protocol-frozen incumbent-based free-form
    redesign — the LLM-Closed refinement step receives only the current best
    architecture + validation score and may redesign freely within capacity;
    first detected closed-loop advantage over the open-loop batch:
@@ -81,7 +81,7 @@ hashing). That tooling is retained and documented below under
    methods at one fixed budget, fix a target *validation* trash fidelity and
    ask for the smallest candidate budget that reaches it in at least 10 of the
    same 12 paired seeds. Seven earlier conditions are re-analysed with no model
-   calls; two pre-registered boundary cells were newly executed. Measured at
+   calls; two protocol-frozen boundary cells were newly executed. Measured at
    target 0.95: the open loop passes at `B = 6` (12/12) where the closed loop
    does not (8/12), and the XXZ closed-loop cell fell from 9/12 at `B = 8` to
    5/12 at `B = 10`. Attainment counts are **not** monotone in budget, so the
@@ -94,8 +94,8 @@ hashing). That tooling is retained and documented below under
 
 Key documents: `docs/research/RESEARCH_ROADMAP_QAE.md` (story),
 `docs/research-log.md` (phase status, decisions and gates),
-`docs/research/QAE_BUDGET_TARGET_PROTOCOL.md` (pre-registered budget-target protocol),
-`docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (pre-registered **primary** protocol),
+`docs/research/QAE_BUDGET_TARGET_PROTOCOL.md` (budget-target protocol, frozen before execution),
+`docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (**primary** protocol, frozen before execution),
 `docs/research/QAE_PROTOCOL_V5.md` (v5; the primary study's reference cell),
 `docs/research/QAE_PROTOCOL_V4.md` / `QAE_PROTOCOL_V3.md` (archived),
 `docs/research/QAE_PROTOCOL.md` (v1/v2 protocol),

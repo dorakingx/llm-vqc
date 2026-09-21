@@ -51,7 +51,7 @@ strict equivalence test was underpowered; frozen quantum parameters and
 product circuits slightly **outperformed** trainable and entangled
 counterparts, and the VQC stayed near or below trivial/classical baselines.
 The study concluded it was **not yet a valid setting for an LLM search
-comparison**. Pre-registration, statistical analysis plan, data-split
+comparison**. The frozen protocol, statistical analysis plan, data-split
 spec and cross-task claim audit are all included.
 
 ### `outputs/higgs_data_scale_qualification_v1/` — HIGGS data-scale follow-up
@@ -69,7 +69,7 @@ produced, is on `main` at
 
 ### `outputs/bench_v2/` + `docs/research/BENCHMARK_V2_PROTOCOL.md` — rigorous QAS benchmark v2 (**incomplete: blocked**)
 
-A frozen, pre-registered benchmark protocol with a literature review,
+A benchmark protocol frozen before execution, with a literature review,
 search-space parity proof, break tests, a cumulative spend ledger and a
 completion checker. The **classical** cells ran (E0 exact-replication check
 passed with 0 API calls; E1–E3 analysis snapshots are present). The

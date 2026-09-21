@@ -11,11 +11,11 @@
 | **Project title** | Quantum Circuit Design with LLMs (ML4SCI project slot **QMLHEP16**) |
 | **Contributor** | Tomoya Hatanaka — GitHub [@dorakingx](https://github.com/dorakingx) |
 | **Organization** | [ML4SCI](https://ml4sci.org/) — Machine Learning for Science |
-| **Mentors** | Not recorded in this repository. The project was designed against the mentoring group's own paper, *AI Agents for Variational Quantum Circuit Design* ([arXiv:2602.19387](https://arxiv.org/abs/2602.19387)), which is analysed in [`LLM-VQC_MASTER_PLAN.md`](./LLM-VQC_MASTER_PLAN.md). Individual mentor names are deliberately **not** guessed here. |
+| **Mentors** | Marco Knipfer, Jogi Suda Neto, Konstantin Matchev, Katia Matcheva |
 | **Program** | Google Summer of Code 2026 |
 | **Repository** | https://github.com/dorakingx/llm-vqc |
 | **Canonical branch** | `main` — the single development branch |
-| **Final snapshot** | tag [`gsoc-2026-final`](https://github.com/dorakingx/llm-vqc/releases/tag/gsoc-2026-final) |
+| **Final snapshot** | tag [`gsoc-2026-final`](https://github.com/dorakingx/llm-vqc/tree/gsoc-2026-final) |
 
 ---
 
@@ -34,7 +34,10 @@ This is quantum architecture search (QAS), and it is hard for three reasons:
 
 Point 3 is the opening for a large language model: an LLM has read the physics
 literature, so it may carry a useful **semantic prior** over circuit structure.
-The existing literature — including the mentoring group's own paper — demonstrates
+The existing literature — including the mentoring group's own paper, *AI Agents
+for Variational Quantum Circuit Design*
+([arXiv:2602.19387](https://arxiv.org/abs/2602.19387), analysed in
+[`LLM-VQC_MASTER_PLAN.md`](./LLM-VQC_MASTER_PLAN.md)) — demonstrates
 that an LLM *can* design VQCs, but does so qualitatively: single runs, no random
 or evolutionary baselines, no seed replication, no statistical tests, and in at
 least one case feedback computed on the test set.
@@ -42,7 +45,7 @@ least one case feedback computed on the test set.
 **The project therefore did not set out to build another agent.** The research
 question it converged on is evaluative:
 
-> Under a **budget-matched, capacity-controlled, pre-registered** comparison
+> Under a **budget-matched, capacity-controlled, protocol-frozen** comparison
 > against non-semantic search, does an LLM's semantic prior actually buy better
 > circuit architectures — and does iterative feedback add anything on top of it?
 
@@ -97,8 +100,10 @@ All of the following is present in this repository.
   the test split is read once, after selection. The budget-target study goes
   further and hands the trainer an **empty test array**, with a guard that fails
   the run if any recorded test quantity is finite
-- **Pre-registration** — every study's protocol is frozen and committed *before*
-  any result is produced; amendments are recorded explicitly
+- **Protocol freezing in Git** — every study's protocol is written, committed and
+  frozen *before* any result is produced; amendments are recorded before
+  inspection. This is a Git-verifiable ordering claim, **not** a registration
+  with an external preregistration service (see §4)
 - **Manifest fingerprinting** — [`llm_vqc/experiments/qae_robustness/manifest.py`](./llm_vqc/experiments/qae_robustness/manifest.py)
   hashes the LLM workflow, prompt template, output schema, trainer, splits,
   selection rule, gate set, method logic, RNG streams and analysis conventions;
@@ -183,9 +188,18 @@ Full narrative: [`docs/research/RESEARCH_ROADMAP_QAE.md`](./docs/research/RESEAR
 ## 4. Final experimental setup
 
 The **primary experiment** is the controlled one-factor-at-a-time robustness
-study, pre-registered at
+study, whose protocol was **frozen and committed before execution** at
 [`docs/research/QAE_ROBUSTNESS_PROTOCOL.md`](./docs/research/QAE_ROBUSTNESS_PROTOCOL.md)
-(frozen at commit `6933d3f`, before any robustness result existed).
+— commit [`6933d3f`](https://github.com/dorakingx/llm-vqc/commit/6933d3f), which
+lands before any robustness result existed.
+
+> **What "protocol-frozen" means here, precisely.** Throughout this report it
+> means: the protocol was pre-specified, committed to Git, and frozen *before*
+> the corresponding experiment was run, with any amendment recorded before the
+> results were inspected. The commit order is independently checkable by anyone
+> with a clone. It does **not** mean the study was registered with an external
+> preregistration registry such as OSF or AsPredicted — **no external
+> preregistration service was used at any point in this project.**
 
 | Element | Value |
 |---|---|
@@ -298,8 +312,9 @@ therefore entangled and are not separated by this study.
 
 ### 5.5 SUPPORTING RESULT — minimum budget to a target fidelity
 
-Most recent study. Pre-registered at
-[`docs/research/QAE_BUDGET_TARGET_PROTOCOL.md`](./docs/research/QAE_BUDGET_TARGET_PROTOCOL.md);
+Most recent study. Protocol frozen and committed before execution at
+[`docs/research/QAE_BUDGET_TARGET_PROTOCOL.md`](./docs/research/QAE_BUDGET_TARGET_PROTOCOL.md)
+(commit [`f9a8d81`](https://github.com/dorakingx/llm-vqc/commit/f9a8d81));
 full report **[`outputs/qae_budget_targets_v2_20260908/REPORT.md`](./outputs/qae_budget_targets_v2_20260908/REPORT.md)**.
 Endpoint is **validation** trash fidelity; a cell passes iff ≥10 of the same 12
 paired seeds reach the target. **No candidate was evaluated on the test set
@@ -571,7 +586,7 @@ part of the build.
 | QAE v4 — pre-registered multi-start (4+4) | [#9](https://github.com/dorakingx/llm-vqc/pull/9) | Multi-start protocol; rescued Greedy to parity; v3 preserved as diagnostic | Merged |
 | QAE v5 — incumbent-based free-form redesign | [#10](https://github.com/dorakingx/llm-vqc/pull/10) | Free-form closed-loop redesign; first detected closed-loop advantage (later shown not to generalise, §5.3) | Merged |
 | **QAE robustness study (PRIMARY)** | [#11](https://github.com/dorakingx/llm-vqc/pull/11) | One-factor-at-a-time stress test across budget, qubits, Hamiltonian and model; manifest fingerprinting; bit-for-bit reference reproduction | Merged |
-| **Minimum budget to target fidelity** | [#12](https://github.com/dorakingx/llm-vqc/pull/12) | Pre-registered `B = 6` and XXZ `B = 10` boundary cells; validation-only, test-quarantined audit | Merged |
+| **Minimum budget to target fidelity** | [#12](https://github.com/dorakingx/llm-vqc/pull/12) | Protocol-frozen `B = 6` and XXZ `B = 10` boundary cells (both **executed**); validation-only, test-quarantined audit | Merged |
 | Final GSoC consolidation | [`main`](https://github.com/dorakingx/llm-vqc/commits/main) | Archived the disconnected research lines onto `main`, this report, README and branch-status rewrite, `gsoc-2026-final` tag | Merged |
 
 Closed without merging (superseded, kept for the record):
@@ -579,7 +594,7 @@ Closed without merging (superseded, kept for the record):
 [#3](https://github.com/dorakingx/llm-vqc/pull/3),
 [#7](https://github.com/dorakingx/llm-vqc/pull/7).
 
-Key pre-registration commits (protocol frozen **before** the corresponding run):
+Key protocol-freezing commits — each lands in Git **before** its corresponding run:
 
 | Protocol | Frozen at | In `git log main`? |
 |---|---|---|
@@ -588,7 +603,7 @@ Key pre-registration commits (protocol frozen **before** the corresponding run):
 | QAE v5 | `33740dc` | No — squash-merged via PR [#10](https://github.com/dorakingx/llm-vqc/pull/10) |
 | QAE v3 | `6620cd4` | No — squash-merged via PR [#8](https://github.com/dorakingx/llm-vqc/pull/8) |
 
-The primary study's pre-registration is a **first-class commit on `main`**, so a
+The primary study's protocol-freezing commit is a **first-class commit on `main`**, so a
 reviewer can verify from a plain clone that the protocol predates the results.
 The two older squash-merged SHAs are not commit objects on `main`; their protocol
 *files* are (`docs/research/QAE_PROTOCOL_V3.md`, `QAE_PROTOCOL_V5.md`), and the
@@ -622,9 +637,9 @@ scripts/
   qae/                        runners, analysis, figure and deck builders
 
 docs/research/
-  QAE_ROBUSTNESS_PROTOCOL.md      ★ primary pre-registration
-  QAE_BUDGET_TARGET_PROTOCOL.md   supporting pre-registration
-  QAE_PROTOCOL{,_V3,_V4,_V5}.md   QAE lineage pre-registrations
+  QAE_ROBUSTNESS_PROTOCOL.md      ★ primary protocol (frozen before execution)
+  QAE_BUDGET_TARGET_PROTOCOL.md   supporting protocol (frozen before execution)
+  QAE_PROTOCOL{,_V3,_V4,_V5}.md   QAE lineage protocols (each frozen first)
   RESEARCH_ROADMAP_QAE.md         the scientific story
   HIGGS_ARCHIVE_SYNTHESIS.md      what the archived HIGGS studies contributed
   BRANCH_STATUS.md                post-consolidation branch/provenance record
@@ -648,9 +663,9 @@ archive/                      read-only copies of superseded, disconnected lines
 
 ## 11. Current state
 
-Complete and verified on `main`:
+**The technical work product is complete.** Verified on `main`:
 
-- ✅ Capacity-controlled, budget-matched, pre-registered QAS evaluation framework
+- ✅ Capacity-controlled, budget-matched, protocol-frozen QAS evaluation framework
 - ✅ Four search arms + hand-designed reference, all capacity- and budget-matched
 - ✅ Real-API execution with pinned model snapshots, hard spend caps and per-call provenance
 - ✅ Protected-test quarantine, escalating to an empty-test-array guard in the latest study
@@ -661,6 +676,10 @@ Complete and verified on `main`:
 - ✅ Deterministic, no-API reproduction path for every published number
 - ✅ Superseded research lines archived onto `main`; `main` is the single branch
 - ✅ Secret scan clean across working tree and full Git history (§13)
+
+The one open administrative item is the **reuse licence**, which awaits ML4SCI /
+mentor confirmation (§13). It does not affect the completeness or validity of
+the work product above.
 
 ---
 
@@ -693,7 +712,9 @@ a result anywhere in this repository.**
    *(Blocked, never executed.)*
 7. **Noise and hardware.** Everything here is noiseless state-vector simulation.
    *(Out of scope for this project; unexecuted.)*
-8. **Resolve licensing** (§13).
+8. **Confirm the reuse licence with ML4SCI / the mentors and add a `LICENSE` file**
+   (§13). This is an administrative follow-up, not unfinished research, and does
+   not affect the completeness of the work product.
 
 ---
 
@@ -735,19 +756,30 @@ on the ML4SCI electron-photon ECAL dataset, including the decision **not** to us
 an unofficial Kaggle re-upload of unclear licence, and the permissively licensed
 scikit-learn fallback actually used.
 
-**⚠ Licensing is UNRESOLVED — flagged, not guessed.**
+**Reuse licence: awaiting organizational confirmation.**
 
-This repository has **no `LICENSE` file**, and GitHub reports no detected licence.
-No licence is specified in `LLM-VQC_MASTER_PLAN.md`, `DECISIONS.md`, or any other
-project record. Under default copyright this means **no reuse rights are granted**,
-which is very likely not the intent for a GSoC work product.
+Two separate things, deliberately not conflated:
+
+| | Status |
+|---|---|
+| **Technical work product** | **Complete.** The code, experiments, results, protocols, documentation and reproduction paths described in this report are finished, verified and submitted. |
+| **Repository reuse licence** | **Not yet confirmed.** Awaiting ML4SCI / mentor confirmation of the licence the organization requires. |
+
+The licence is an **administrative follow-up, not a defect in the work and not a
+blocker for this submission.** The work product stands on its own; only the terms
+under which third parties may *reuse* the code remain to be set.
+
+Concretely: this repository has no `LICENSE` file, and GitHub detects none. No
+licence is specified in `LLM-VQC_MASTER_PLAN.md`, `DECISIONS.md`, or any other
+project record, so under default copyright no reuse rights are granted yet — which
+is very likely not the long-term intent.
 
 A licence has deliberately **not** been invented here, because ML4SCI or the
-mentors may already require a specific one. **Action required by the contributor
-and mentors:** confirm the organization's required licence (ML4SCI projects
-commonly use Apache-2.0 or MIT) and add the corresponding `LICENSE` file. The
-README's licence section has been corrected to state this openly rather than
-point at a file that does not exist.
+mentors may already require a specific one, and picking one unilaterally could
+conflict with that. **Next step for the contributor and mentors:** confirm the
+organization's required licence and add the corresponding `LICENSE` file. This can
+be done at any time, before or after submission, without changing any of the work
+described above.
 
 Third-party dependencies (Qiskit, PennyLane, PyTorch, scikit-learn, pandas,
 SciPy, matplotlib, openai, pydantic) are used **unmodified** via their public
@@ -792,7 +824,7 @@ seeds). Spending half a small budget on refinement is a real cost, and it grows
 with the size of the space being given up.
 
 **6. Reproducibility must survive a dead credential.** The `bench_v2` line was
-fully built, pre-registered, parity-proved and budget-ledgered — and then died on
+fully built, protocol-frozen, parity-proved and budget-ledgered — and then died on
 an account-level `insufficient_quota` with $0.000000 spent. That loss forced the
 discipline that the final work depends on: commit raw candidate logs, make every
 published number regenerable from them with **zero** API calls, and treat paid
@@ -818,7 +850,7 @@ claim, is the outcome the whole control apparatus was built to make possible.
 
 ## 15. GSoC final snapshot
 
-**Final GSoC tag: [`gsoc-2026-final`](https://github.com/dorakingx/llm-vqc/releases/tag/gsoc-2026-final)**
+**Final GSoC tag: [`gsoc-2026-final`](https://github.com/dorakingx/llm-vqc/tree/gsoc-2026-final)**
 
 Annotated tag on the exact commit whose tests and checks are reported in §8.
 Browse the repository at that immutable snapshot:

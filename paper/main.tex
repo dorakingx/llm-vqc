@@ -22,12 +22,17 @@ We therefore introduce a semantic quantum-autoencoder (QAE) benchmark in which t
 The task compresses four-qubit open-chain transverse-field Ising ground states to two latent qubits.
 Every candidate is an ordered sequence of exactly sixteen gates --- twelve trainable single-qubit rotations (free axis and qubit) and four CNOTs (free wiring), with completely free gate ordering; only the architecture proposer differs.
 We compare four conceptually organized methods --- Random (no semantics, breadth-only), Greedy (no semantics, validation-guided local refinement), LLM-Open (semantics, open-loop batch), and LLM-Closed (semantics, adaptive closed-loop) --- each with eight candidate evaluations per seed and a version-pinned API model (\texttt{gpt-5.4-mini-2026-03-17}).
-A first, single-start experiment (v3) found a large semantic advantage but also that its single-start adaptive arms struggled; a pre-registered multi-start follow-up (v4; four warm starts, then four refinement evaluations) confirmed that diagnosis --- Greedy recovered to Random-parity with a genuine refinement gain, yet the history-conditioned closed loop still showed no benefit over the open-loop batch.
-A second pre-registered revision (v5, primary) removes an artificial restriction: the closed-loop refinement step receives only the current best architecture and its validation score and may \emph{redesign the architecture freely} within the fixed capacity.
+A first, single-start experiment (v3) found a large semantic advantage but also that its single-start adaptive arms struggled; a protocol-frozen multi-start follow-up (v4; four warm starts, then four refinement evaluations) confirmed that diagnosis --- Greedy recovered to Random-parity with a genuine refinement gain, yet the history-conditioned closed loop still showed no benefit over the open-loop batch.
+A second protocol-frozen revision (v5) removes an artificial restriction: the closed-loop refinement step receives only the current best architecture and its validation score and may \emph{redesign the architecture freely} within the fixed capacity.
 On the held-out test trash fidelity $F_{\rm trash}=\langle 00|\rho_{\rm trash}|00\rangle$, this yields the first detected closed-loop advantage: LLM-Closed reaches $0.9671$ versus $0.9605$ for LLM-Open (paired gain $+0.0066$, 95\% CI $[0.0023, 0.0112]$, $d_z=0.81$, 11/12 seeds, exact Wilcoxon $p=0.012$), with both LLM arms far above Greedy ($0.8696$) and Random ($0.8520$).
 The accepted redesigns were predominantly global --- a median of 11 of 16 gate slots changed --- indicating coordinated architectural reasoning rather than local mutation.
-The result is exploratory rather than a general LLM-superiority claim: it is a small noiseless four-qubit simulation with a single pinned model.
-The main conclusion is conditional: language-model reasoning becomes useful when the task exposes semantic structure that can be converted into circuit priors, rather than merely asking the model to sample gate syntax.
+We then stress-tested that cell one factor at a time (budget $B \in \{4,8,16\}$, qubits $n \in \{4,6,8\}$, TFIM versus XXZ, and a second pinned model), and this is the study the paper's conclusions rest on.
+The two components separate sharply.
+The \emph{score-free semantic prior} is robust: LLM-Open $-$ Random keeps its sign in all six varied conditions and grows where search is hardest, reaching $+0.2841$ ($d_z=5.55$, 12/12 seeds) at eight qubits, while Greedy $-$ Random is significant in none.
+The \emph{closed-loop advantage does not generalise}: LLM-Closed $-$ LLM-Open survives in only two of the six varied conditions and significantly reverses at six and eight qubits, so the v5 result must be restated as budget- and width-dependent rather than general.
+A separate, measurable failure mode is resource-contract compliance, which falls to $65.1\%$ with the weaker model.
+These are small noiseless simulations with twelve paired seeds and two pinned models; no quantum-advantage claim and no general LLM-superiority claim is made.
+The main conclusion is conditional: language-model reasoning becomes useful when the task exposes semantic structure that can be converted into circuit priors, rather than merely asking the model to sample gate syntax --- and it is the semantic prior, not the agent's feedback loop, that carries the effect.
 \end{abstract}
 
 \section{Introduction}
@@ -157,7 +162,7 @@ LLM-Closed & semantics; multi-start + validation-guided adaptive refinement\\
 
 We deliberately do not present this as a causal $2\times2$ factorial: Random and Greedy differ in allocation policy as well as feedback, and LLM-Open versus LLM-Closed compares open-loop batch search against adaptive closed-loop search rather than isolating ``the pure effect of feedback.''
 
-Three designs were run in sequence, each pre-registered before its own matrix and preserved unchanged afterwards.
+Three designs were run in sequence, each with its protocol committed and frozen in Git before its own matrix ran, and preserved unchanged afterwards.
 \textbf{v3} used single-start adaptive arms (Greedy: one random start plus seven local mutations; LLM-Closed: all eight proposals sequential, conditioned on the full history).
 \textbf{v4} moved both adaptive arms to a \emph{four-warm-start + four-refinement} allocation, with the LLM refinement still conditioned on the full history.
 \textbf{v5} (primary) keeps the 4+4 allocation and changes only the LLM-Closed refinement step: each call receives the \emph{current best architecture and its validation trash fidelity} and may \emph{redesign the architecture freely} within the fixed capacity --- one gate choice, several coordinated choices, or the entire architecture --- with no one-change restriction and no instruction to stay close to the incumbent.
@@ -178,7 +183,7 @@ Greedy is deliberately local one-step hill climbing.
 
 \paragraph{LLM-Open (version-pinned API).}
 One chat-completion call to \texttt{gpt-5.4-mini-2026-03-17} (temperature $0.7$) sends the physics/task card of Appendix~\ref{app:prompt} --- Hamiltonian, real-ground-state property, nearest-neighbour interaction structure, latent/trash roles, and the exact resource contract --- and requests eight distinct candidates in a structured JSON gate-list schema.
-Each version draws a fresh pool; the v5 pool returned eight valid, distinct architectures with one rejected entry repaired in bounded calls (v4: eight valid in one call; v3: one repair call, per its pre-registered amendment).
+Each version draws a fresh pool; the v5 pool returned eight valid, distinct architectures with one rejected entry repaired in bounded calls (v4: eight valid in one call; v3: one repair call, per its pre-declared amendment).
 No validation result is ever shown to this arm.
 
 \paragraph{LLM-Closed (v5: incumbent-based free-form redesign).}
@@ -206,11 +211,11 @@ Three observations motivated the v4 follow-up.
 First, Greedy landed significantly \emph{below} Random ($-0.1055$, 2/12 wins, $p=0.005$) despite functioning correctly --- 34/84 mutations accepted, every seed improving on its own start: \emph{single-start local refinement sacrificed too much exploration breadth at $B=8$}.
 Second, no additional closed-loop benefit was detected (LLM-Closed $-$ LLM-Open $=-0.0100$, $p=0.68$); we do not claim closed-loop was worse.
 Third, LLM-Closed produced 26/96 duplicate or invalid proposals, focusing quickly around previously successful structures --- a premature-exploitation signature consistent with the exploration-collapse failure mode reported for agentic VQC design \cite{knipfer2026}.
-v3 is preserved unchanged (\texttt{outputs/qae\_tfim\_neutral\_v3/}); the multi-start v4 protocol was pre-registered before its matrix ran, explicitly motivated by this diagnosis.
+v3 is preserved unchanged (\texttt{outputs/qae\_tfim\_neutral\_v3/}); the multi-start v4 protocol was frozen before its matrix ran, explicitly motivated by this diagnosis.
 
 \subsection{v4: the multi-start diagnostic}
 
-The pre-registered v4 experiment (4+4 allocation, history-conditioned closed loop) confirmed the v3 diagnosis: Greedy recovered from significantly-below-Random to parity ($0.8793$ vs $0.8677$, $p=0.42$) with a genuine refinement gain ($+0.0635$, 10/12 seeds, $p=0.0093$); the semantic advantage replicated with an independently drawn pool (LLM-Open $0.9643$, 12/12 vs Random, $d_z=3.5$); duplicate proposals fell from 26/96 to 8/96.
+The protocol-frozen v4 experiment (4+4 allocation, history-conditioned closed loop) confirmed the v3 diagnosis: Greedy recovered from significantly-below-Random to parity ($0.8793$ vs $0.8677$, $p=0.42$) with a genuine refinement gain ($+0.0635$, 10/12 seeds, $p=0.0093$); the semantic advantage replicated with an independently drawn pool (LLM-Open $0.9643$, 12/12 vs Random, $d_z=3.5$); duplicate proposals fell from 26/96 to 8/96.
 Yet the closed loop still showed no detectable benefit over the open-loop batch ($-0.0085$, $p=0.13$).
 This motivated the v5 hypothesis: the history-style refinement prompt may have under-used the model's ability to redesign, and an explicit incumbent-plus-freedom framing could change that.
 v4 is preserved unchanged (\texttt{outputs/qae\_tfim\_neutral\_v4/}).
@@ -308,7 +313,7 @@ The closed-versus-open outcome, by contrast, depended on the refinement interfac
 
 The v5 result rests on one cell of the design space: four qubits, a
 transverse-field Ising family, $B=8$, and one pinned model.
-We therefore ran a pre-registered one-factor-at-a-time stress test
+We therefore ran a one-factor-at-a-time stress test, its protocol frozen in advance
 (\texttt{docs/research/QAE\_ROBUSTNESS\_PROTOCOL.md}, frozen before the run),
 varying exactly one of four factors per condition:
 the candidate budget $B \in \{4,8,16\}$;
@@ -524,7 +529,7 @@ Return ONLY a single JSON object, no prose and no markdown fences, with this sch
 \texttt{\ \ \{"g": "RY", "q": 0\}, \{"g": "CNOT", "c": 3, "t": 2\}, ...]\}]\}}\\
 Each gates list holds exactly 16 entries in execution order: a rotation is \texttt{\{"g": "RX"|"RY"|"RZ", "q": 0-3\}} and a CNOT is \texttt{\{"g": "CNOT", "c": 0-3, "t": 0-3, c != t\}}. Exactly 12 rotations and exactly 4 CNOTs per candidate.
 \end{quote}
-If returned candidates violate the capacity contract, up to two bounded repair calls quote the rejected entries and errors and request replacements (pre-registered amendment); only then are remaining slots filled by flagged random draws.
+If returned candidates violate the capacity contract, up to two bounded repair calls quote the rejected entries and errors and request replacements (pre-declared amendment); only then are remaining slots filled by flagged random draws.
 The v4 LLM-Closed warm start uses the same task instruction with ``Output 4 distinct candidates. Aim for structural DIVERSITY across the candidates (different orderings, wirings, and axis patterns), \ldots'' in place of the open-loop closing lines.
 The v1/v2 pilot used the same physics sentences with a rigid layered layout and a per-layer axes schema; that version is preserved in the repository history and \texttt{docs/research/LLM\_QAE\_SKILL.md}.
 

@@ -59,7 +59,7 @@ and authorship are preserved as-is** — nothing was squashed or rewritten.
 | Branch (deleted) | Tip SHA | Contribution | PR |
 |---|---|---|---|
 | `claude/qae-experiments-presentation-ba33c0` | `e846c27` | **QAE robustness study (the primary result)** + 2026-09-04 deck | [#11](https://github.com/dorakingx/llm-vqc/pull/11) |
-| `analysis/qae-budget-target-20260908` | `d2ef21b` | Validation-only budget audit; pre-registered the B=6 / XXZ B=10 follow-up | [#12](https://github.com/dorakingx/llm-vqc/pull/12) |
+| `analysis/qae-budget-target-20260908` | `d2ef21b` | Validation-only budget audit; froze the B=6 / XXZ B=10 follow-up protocol | [#12](https://github.com/dorakingx/llm-vqc/pull/12) |
 | `claude/llm-vqc-min-budget-search-eb95ad` | `9ec31bc` | **Executed** those two boundary cells; report, figures, deck | [#12](https://github.com/dorakingx/llm-vqc/pull/12) |
 
 Verified chain: `main`(`86cf5e2`) → `e846c27` → `d2ef21b` → `9ec31bc`, each an
@@ -132,9 +132,12 @@ reference cell and as a correct result *at its own operating point*, but it is
 **no longer the headline**. What survives everywhere is the *open-loop* semantic
 advantage (Open − Random, 6/6).
 
-## Pre-registration commits
+## Protocol-freezing commits
 
-Each protocol was frozen and committed **before** the corresponding run:
+Each protocol was written, committed and frozen in Git **before** the
+corresponding run. This is a commit-order claim anyone can check from a clone;
+it is **not** a registration with an external preregistration service, and no
+such service was used.
 
 | Protocol | Frozen at | Reachable from `main`? |
 |---|---|---|
@@ -147,7 +150,7 @@ The two squash-merged SHAs are **not** in `git log main` and are not recoverable
 from a plain clone. They remain viewable on GitHub through their pull request,
 whose head ref GitHub retains after branch deletion. The **protocol files
 themselves are on `main`** in `docs/research/`, and the squash commit messages
-record the lineage — so the pre-registration claim is verifiable from `main`
+record the lineage — so the protocol-freezing claim is verifiable from `main`
 alone; only the individual pre-merge commit object is not.
 
 ## Pull requests

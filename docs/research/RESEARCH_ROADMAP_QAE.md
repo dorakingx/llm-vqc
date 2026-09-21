@@ -60,7 +60,7 @@ The current QAE result is an exploratory/frozen verification pilot, not a final 
 2. ~~add Evolutionary and a hand-designed QAE baseline~~ — **done** (v2; both underperform even unconstrained Random at B=8),
 3. repeat on 6–8 qubits and other Hamiltonians,
 4. add noise and hardware connectivity,
-5. freeze a confirmatory multi-model protocol (several pinned models, pre-registered) before inspecting protected test results.
+5. freeze a confirmatory multi-model protocol (several pinned models, committed to Git in advance) before inspecting protected test results.
 
 The v2 verification confirmed the pilot: the API open-loop pool (mean test trash
 fidelity 0.9700) beats Random (+0.0518, 11/12 seeds), the RY-only control
@@ -70,7 +70,7 @@ open-loop priors at this budget (23/96 proposals were duplicates).
 
 ## Step 6 — Neutral-space 2×2 (v3, completed; now a DIAGNOSTIC)
 
-v3 (`docs/research/QAE_PROTOCOL_V3.md`, pre-registered) removed the rigid
+v3 (`docs/research/QAE_PROTOCOL_V3.md`, frozen before the run) removed the rigid
 layer layout (free ordering of 12 rotations + 4 CNOTs) and reduced the
 comparison to a clean 2×2 over semantics × validation feedback:
 Random / Greedy / LLM-Open / LLM-Closed, B=8, paired seeds, pinned
@@ -85,7 +85,7 @@ single-start diagnostic.
 
 ## Step 7 — Multi-start 4+4 follow-up (v4, completed; now a DIAGNOSTIC)
 
-Motivated by the v3 diagnosis and pre-registered before running
+Motivated by the v3 diagnosis, with its protocol frozen and committed before running
 (`docs/research/QAE_PROTOCOL_V4.md`, commit 69f8335): Greedy and
 LLM-Closed get 4 diverse warm starts before 4 refinement evaluations;
 Random and LLM-Open unchanged in design (fresh draws/pool). Result
@@ -99,7 +99,7 @@ closed-loop benefit over the open-loop batch** (−0.0085, p=0.13).
 
 ## Step 8 — Incumbent-based free-form redesign (v5, completed; now the REFERENCE CELL of Step 9)
 
-Pre-registered before running (`docs/research/QAE_PROTOCOL_V5.md`, commit
+Protocol frozen and committed before running (`docs/research/QAE_PROTOCOL_V5.md`, commit
 33740dc): the LLM-Closed refinement step now receives ONLY the current
 best architecture and its validation trash fidelity, and may redesign
 freely within the 12R+4CX capacity (no one-change restriction, no
@@ -114,8 +114,8 @@ expressivity as well as semantics — deliberate, and reported as such.
 
 ## Step 9 — Controlled one-factor robustness study (2026-09-04) — ★ PRIMARY EXPERIMENT
 
-Pre-registered at `docs/research/QAE_ROBUSTNESS_PROTOCOL.md` (commit `6933d3f`),
-frozen before any robustness result existed. The v5 cell of Step 8 is **reused,
+Protocol frozen and committed at `docs/research/QAE_ROBUSTNESS_PROTOCOL.md`
+(commit `6933d3f`) before any robustness result existed. The v5 cell of Step 8 is **reused,
 not re-run**, and `tests/test_qae_robustness_reference.py` proves the new code
 reproduces it bit-for-bit. Four factors varied one at a time: budget
 `B ∈ {4,8,16}`, qubits `n ∈ {4,6,8}`, Hamiltonian (TFIM vs XXZ), and the LLM
@@ -138,8 +138,8 @@ manifest fingerprint. Result: `outputs/qae_robustness/REPORT.md`.
 
 ## Step 10 — Minimum budget to a target fidelity (2026-09-08, supporting)
 
-Pre-registered at `docs/research/QAE_BUDGET_TARGET_PROTOCOL.md` (commit
-`f9a8d81`). Stops ranking methods at one budget and instead asks for the smallest
+Protocol frozen and committed at `docs/research/QAE_BUDGET_TARGET_PROTOCOL.md`
+(commit `f9a8d81`) before either boundary cell was run. Stops ranking methods at one budget and instead asks for the smallest
 budget reaching a target *validation* fidelity in ≥10 of 12 paired seeds. Seven
 earlier conditions re-analysed with **zero** model calls (reproducing the prior
 audit byte-for-byte); two boundary cells newly executed (USD 0.2902).
