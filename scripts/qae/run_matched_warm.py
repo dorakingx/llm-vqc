@@ -51,18 +51,18 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=os.cpu_count())
     args = parser.parse_args()
     tasks = []
-    for key, (n, family, budget) in CONDITIONS.items():
+    for key, (_n, _family, budget) in CONDITIONS.items():
         w = budget // 2
         for seed in range(12):
             own = _closed(key, seed)
             other_seed = (seed + 6) % 12
             other = _closed(key, other_seed)
-            for row, arch in zip(own["rows"], own["architectures"]):
+            for row, arch in zip(own["rows"], own["architectures"], strict=True):
                 meta = {"condition": key, "seed": seed, "arm": "LLM-Closed",
                         "source_seed": seed, "phase": row["phase"], "order": row["order"],
                         "candidate": row["candidate"], "fallback": row["fallback"]}
                 tasks.append((meta, arch))
-            for row, arch in zip(other["rows"][:w], other["architectures"][:w]):
+            for row, arch in zip(other["rows"][:w], other["architectures"][:w], strict=True):
                 meta = {"condition": key, "seed": seed, "arm": "LLM-Fresh",
                         "source_seed": other_seed, "phase": "fresh", "order": w + row["order"],
                         "candidate": row["candidate"], "fallback": row["fallback"]}

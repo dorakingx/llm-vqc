@@ -62,7 +62,9 @@ def llm_open_pool(condition_key: str) -> dict[str, list[dict]]:
     return json.loads(path.read_text())["candidates"]
 
 
-def pool_for(arm: str, condition_key: str, n: int, family: str, seed: int) -> list[tuple[str, list[dict]]]:
+def pool_for(
+    arm: str, condition_key: str, n: int, family: str, seed: int
+) -> list[tuple[str, list[dict]]]:
     space = Space(n)
     if arm == "Hand":
         return list(hand_templates(n).items())

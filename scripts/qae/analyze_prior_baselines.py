@@ -143,7 +143,7 @@ def main() -> None:
             rows.append({"family": "secondary", "condition": key, "contrast": name,
                          **paired(a, b), "p_holm": None})
     adj = holm([st["p"] for _, _, st in primary])
-    for (key, name, st), p_adj in zip(primary, adj):
+    for (key, name, st), p_adj in zip(primary, adj, strict=True):
         rows.append({"family": "primary", "condition": key, "contrast": name, **st,
                      "p_holm": p_adj})
 
@@ -170,7 +170,7 @@ def main() -> None:
                          "contrast": "LLM-Fresh - Random", **paired(fresh, sel["Random"]),
                          "p_holm": None})
         adj = holm([st["p"] for _, st in mw_rows])
-        for (key, st), p_adj in zip(mw_rows, adj):
+        for (key, st), p_adj in zip(mw_rows, adj, strict=True):
             rows.append({"family": "matched_warm", "condition": key,
                          "contrast": "LLM-Closed - LLM-Fresh", **st, "p_holm": p_adj})
 
@@ -183,7 +183,8 @@ def main() -> None:
         rnd = selected(c[(c.method == "Random") & (c.order <= w)])
         st = paired(warm, rnd)
         wr.append((key, st))
-        summary["warm_vs_random"][key] = {"warm": float(warm.mean()), "random": float(rnd.mean()), "w": w}
+        summary["warm_vs_random"][key] = {
+            "warm": float(warm.mean()), "random": float(rnd.mean()), "w": w}
         # LLM-Open selected-candidate concentration
         s = pd.read_csv(study_dir(key) / "selected_results.csv")
         vc = s[s.method == "LLM-Open"].candidate.value_counts()
@@ -191,7 +192,7 @@ def main() -> None:
             "distinct_selected": int(len(vc)), "modal_count": int(vc.iloc[0]),
             "pool_size": int(c[c.method == "LLM-Open"].candidate.nunique())}
     adj = holm([st["p"] for _, st in wr])
-    for (key, st), p_adj in zip(wr, adj):
+    for (key, st), p_adj in zip(wr, adj, strict=True):
         rows.append({"family": "warm_vs_random", "condition": key,
                      "contrast": "LLM-warm - Random (B/2)", **st, "p_holm": p_adj})
 
@@ -211,7 +212,8 @@ def main() -> None:
                                "p_ry_nn": pr, "n_warm": int(len(warm)), "n_uniform": int(len(uni)),
                                "B_eq_uniform_for_B8": equivalent_budget(q, p, 8),
                                "B_eq_rynn_for_B8": equivalent_budget(q, pr, 8)}
-        entry["candidate_means"] = {"llm_warm": float(warm.mean()), "llm_refine": float(refine.mean()),
+        entry["candidate_means"] = {"llm_warm": float(warm.mean()),
+                                    "llm_refine": float(refine.mean()),
                                     "uniform": float(uni.mean()), "ry_nn": float(prior.mean()),
                                     "hand": float(hand.mean())}
         summary["tail"][key] = entry
@@ -245,7 +247,7 @@ def make_figures(cand, summary, curves) -> None:
     titles = {"reference": "$n=4$ TFIM", "hamiltonian_xxz": "$n=4$ XXZ",
               "qubits_n6": "$n=6$ TFIM", "qubits_n8": "$n=8$ TFIM"}
     fig, axes = plt.subplots(1, 4, figsize=(7.2, 2.3), sharey=False)
-    for ax, key in zip(axes, PRIOR_CONDITIONS):
+    for ax, key in zip(axes, PRIOR_CONDITIONS, strict=True):
         cv = curves[curves.condition == key]
         for arm in ["Uniform", "RY", "NN", "RY+NN", "LLM-shuffled"]:
             c = cv[cv.arm == arm]
@@ -274,18 +276,20 @@ def make_figures(cand, summary, curves) -> None:
     # Closed - Open (committed, shared pool) vs Closed - Fresh (matched warm)
     contr = pd.read_csv(OUT / "contrasts.csv")
     if (contr.contrast == "LLM-Closed - LLM-Fresh").any():
-        robust = json.loads((ROOT / "outputs/qae_robustness/summary.json").read_text())
         keys = list(ALL_CONDITIONS)
         fig, ax = plt.subplots(figsize=(3.5, 2.6))
         for i, key in enumerate(keys):
             y = len(keys) - 1 - i
             sel = committed_selected(key)
             co = paired(sel["LLM-Closed"], sel["LLM-Open"])
-            cf = contr[(contr.condition == key) & (contr.contrast == "LLM-Closed - LLM-Fresh")].iloc[0]
-            ax.errorbar(co["mean_gain"], y + 0.17, xerr=[[co["mean_gain"] - co["ci_lo"]], [co["ci_hi"] - co["mean_gain"]]],
+            cf = contr[(contr.condition == key)
+                      & (contr.contrast == "LLM-Closed - LLM-Fresh")].iloc[0]
+            err_o = [[co["mean_gain"] - co["ci_lo"]], [co["ci_hi"] - co["mean_gain"]]]
+            ax.errorbar(co["mean_gain"], y + 0.17, xerr=err_o,
                         fmt="o", ms=3.5, color="#d1495b", lw=1, capsize=2,
                         label="Closed $-$ Open (shared pool)" if i == 0 else None)
-            ax.errorbar(cf.mean_gain, y - 0.17, xerr=[[cf.mean_gain - cf.ci_lo], [cf.ci_hi - cf.mean_gain]],
+            err_f = [[cf.mean_gain - cf.ci_lo], [cf.ci_hi - cf.mean_gain]]
+            ax.errorbar(cf.mean_gain, y - 0.17, xerr=err_f,
                         fmt="s", ms=3.5, color="#2a9d8f", lw=1, capsize=2,
                         label="Closed $-$ Fresh (matched warm)" if i == 0 else None)
         ax.axvline(0, color="k", lw=0.7)
