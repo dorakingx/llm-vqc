@@ -13,6 +13,8 @@ from multiprocessing import Pool
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+import sys
+sys.path.insert(0, str(ROOT))
 OUT = ROOT / "outputs/qae_prior_baselines"
 CONDITIONS = [("reference", 4, "TFIM"), ("hamiltonian_xxz", 4, "XXZ"),
               ("qubits_n6", 6, "TFIM"), ("qubits_n8", 8, "TFIM")]
