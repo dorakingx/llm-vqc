@@ -62,3 +62,26 @@ Holm correction is applied across the 4 conditions × 3 contrasts.
 Secondary (descriptive): best-of-B curves (expected selected test `F_trash`
 over 2,000 random B-subsets of each pool, B = 1 … pool size), `RY − Uniform`,
 `NN − Uniform`, `LLM-shuffled` vs LLM-Open, `Hand`.
+
+## Addendum A (committed before execution): matched-warm feedback ablation
+
+Motivation (observed in committed data before this addendum): LLM-Open
+selects the *same* pool member in all 12 seeds in 5 of 7 robustness
+conditions, so its 12 seeds replicate training, not generation. LLM-Closed's
+warm batch, by contrast, is a fresh score-free call per seed.
+
+New arm `LLM-Fresh` (no new API call): for seed s, the candidates are the
+committed LLM-Closed warm batch of seed s followed by the committed warm batch
+of seed (s + 6) mod 12, both re-evaluated on seed s's data with the shared
+trainer. Warm calls are score-free and their prompt does not depend on the
+seed, so batch (s + 6) is an exchangeable independent draw. Fallback
+entries are kept (operational score), exactly as in the original arms.
+
+`LLM-Closed (re-evaluated)`: the committed warm batch + refinement
+candidates of seed s, re-evaluated with the same trainer on the same platform.
+
+Primary contrast: `LLM-Closed − LLM-Fresh`, per condition (all 7
+robustness conditions), paired over seeds, Holm-corrected across the 7.
+The two arms share their first B/2 candidates exactly; they differ only in
+whether the second B/2 are incumbent-conditioned redesigns or independent
+score-free proposals. Secondary: `LLM-Fresh − Random`.
