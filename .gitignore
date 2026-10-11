@@ -50,3 +50,5 @@ paper/main.pdf
 !outputs/qae_robustness/**
 !outputs/qae_budget_targets_v2_20260908/
 !outputs/qae_budget_targets_v2_20260908/**
+!outputs/qae_prior_baselines/
+!outputs/qae_prior_baselines/**
