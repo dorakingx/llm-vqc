@@ -9,6 +9,10 @@ import argparse
 import csv
 import json
 import os
+
+# One BLAS/OpenMP thread per worker; without this the pool oversubscribes the CPU.
+os.environ.setdefault("OMP_NUM_THREADS", "1")
+os.environ.setdefault("MKL_NUM_THREADS", "1")
 import sys
 from multiprocessing import Pool
 from pathlib import Path
