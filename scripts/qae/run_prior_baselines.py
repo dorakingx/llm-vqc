@@ -66,7 +66,7 @@ def main() -> None:
             writer.writeheader()
         for i, row in enumerate(pool.imap_unordered(_work, tasks, chunksize=4), 1):
             writer.writerow(row)
-            if i % 200 == 0:
+            if i % 20 == 0:
                 fh.flush()
                 print(f"{i}/{len(tasks)}", flush=True)
 
